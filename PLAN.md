@@ -545,7 +545,7 @@ Branche : `feature/server-account`.
 
 **Interfaces :**
 - Produit :
-  - `createInvitation(db, adminId, ttlHours = 72): Promise<{ url: string }>` : jeton aléatoire de 32 octets en base64url, stocké haché en sha256 ; l'URL vaut `${PUBLIC_URL}/invite/<token>` ;
+  - `createInvitation(db, adminId, publicUrl, ttlHours = 72): Promise<{ url: string }>` : jeton aléatoire de 32 octets en base64url, stocké haché en sha256 ; l'URL vaut `${PUBLIC_URL}/invite/<token>` ;
   - `consumeInvitation(db, token, {username, password}): Promise<User>`.
 - Prérequis issus de la revue du scope 3 :
   - un preHandler `requireUser(db)` recharge l'utilisateur de la session depuis la base à chaque requête web authentifiée (supprime la session si l'utilisateur n'existe plus) et expose `is_admin` et `locale` depuis la base ; `/account` et `/admin/*` l'utilisent ;
