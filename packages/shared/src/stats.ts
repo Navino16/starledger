@@ -20,13 +20,7 @@ export const DEFAULT_VALUATION: ValuationSettings = {
 
 export type StoredEvent = { day: string; status: 'ok' | 'conflict'; event: ParsedEvent };
 
-export type BalanceCategory =
-  | 'expeditions'
-  | 'combats'
-  | 'recycling'
-  | 'discoveries'
-  | 'wreckfields'
-  | 'fuel';
+export type BalanceCategory = 'expeditions' | 'combats' | 'recycling' | 'wreckfields' | 'fuel';
 
 export type Balance = { gains: Resources; losses: Resources };
 
@@ -66,7 +60,6 @@ export type StatsSummary = {
     outcomes: Record<LifeformDiscoveryResult, number>;
     xpByLifeform: Record<string, number>;
     artefacts: number;
-    shipsLost: ShipCounts;
   };
   wreckfields: { count: number; shipsRecovered: ShipCounts };
   conflictCount: number;
@@ -132,7 +125,6 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
       expeditions: zeroBalance(),
       combats: zeroBalance(),
       recycling: zeroBalance(),
-      discoveries: zeroBalance(),
       wreckfields: zeroBalance(),
       fuel: zeroBalance(),
     },
@@ -162,7 +154,6 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
       outcomes: zeroCounts(DISCOVERY_RESULTS),
       xpByLifeform: {},
       artefacts: 0,
-      shipsLost: {},
     },
     wreckfields: { count: 0, shipsRecovered: {} },
     conflictCount: 0,
@@ -202,8 +193,6 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
           const key = String(e.lifeform);
           stats.discoveries.xpByLifeform[key] = (stats.discoveries.xpByLifeform[key] ?? 0) + e.xp;
         }
-        addShips(stats.discoveries.shipsLost, e.shipsLost);
-        loss(balance.discoveries, e.shipsLost, true);
         break;
       }
       case 'combat': {

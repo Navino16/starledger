@@ -168,7 +168,7 @@ fleet lost (OGL l.8738, l.8767).
 | `lifeform` | int, optional | `1` humans, `2` rocktal, `3` mechas, `4` kaelesh | TRK `raw/OgameRawLifeformType.ts`, OGL l.8722 |
 | `lifeformgainedexperience` | int, optional | | TRK `msg/lifeform`, OGL l.8726 |
 | `lifeformalreadyowned` | `"1"` / other, optional | boolean | TRK `msg/lifeform` |
-| `shipslost` | JSON object, optional **(inferred)** | `{ "<shipId>": amount }` (OGLight reads it for both 41 and 61) | OGL l.8734 |
+| `shipslost` | not applicable to 61 | Discoveries involve no fleet ships; not read (OGLight reads the field for both 41 and 61, but that was only an inference) | OGL l.8734 |
 
 OGLight classifies 61 by `artifactsfound > 0` → artifact, else `lifeformgainedexperience > 0` →
 lifeform XP, else nothing (OGL l.8742–8746).

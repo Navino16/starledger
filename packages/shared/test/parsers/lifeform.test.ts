@@ -30,7 +30,7 @@ describe('parseLifeformDiscovery', () => {
 
   it('maps explicit discovery types', () => {
     expect(result({ discoverytype: 'lifeform-found' })).toBe('lifeform_found');
-    expect(result({ discoverytype: 'ship-lost', shipslost: '{"203":1}' })).toBe('ship_lost');
+    expect(result({ discoverytype: 'ship-lost' })).toBe('ship_lost');
     expect(result({ discoverytype: 'none' })).toBe('none');
   });
 
@@ -49,9 +49,9 @@ describe('parseLifeformDiscovery', () => {
     expect(size('')).toBeNull();
   });
 
-  it('rejects invalid shipslost JSON naming the attribute', () => {
+  it('ignores a shipslost attribute', () => {
     const r = parseLifeformDiscovery(withRaw(base, { shipslost: 'x' }));
-    expect(r).toMatchObject({ status: 'unrecognized' });
-    if (r.status === 'unrecognized') expect(r.reason).toContain('shipslost');
+    expect(r.status).toBe('ok');
+    if (r.status === 'ok') expect(r.event).not.toHaveProperty('shipsLost');
   });
 });

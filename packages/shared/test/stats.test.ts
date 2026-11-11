@@ -43,7 +43,6 @@ const discovery = (o: Partial<LifeformDiscoveryEvent> = {}): LifeformDiscoveryEv
   xp: null,
   artifacts: null,
   artifactsSize: null,
-  shipsLost: null,
   ...o,
 });
 const combat = (o: Partial<CombatEvent> = {}): CombatEvent => ({
@@ -215,11 +214,10 @@ describe('computeStats', () => {
   it('ignores expedition-related ship losses when asked', () => {
     const events = [
       expedition({ shipsLost: { '202': 1 } }),
-      discovery({ shipsLost: { '202': 1 } }),
       combat({ isExpedition: true, shipsLost: { '202': 1 } }),
       combat({ shipsLost: { '202': 1 } }),
     ];
-    expect(run(events).tiles.metal).toBe(-8000);
+    expect(run(events).tiles.metal).toBe(-6000);
     expect(run(events, { ignoreExpeShipsLoss: true }).tiles.metal).toBe(-2000);
   });
 
@@ -254,12 +252,6 @@ describe('computeStats', () => {
     expect(s.combats.shipsLost).toEqual({ '210': 1 });
   });
 
-  it('records discovery ship losses', () => {
-    const s = run([discovery({ result: 'ship_lost', shipsLost: { '202': 2 } })]);
-    expect(s.discoveries.shipsLost).toEqual({ '202': 2 });
-    expect(s.balance.discoveries.losses).toEqual(res(4000, 4000));
-  });
-
   it('fills the per-category balance with positive gains and losses', () => {
     const s = run([
       expedition({ resources: res(100), shipsFound: { '202': 1 }, shipsLost: { '210': 1 } }),
@@ -289,7 +281,7 @@ describe('computeStats', () => {
           shipsFound: { '202': 2 },
           shipsLost: { '202': 1 },
         }),
-        discovery({ result: 'ship_lost', shipsLost: { '210': 1 } }),
+        discovery({ result: 'ship_lost' }),
         combat({ isExpedition: true, loot: res(300), shipsLost: { '202': 1 } }),
         combat({ loot: res(40, 30, 20), lootSign: -1, shipsLost: { '210': 3 } }),
         shortCombat({ isExpedition: true, shipsLost: { '202': 1 } }),

@@ -1,7 +1,6 @@
-import { shipCountsSchema } from '../domain';
 import type { LifeformDiscoveryEvent, LifeformDiscoveryResult, ParseResult } from '../events';
 import type { MessageObservation } from '../observation';
-import { coordsOf, Invalid, need, rawInt, rawJson, tryBuild } from './raw';
+import { coordsOf, Invalid, need, rawInt, tryBuild } from './raw';
 
 // docs/ogame-data-formats.md §3.2
 const TYPES: Record<string, LifeformDiscoveryResult> = {
@@ -20,7 +19,6 @@ function build(obs: MessageObservation): LifeformDiscoveryEvent {
   const artifacts = need(rawInt(raw, 'artifactsfound'), 'artifactsfound');
   const xp = need(rawInt(raw, 'lifeformgainedexperience'), 'lifeformgainedexperience');
   const lifeform = need(rawInt(raw, 'lifeform'), 'lifeform');
-  const shipsLost = need(rawJson(raw, 'shipslost', shipCountsSchema), 'shipslost');
 
   const typeRaw = raw.discoverytype;
   let result: LifeformDiscoveryResult;
@@ -43,7 +41,6 @@ function build(obs: MessageObservation): LifeformDiscoveryEvent {
     xp,
     artifacts,
     artifactsSize: raw.artifactssize || null,
-    shipsLost,
   };
 }
 
