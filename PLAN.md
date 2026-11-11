@@ -165,10 +165,10 @@ Workflow `ci.yml` :
   4. `pnpm install --frozen-lockfile`, puis `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`.
 - Chaque action est **épinglée sur un SHA de commit** avec la version en commentaire (`uses: actions/checkout@<sha> # v5.x.y`), à la dernière release publiée depuis plus de 24 h (vérifiée via `gh api repos/<owner>/<repo>/releases/latest`).
 
-- [ ] **Step 1 : écrire le workflow.**
-- [ ] **Step 2 : le valider en local.** `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest -color`. Attendu : aucune erreur.
-- [ ] **Step 3 : simuler les commandes du job en local**, dans l'ordre et sur une copie propre : `rm -rf node_modules && pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test && pnpm build`. Attendu : tout PASS.
-- [ ] **Step 4 : commit.** `git commit -m "Add GitHub Actions CI workflow"`
+- [x] **Step 1 : écrire le workflow.**
+- [x] **Step 2 : le valider en local.** `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest -color`. Attendu : aucune erreur.
+- [x] **Step 3 : simuler les commandes du job en local**, dans l'ordre et sur une copie propre : `rm -rf node_modules && pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test && pnpm build`. Attendu : tout PASS.
+- [x] **Step 4 : commit.** `git commit -m "Add GitHub Actions CI workflow"`
 - [ ] **Step 5 (après création du remote) :** vérifier que la CI passe sur la PR du scope 0.
 
 ---
