@@ -19,19 +19,20 @@ const PASSWORD = 'correct horse battery';
 describe('users', () => {
   it('creates a user then verifies credentials', async () => {
     const user = await createUser(t.db, {
-      username: 'Bob',
+      username: 'Bob1',
       password: PASSWORD,
       isAdmin: false,
       locale: 'en',
     });
-    expect(user.username).toBe('bob');
+    expect(user.username).toBe('bob1');
     expect(user).not.toHaveProperty('password_hash');
-    const ok = await verifyCredentials(t.db, 'BOB', PASSWORD);
+    const ok = await verifyCredentials(t.db, 'BOB1', PASSWORD);
     expect(ok?.id).toBe(user.id);
   });
 
   it('returns null for a wrong password or unknown user', async () => {
-    expect(await verifyCredentials(t.db, 'bob', 'wrong password!!')).toBeNull();
+    await createUser(t.db, { username: 'bob2', password: PASSWORD, isAdmin: false, locale: 'fr' });
+    expect(await verifyCredentials(t.db, 'bob2', 'wrong password!!')).toBeNull();
     expect(await verifyCredentials(t.db, 'nobody', PASSWORD)).toBeNull();
   });
 
@@ -49,10 +50,11 @@ describe('users', () => {
   });
 
   it('stores an argon2id hash', async () => {
+    await createUser(t.db, { username: 'bob3', password: PASSWORD, isAdmin: false, locale: 'fr' });
     const row = await t.db
       .selectFrom('users')
       .select('password_hash')
-      .where('username', '=', 'bob')
+      .where('username', '=', 'bob3')
       .executeTakeFirstOrThrow();
     expect(row.password_hash.startsWith('$argon2id$')).toBe(true);
   });
@@ -86,9 +88,10 @@ describe('runCli create-admin', () => {
   });
 
   it('fails on duplicate username and short password', async () => {
+    await createUser(t.db, { username: 'root2', password: PASSWORD, isAdmin: true, locale: 'en' });
     const run = (pw: string) => {
       const err = sink();
-      return runCli(['create-admin', '--username', 'root'], {
+      return runCli(['create-admin', '--username', 'root2'], {
         stdin: Readable.from([`${pw}\n`]),
         stdout: sink().stream,
         stderr: err.stream,
@@ -113,5 +116,33 @@ describe('runCli create-admin', () => {
     });
     expect(code).toBe(2);
     expect(err.text()).toMatch(/usage/i);
+  });
+
+  it.each([
+    [['create-admin']],
+    [['create-admin', '--bogus', 'x']],
+    [['create-admin', '--username']],
+  ])('returns usage error 2 for bad arguments %j', async (argv) => {
+    const err = sink();
+    const code = await runCli(argv, {
+      stdin: Readable.from([`${PASSWORD}\n`]),
+      stdout: sink().stream,
+      stderr: err.stream,
+      db: t.db,
+    });
+    expect(code).toBe(2);
+    expect(err.text()).toMatch(/usage/i);
+  });
+
+  it('rejects oversized password input', async () => {
+    const err = sink();
+    const code = await runCli(['create-admin', '--username', 'big'], {
+      stdin: Readable.from(['x'.repeat(2048)]),
+      stdout: sink().stream,
+      stderr: err.stream,
+      db: t.db,
+    });
+    expect(code).toBe(1);
+    expect(err.text()).toMatch(/too long/i);
   });
 });

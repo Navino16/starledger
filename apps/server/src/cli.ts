@@ -8,22 +8,64 @@ import type { Database } from './db/schema';
 import { createUser } from './users/users';
 
 export interface CliIo {
-  stdin: AsyncIterable<string | Uint8Array>;
+  stdin: AsyncIterable<string | Uint8Array> & {
+    isTTY?: boolean;
+    setRawMode?: (mode: boolean) => unknown;
+  };
   stdout: NodeJS.WritableStream;
   stderr: NodeJS.WritableStream;
   db: Kysely<Database>;
 }
 
 const USAGE = `Usage:
-  node dist/cli.js create-admin --username <name>   (password read from stdin)
+  node dist/cli.js create-admin --username <name>   (pipe the password via stdin)
   node dist/cli.js migrate
 `;
 
-async function readPassword(stdin: CliIo['stdin']): Promise<string> {
-  const chunks: string[] = [];
-  for await (const chunk of stdin) chunks.push(chunk.toString());
-  return chunks.join('').replace(/\r?\n$/, '');
+const MAX_PASSWORD_BYTES = 1024;
+
+class UsageError extends Error {}
+
+async function readPiped(stdin: CliIo['stdin']): Promise<string> {
+  const chunks: Buffer[] = [];
+  let size = 0;
+  for await (const chunk of stdin) {
+    const buf = typeof chunk === 'string' ? Buffer.from(chunk) : Buffer.from(chunk);
+    size += buf.length;
+    if (size > MAX_PASSWORD_BYTES) throw new Error('Password input is too long');
+    chunks.push(buf);
+  }
+  return Buffer.concat(chunks)
+    .toString('utf8')
+    .replace(/\r?\n$/, '');
 }
+
+// Raw mode keeps the typed password from being echoed on an interactive terminal.
+async function readHidden(stdin: CliIo['stdin'], stderr: CliIo['stderr']): Promise<string> {
+  stderr.write('Password: ');
+  stdin.setRawMode?.(true);
+  let password = '';
+  try {
+    for await (const chunk of stdin) {
+      for (const ch of Buffer.from(chunk).toString('utf8')) {
+        if (ch === '\r' || ch === '\n' || ch === '\u0004') return password;
+        if (ch === '\u0003') throw new Error('Aborted');
+        if (ch === '\u007f' || ch === '\b') password = password.slice(0, -1);
+        else password += ch;
+        if (Buffer.byteLength(password) > MAX_PASSWORD_BYTES) {
+          throw new Error('Password input is too long');
+        }
+      }
+    }
+    return password;
+  } finally {
+    stdin.setRawMode?.(false);
+    stderr.write('\n');
+  }
+}
+
+const readPassword = (io: CliIo) =>
+  io.stdin.isTTY ? readHidden(io.stdin, io.stderr) : readPiped(io.stdin);
 
 export async function runCli(argv: string[], io: CliIo): Promise<number> {
   const [command, ...rest] = argv;
@@ -34,14 +76,17 @@ export async function runCli(argv: string[], io: CliIo): Promise<number> {
       return 0;
     }
     if (command === 'create-admin') {
-      const { values } = parseArgs({ args: rest, options: { username: { type: 'string' } } });
-      if (!values.username) {
-        io.stderr.write(`Missing --username\n${USAGE}`);
-        return 2;
+      let username: string | undefined;
+      try {
+        username = parseArgs({ args: rest, options: { username: { type: 'string' } } }).values
+          .username;
+      } catch (error) {
+        throw new UsageError((error as Error).message);
       }
-      const password = await readPassword(io.stdin);
+      if (!username) throw new UsageError('Missing --username');
+      const password = await readPassword(io);
       const user = await createUser(io.db, {
-        username: values.username,
+        username,
         password,
         isAdmin: true,
         locale: 'en',
@@ -52,6 +97,10 @@ export async function runCli(argv: string[], io: CliIo): Promise<number> {
     io.stderr.write(USAGE);
     return 2;
   } catch (error) {
+    if (error instanceof UsageError) {
+      io.stderr.write(`${error.message}\n${USAGE}`);
+      return 2;
+    }
     io.stderr.write(`Error: ${error instanceof Error ? error.message : String(error)}\n`);
     return 1;
   }
