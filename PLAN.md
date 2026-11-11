@@ -170,7 +170,47 @@ Workflow `ci.yml` :
 - [x] **Step 2 : le valider en local.** `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest -color`. Attendu : aucune erreur.
 - [x] **Step 3 : simuler les commandes du job en local**, dans l'ordre et sur une copie propre : `rm -rf node_modules && pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test && pnpm build`. Attendu : tout PASS.
 - [x] **Step 4 : commit.** `git commit -m "Add GitHub Actions CI workflow"`
-- [ ] **Step 5 (après création du remote) :** vérifier que la CI passe sur la PR du scope 0.
+- [x] **Step 5 :** remplacé par les tâches 0.3 (alignement sur la convention CI des projets perso) et 0.4 (vérification sur GitHub).
+
+### Tâche 0.3 : Alignement sur la convention CI des projets perso, couverture
+
+Convention reprise de `budget` et `librarr`, avec les ajustements validés par l'utilisateur le 2026-11-11 : épinglage par SHA, Node lu dans `.nvmrc`, `timeout-minutes`, `persist-credentials: false`.
+
+**Files :**
+- Modify : `.github/workflows/ci.yml`, `package.json` (script `test:coverage`, devDependency `@vitest/coverage-v8`), `vitest.config.ts`, `.gitignore` (`.reports/`)
+
+Workflow `ci.yml` :
+- déclencheur : `pull_request` sur `[main, develop]` uniquement, sans `push` ;
+- `concurrency: { group: ci-${{ github.event.pull_request.number || github.ref }}, cancel-in-progress: true }` ;
+- `permissions: contents: read` ;
+- quatre jobs parallèles, dont les noms servent de checks obligatoires : `Lint`, `Typecheck`, `Build`, `Test (unit + coverage)` ;
+- pour chaque job : `runs-on: ubuntu-26.04` et `timeout-minutes: 15`, puis les étapes suivantes :
+  1. checkout avec `persist-credentials: false` ;
+  2. `pnpm/action-setup` sans version ;
+  3. `actions/setup-node` avec `node-version-file: .nvmrc` et `cache: pnpm` ;
+  4. `pnpm install --frozen-lockfile`, puis la commande du job (`pnpm lint`, `pnpm typecheck`, `pnpm build` ou `pnpm test:coverage`).
+- Le job Test ajoute deux envois `codecov/codecov-action` (épinglé par SHA, dernière release publiée depuis plus de 24 h), tous deux avec `token: ${{ secrets.CODECOV_TOKEN }}` et `fail_ci_if_error: false` :
+  - la couverture : `files: .reports/coverage/cobertura-coverage.xml` ;
+  - les résultats de tests : `if: ${{ !cancelled() }}`, `files: .reports/junit.xml`, `report_type: test_results`.
+
+Couverture :
+- `test:coverage` lance `vitest run --coverage` à la racine, sur tous les projets ;
+- provider `v8`, reporters `text` et `cobertura` vers `.reports/coverage/` ;
+- reporters de test `default` et `junit` (`outputFile.junit: .reports/junit.xml`) ;
+- pas de seuil bloquant.
+
+- [ ] **Step 1 : vérifier les versions** avec `npx npm-check-updates`. `@vitest/coverage-v8` doit avoir la même version majeure que `vitest`.
+- [ ] **Step 2 : écrire la config et le workflow.**
+- [ ] **Step 3 : valider.** Lancer actionlint (Docker) : zéro erreur. Lancer `pnpm test:coverage` : les fichiers `.reports/coverage/cobertura-coverage.xml` et `.reports/junit.xml` existent. Puis `pnpm lint && pnpm typecheck && pnpm build`.
+- [ ] **Step 4 : commit.** `git commit -m "Align CI with personal projects convention and add coverage"`
+
+### Tâche 0.4 : Mise en service sur GitHub (après création du remote)
+
+- [ ] L'utilisateur crée le dépôt, le secret `CODECOV_TOKEN` et un token d'API Codecov en lecture, exporté en `CODECOV_API_TOKEN` dans son shell.
+- [ ] Badge Codecov dans le README : `https://img.shields.io/codecov/c/github/Navino16/<repo>?style=flat-square&label=Coverage`, avec un lien vers `https://codecov.io/gh/Navino16/<repo>`.
+- [ ] Section « Codecov » dans le `CLAUDE.md` du projet : URL du projet et requêtes `curl` vers l'API v2 avec `$CODECOV_API_TOKEN` (totaux, couverture par fichier, comparaison de PR). Pas de serveur MCP Codecov : aucun n'est officiel.
+- [ ] Ruleset de branche : checks obligatoires `Lint`, `Typecheck`, `Build` et `Test (unit + coverage)` sur `main` et `develop`.
+- [ ] Vérifier que la CI passe sur la PR du scope 0.
 
 ---
 
@@ -1036,11 +1076,15 @@ Branche : `feature/toleration-release`. **Prérequis** : nom du projet choisi (d
 
 ## Scope 15 — Renovate
 
-Branche : `feature/renovate`. **Prérequis** : dépôt sur GitHub, et application Renovate installée sur le dépôt par l'utilisateur.
+Branche : `feature/renovate`. **Prérequis** : dépôt sur GitHub, et application Renovate installée sur le dépôt par l'utilisateur. Pas de Dependabot.
 
-Travail prévu :
-- `renovate.json` : preset `config:recommended`, `minimumReleaseAge: "1 day"` (alignée sur pnpm 12 et ncu) ;
-- regroupement des mises à jour mineures et correctives ;
-- mise à jour des SHA des GitHub Actions (`helpers:pinGitHubActionDigests`) ;
-- `@types/node` limité à la version majeure de `.nvmrc` ;
-- PR vers `develop`.
+Travail prévu : `.github/renovate.json`, repris de la convention des projets perso (`flixpatrol` et `Varken`), avec les ajustements validés le 2026-11-11 :
+- `extends` : `config:recommended`, `:dependencyDashboard`, `helpers:pinGitHubActionDigests` ;
+- `baseBranchPatterns: ["develop"]`, `labels: ["dependencies"]`, `schedule: ["before 6am on monday"]` ;
+- `minimumReleaseAge: "1 day"` et `internalChecksFilter: "strict"`, obligatoires avec pnpm 12 ;
+- `platformAutomerge: false` et `automergeSchedule: ["at any time"]` ;
+- trois groupes en automerge :
+  - npm : mineur et correctif ;
+  - github-actions : mineur, correctif, `digest` et `pinDigest` ;
+  - dockerfile : mineur, correctif et `digest` ;
+- `@types/node` avec `allowedVersions: "<=26"`.
