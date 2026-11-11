@@ -199,10 +199,10 @@ Couverture :
 - reporters de test `default` et `junit` (`outputFile.junit: .reports/junit.xml`) ;
 - pas de seuil bloquant.
 
-- [ ] **Step 1 : vérifier les versions** avec `npx npm-check-updates`. `@vitest/coverage-v8` doit avoir la même version majeure que `vitest`.
-- [ ] **Step 2 : écrire la config et le workflow.**
-- [ ] **Step 3 : valider.** Lancer actionlint (Docker) : zéro erreur. Lancer `pnpm test:coverage` : les fichiers `.reports/coverage/cobertura-coverage.xml` et `.reports/junit.xml` existent. Puis `pnpm lint && pnpm typecheck && pnpm build`.
-- [ ] **Step 4 : commit.** `git commit -m "Align CI with personal projects convention and add coverage"`
+- [x] **Step 1 : vérifier les versions** avec `npx npm-check-updates`. `@vitest/coverage-v8` doit avoir la même version majeure que `vitest`.
+- [x] **Step 2 : écrire la config et le workflow.**
+- [x] **Step 3 : valider.** Lancer actionlint (Docker) : zéro erreur. Lancer `pnpm test:coverage` : les fichiers `.reports/coverage/cobertura-coverage.xml` et `.reports/junit.xml` existent. Puis `pnpm lint && pnpm typecheck && pnpm build`.
+- [x] **Step 4 : commit.** `git commit -m "Align CI with personal projects convention and add coverage"`
 
 ### Tâche 0.4 : Mise en service sur GitHub (après création du remote)
 
