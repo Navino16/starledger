@@ -6,6 +6,7 @@ export * from './observation';
 export { PARSER_VERSION, parseMessage, TRACKED_MESSAGE_TYPES } from './parsers';
 export * from './parsers/combat';
 export * from './parsers/expedition';
+export * from './parsers/fuel';
 export * from './parsers/lifeform';
 export { rawInt, rawJson } from './parsers/raw';
 export * from './parsers/recycling';

@@ -88,13 +88,24 @@ export type WreckfieldEvent = {
   shipsRecovered: ShipCounts;
 };
 
+export type FuelEvent = {
+  kind: 'fuel';
+  source: 'fleetdispatch' | 'minifleet';
+  mission: number;
+  origin: Coords | null;
+  target: Coords & { type: 1 | 2 | 3 };
+  ships: ShipCounts;
+  consumption: number | null;
+};
+
 export type ParsedEvent =
   | ExpeditionEvent
   | LifeformDiscoveryEvent
   | CombatEvent
   | ShortCombatEvent
   | RecyclingEvent
-  | WreckfieldEvent;
+  | WreckfieldEvent
+  | FuelEvent;
 
 export type ParseResult =
   | { status: 'ok'; externalKey: string; occurredAt: number; event: ParsedEvent }
