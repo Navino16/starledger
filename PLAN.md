@@ -408,9 +408,9 @@ type StatsSummary = {
   wreckfields: { count: number; shipsRecovered: ShipCounts };
   conflictCount: number;
   // added in scope 2 review: valued gains/losses per category (all ≥ 0), tiles = Σ(gains − losses)
-  balance: Record<'expeditions'|'combats'|'recycling'|'discoveries'|'wreckfields'|'fuel', { gains: Resources; losses: Resources }>;
+  balance: Record<'expeditions'|'combats'|'recycling'|'wreckfields'|'fuel', { gains: Resources; losses: Resources }>;
 };
-// also added: discoveries.shipsLost; combats.shipsLost = non-expedition fights, combats.expeditionShipsLost = isExpedition fights
+// also added: combats.shipsLost = non-expedition fights, combats.expeditionShipsLost = isExpedition fights
 ```
 
 Règles des tuiles (design §5.6), à implémenter exactement :
