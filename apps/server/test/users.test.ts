@@ -106,6 +106,18 @@ describe('runCli create-admin', () => {
     expect(short.err).not.toContain('tiny');
   });
 
+  it('applies migrations through the migrate command', async () => {
+    const out = sink();
+    const code = await runCli(['migrate'], {
+      stdin: Readable.from([]),
+      stdout: out.stream,
+      stderr: sink().stream,
+      db: t.db,
+    });
+    expect(code).toBe(0);
+    expect(out.text()).toMatch(/migrations applied/i);
+  });
+
   it('prints usage and fails for unknown commands', async () => {
     const err = sink();
     const code = await runCli([], {

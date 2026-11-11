@@ -15,7 +15,8 @@ function isTrustedEntry(entry: string): boolean {
   const family = isIP(address ?? '');
   if (family === 0 || rest.length > 0) return false;
   if (prefix === undefined) return true;
-  return /^\d+$/.test(prefix) && Number(prefix) <= (family === 4 ? 32 : 128);
+  // proxy-addr rejects a /0 prefix, which would crash buildApp.
+  return /^\d+$/.test(prefix) && Number(prefix) >= 1 && Number(prefix) <= (family === 4 ? 32 : 128);
 }
 
 // Fastify trustProxy forms: boolean, hop count, or list of IPs/CIDRs/named ranges (PLAN scope 6).

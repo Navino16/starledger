@@ -11,7 +11,8 @@ beforeAll(async () => {
 }, 120_000);
 
 afterAll(async () => {
-  process.env.TZ = originalTz;
+  if (originalTz === undefined) delete process.env.TZ;
+  else process.env.TZ = originalTz;
   await t.teardown();
 });
 
