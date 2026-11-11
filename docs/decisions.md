@@ -162,6 +162,24 @@ Décisions prises pendant l'exécution du plan (scopes 1 à 7). Chaque entrée i
 | Scope 9: Ruling (revue) | La revue de 9.2 vaut revue de tâche ET revue finale de branche (9.1 déjà revue). | Aucun. |
 | Task 9.2: Ruling (revue, corrections) | Ouverture du détail : la file est vidée avant la première requête de stats (design §4.1) ; ligne FdV et ligne Net ajoutées, phrase de périmètre corrigée ; un seul détail ouvert à la fois, focus géré ; consentement revérifié après chaque réponse avant tout cache ou rendu. | Aucun. |
 
+### Scope 10 — Préparation de la validation PTS
+
+Le scope reste ouvert (☐) : il dépend des captures PTS de l'utilisateur. Cette branche ne fait que préparer.
+
+| Sujet | Décision | Coût si faux |
+|---|---|---|
+| Périmètre de la branche | Scope 10 : Ruling : bloqué sur les captures PTS (tâche 10.1 étapes 1 à 6). Seuls sont préparés l'export de debug (10.1a) et la commande `reparse` (10.2), indépendante des captures. | Aucun. |
+| Export de debug | Scope 10 : Ruling : disponible uniquement avec consentement, il exporte des données collectées localement sans rien envoyer ; téléchargement d'un `.json` via Blob et `<a download>` (pas de grant `GM_download`) ; le libellé du menu indique « rien n'est envoyé » (AGENTS.md §1.9). | Aucun. |
+| Task 10.2 : compteur `skipped` | Task 10.2 : Ruling : compteur `skipped` en plus (événements ignorés sur une erreur de données) ; règles de l'étape 4 extraites dans `ingest/merge.ts` (`mergeReading`), partagées par l'ingestion et `reparse`. | Aucun. |
+| Reparse : lecture différente | Scope 10 : Ruling : en reparse seulement, un événement `ok` dont la relecture de son observation source donne une autre lecture `ok` est remplacé (données, kind, date, jour, version), pas mis en conflit : les deux lectures viennent du même brut, donc la différence vient du parseur. Les événements `conflict` sont relus de la même façon. L'ingestion garde les règles du scope 5 (observations différentes). | Un reparse pourrait écraser des données qu'on croyait figées ; aucune n'existe, car elles dérivent toujours du brut. |
+| Observation source | Scope 10 : Ruling : quand l'ingestion remplace un événement non reconnu par la lecture `ok` d'une observation ultérieure, `first_observation_id` pointe sur cette observation, pour que `reparse` relise le bon brut. | Nom de colonne un peu trompeur ; pas de migration. |
+
+Notes pour l'utilisateur :
+
+- Pour capturer, donner le consentement en laissant l'URL du serveur vide (sinon le vidage au chargement de page vide la file avant l'export).
+- Vérifier que le téléchargement de l'export fonctionne dans Tampermonkey (Chrome, Firefox, mobile) à la première capture.
+- Les exports contiennent `playerId` et le nom : les anonymiser avant de les committer comme fixtures (tâche 10.1 étape 1).
+
 ## Écart noté
 
 Le design §6.4 prévoit la lecture et l'écriture des réglages par l'API ; le plan ne prévoit que la lecture (dans la réponse de stats). Aucune écriture par l'API dans le MVP.

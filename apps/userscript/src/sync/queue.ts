@@ -157,5 +157,5 @@ export function createQueue(gm: Gm) {
     gm.set(QUEUE_KEY, []);
   }
 
-  return { enqueue, size: () => read().length, state, flush, clear };
+  return { enqueue, size: () => read().length, items: read, state, flush, clear };
 }

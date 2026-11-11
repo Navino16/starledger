@@ -11,6 +11,7 @@ import { mountStatsBox } from './ui/box';
 import { renderConsent } from './ui/consent';
 import { openDetails } from './ui/details';
 import type { UiContext } from './ui/dom';
+import { exportQueue } from './ui/export';
 import { setOglightHidden } from './ui/oglight';
 import { renderOptions } from './ui/options';
 import { UI_CSS } from './ui/styles';
@@ -124,6 +125,13 @@ function bootstrap(
     //! AGENTS.md §1.9: nothing is collected or sent before explicit consent
     return;
   }
+
+  //! AGENTS.md §1.9: local export of already-collected data, nothing is sent
+  gm.menu(ctx.t('exportLabel'), () => {
+    try {
+      exportQueue(doc, ctx.queue.items(), CLIENT_VERSION);
+    } catch {}
+  });
 
   setOglightHidden(gm, doc, settings.hideOglightBox);
 

@@ -347,6 +347,12 @@ describe('ingestBatch', () => {
       expect(after?.day).toBe('2026-09-21');
       expect(after?.parser_version).toBeGreaterThan(0);
       expect(after?.data).toMatchObject({ kind: 'expedition' });
+      const source = await t.db
+        .selectFrom('observations')
+        .select('id')
+        .where('client_observation_id', '=', good.clientObservationId)
+        .executeTakeFirstOrThrow();
+      expect(after?.first_observation_id).toBe(source.id);
     });
 
     it('never downgrades or flags an existing ok or conflict event', async () => {

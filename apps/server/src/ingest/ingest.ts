@@ -12,7 +12,7 @@ import {
 } from '@app/shared';
 import { type Kysely, sql, type Transaction } from 'kysely';
 import type { Database } from '../db/schema';
-import { canonicalJson } from './canonical';
+import { mergeReading } from './merge';
 
 export interface IngestLogger {
   warn: (obj: object, msg: string) => void;
@@ -188,32 +188,10 @@ async function ingestValid(
     .where('external_key', '=', result.externalKey)
     .executeTakeFirstOrThrow();
 
-  // A weaker reading never touches an existing event; the raw stays in observations.payload.
-  if (!ok) return 'duplicate';
-
-  if (existing.status === 'unrecognized') {
-    await trx
-      .updateTable('events')
-      .set({
-        data,
-        status: 'ok',
-        kind,
-        occurred_at: occurredAt,
-        day,
-        parser_version: PARSER_VERSION,
-      })
-      .where('id', '=', existing.id)
-      .execute();
-    return 'accepted';
-  }
-
-  if (canonicalJson(existing.data) === canonicalJson(result.event)) return 'duplicate';
-  if (existing.status !== 'conflict') {
-    await trx
-      .updateTable('events')
-      .set({ status: 'conflict' })
-      .where('id', '=', existing.id)
-      .execute();
-  }
-  return 'conflict';
+  const outcome = await mergeReading(trx, existing, result, obs.serverUtcOffsetMinutes, {
+    observationId: inserted.id,
+  });
+  if (outcome === 'replaced') return 'accepted';
+  if (outcome === 'conflict' || outcome === 'new_conflict') return 'conflict';
+  return 'duplicate';
 }

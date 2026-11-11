@@ -996,13 +996,13 @@ Branche : `feature/pts-validation`. **Prérequis utilisateur** : serveur déploy
 **Interfaces :**
 - Produit : `reparseEvents(db, opts): Promise<{ updated: number; stillUnrecognized: number; newConflicts: number }>`. Pour chaque événement `unrecognized`, ou dont `parser_version` est inférieur à `PARSER_VERSION`, on réinterprète la première observation et on applique les règles du scope 5, tâche 2, étape 4.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - Un événement `unrecognized` dont le parseur existe désormais (parseur simulé) devient `ok`.
   - Un événement `ok` déjà à jour n'est pas modifié.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add history reparse command"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add history reparse command"`
 
 ---
 
