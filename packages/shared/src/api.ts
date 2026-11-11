@@ -14,7 +14,6 @@ export function parseSemver(value: string): [number, number, number] | null {
   return parts.every(Number.isSafeInteger) ? [parts[0], parts[1], parts[2]] : null;
 }
 
-// True when `version` is strictly lower than `minimum`; both must be valid MAJOR.MINOR.PATCH.
 export function isVersionBelow(version: string, minimum: string): boolean {
   const a = parseSemver(version);
   const b = parseSemver(minimum);

@@ -118,6 +118,7 @@ async function ingestValid(
 ): Promise<AckStatus> {
   const result = interpret(obs, log);
 
+  // The DO UPDATE row lock serialises concurrent batches on one account, which keeps duplicate detection race-free; DO NOTHING + SELECT would reopen the race.
   const account = await trx
     .insertInto('accounts')
     .values({

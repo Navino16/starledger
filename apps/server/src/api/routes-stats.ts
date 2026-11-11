@@ -4,6 +4,7 @@ import type { Kysely } from 'kysely';
 import { z } from 'zod';
 import type { Database } from '../db/schema';
 import { getStats } from '../stats/stats-service';
+import { requireApiUser, sendError } from './errors';
 
 const DAY_KEY = /^(\d{4})-(\d{2})-(\d{2})$/;
 
@@ -34,10 +35,9 @@ export async function statsRoutes(app: FastifyInstance, opts: { db: Kysely<Datab
   app.get('/stats', async (request, reply) => {
     const query = statsQuerySchema.safeParse(request.query);
     if (!query.success) {
-      return reply.status(400).send({ error: 'invalid_payload', message: query.error.message });
+      return sendError(reply, 400, 'invalid_payload', query.error.message);
     }
-    // apiUser is set by the auth hook that runs before every API route.
-    const { userId } = request.apiUser as { userId: string };
+    const { userId } = requireApiUser(request);
     return getStats(opts.db, userId, query.data);
   });
 }

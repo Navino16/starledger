@@ -215,7 +215,18 @@ describe('GET /api/v1/stats', () => {
     const body = res.json<StatsResponse>();
     expect(body.summary).toEqual(computeStats([], DEFAULT_VALUATION));
     expect(body.counts.unrecognized).toBe(0);
-    expect(bobId).not.toBe(aliceId);
+  });
+
+  it('keeps two users on the same account tuple separate', async () => {
+    const p = nextPlayerId++;
+    await send(aliceId, [expedition(p, TODAY_TS), expedition(p, TODAY_TS - DAY_S)]);
+    await send(bobId, [expedition(p, TODAY_TS), { ...expedition(p, TODAY_TS), messageType: 33 }]);
+    const alice = (await get(q(p))).json<StatsResponse>();
+    expect(alice.summary.expeditions.count).toBe(2);
+    expect(alice.counts.unrecognized).toBe(0);
+    const bob = (await get(q(p), bobKey)).json<StatsResponse>();
+    expect(bob.summary.expeditions.count).toBe(1);
+    expect(bob.counts.unrecognized).toBe(1);
   });
 
   it('returns an empty summary for an unknown account', async () => {
@@ -229,7 +240,7 @@ describe('GET /api/v1/stats', () => {
   it.each([
     ['malformed today', { today: '21/09/2026' }],
     ['non-existent date', { today: '2026-02-31' }],
-    ['missing today', { today: '' }],
+    ['empty today', { today: '' }],
     ['today with period all', { today: 'nope', period: 'all' }],
     ['bad period', { period: 'year' }],
     ['bad serverId', { serverId: '0' }],
@@ -242,7 +253,7 @@ describe('GET /api/v1/stats', () => {
     expect(res.json().error).toBe('invalid_payload');
   });
 
-  it('rejects a request without today', async () => {
+  it('rejects an absent today', async () => {
     const { today: _today, ...rest } = q(1);
     const res = await get(rest);
     expect(res.statusCode).toBe(400);

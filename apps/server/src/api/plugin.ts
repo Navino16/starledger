@@ -1,35 +1,20 @@
 import {
   API_RATE_LIMIT_PER_MINUTE,
-  type ApiError,
   isVersionBelow,
   MIN_CLIENT_VERSION,
   parseSemver,
 } from '@app/shared';
 import fastifyRateLimit from '@fastify/rate-limit';
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { Kysely } from 'kysely';
 import { authenticateApiKey } from '../auth/api-keys';
 import type { Database } from '../db/schema';
+import { sendError } from './errors';
 import { observationRoutes } from './routes-observations';
 import { pingRoutes } from './routes-ping';
 import { statsRoutes } from './routes-stats';
 
-export interface ApiUser {
-  userId: string;
-  username: string;
-}
-
-declare module 'fastify' {
-  interface FastifyRequest {
-    apiUser: ApiUser | null;
-  }
-}
-
 const BEARER = /^bearer +(\S+)$/i;
-
-function sendError(reply: FastifyReply, status: number, error: ApiError, message: string) {
-  return reply.status(status).send({ error, message });
-}
 
 async function resolveApiUser(db: Kysely<Database>, header: string | undefined) {
   const key = header ? BEARER.exec(header)?.[1] : undefined;
@@ -44,6 +29,7 @@ async function resolveApiUser(db: Kysely<Database>, header: string | undefined) 
   return user ? { userId: user.id, username: user.username } : null;
 }
 
+// onRequest hooks run before the body is buffered, so unauthenticated callers cannot make the server read a 2 MB payload.
 // Hook order: identify -> rate limit -> reject. Failed auth is rate limited by IP, authenticated calls by userId (never the raw key).
 // The version gate runs after auth: an unauthenticated caller learns nothing about the minimum version.
 export async function apiPlugin(app: FastifyInstance, opts: { db: Kysely<Database> }) {
@@ -72,13 +58,13 @@ export async function apiPlugin(app: FastifyInstance, opts: { db: Kysely<Databas
     return sendError(reply, 404, 'not_found', 'Unknown API endpoint.');
   });
 
-  app.addHook('preHandler', async (request) => {
+  app.addHook('onRequest', async (request) => {
     request.apiUser = await resolveApiUser(db, request.headers.authorization);
   });
 
   await app.register(fastifyRateLimit, { global: false });
   app.addHook(
-    'preHandler',
+    'onRequest',
     app.rateLimit({
       max: API_RATE_LIMIT_PER_MINUTE,
       timeWindow: '1 minute',
@@ -86,7 +72,7 @@ export async function apiPlugin(app: FastifyInstance, opts: { db: Kysely<Databas
     }),
   );
 
-  app.addHook('preHandler', async (request, reply) => {
+  app.addHook('onRequest', async (request, reply) => {
     if (!request.apiUser) {
       return sendError(reply, 401, 'invalid_key', 'Missing, malformed or revoked API key.');
     }

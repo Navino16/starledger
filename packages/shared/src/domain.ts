@@ -23,7 +23,7 @@ export const LANG_PATTERN = /^[a-z]{2,3}$/;
 export const accountRefSchema = z.object({
   serverId: z.number().int().min(1).max(MAX_SERVER_ID),
   lang: z.string().regex(LANG_PATTERN),
-  playerId: z.number().int(),
+  playerId: z.number().int().nonnegative(),
   playerName: z.string().nullable(),
 });
 export type AccountRef = z.infer<typeof accountRefSchema>;

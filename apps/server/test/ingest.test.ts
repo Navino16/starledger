@@ -441,6 +441,8 @@ describe('POST /api/v1/observations', () => {
       {},
       { clientVersion: '0.1.0', deviceId: 'not-a-uuid', observations: [] },
       { clientVersion: '0.1.0', deviceId: deviceA, observations: 'x' },
+      { clientVersion: '0.1.0\0', deviceId: deviceA, observations: [] },
+      { clientVersion: 'abc', deviceId: deviceA, observations: [] },
       batch(Array.from({ length: 201 }, () => ({}))),
       '{not json',
     ]) {
@@ -455,5 +457,11 @@ describe('POST /api/v1/observations', () => {
     expect(res.statusCode).toBe(413);
     expect(res.headers['content-type']).toMatch(/application\/json/);
     expect(res.json().error).toBe('payload_too_large');
+  });
+
+  it('answers 401, not 413, to an unauthenticated oversized body', async () => {
+    const res = await post(`{"pad":"${'a'.repeat(2 * 1024 * 1024)}"}`, 'slk_bad');
+    expect(res.statusCode).toBe(401);
+    expect(res.json().error).toBe('invalid_key');
   });
 });

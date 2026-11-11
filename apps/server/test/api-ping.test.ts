@@ -26,7 +26,6 @@ const config: Config = {
 let t: TestDb;
 let app: FastifyInstance;
 let aliceKey: string;
-let aliceId: string;
 
 const ping = (headers: Record<string, string>, remoteAddress?: string) =>
   app.inject({ method: 'GET', url: '/api/v1/ping', headers, remoteAddress });
@@ -43,7 +42,6 @@ beforeAll(async () => {
     isAdmin: false,
     locale: 'en',
   });
-  aliceId = alice.id;
   aliceKey = await generateApiKey(t.db, alice.id);
   app = buildApp(config, t.db);
   await app.ready();
@@ -158,8 +156,29 @@ describe('GET /api/v1/ping', () => {
   });
 
   it('does not authenticate from a session cookie', async () => {
-    const login = await app.inject({ method: 'GET', url: '/login' });
-    const cookie = String(login.headers['set-cookie'] ?? '').split(';')[0] as string;
+    const loginPage = await app.inject({ method: 'GET', url: '/login' });
+    const token = /name="_csrf" value="([^"]+)"/.exec(loginPage.body)?.[1] ?? '';
+    const pageCookies = [loginPage.headers['set-cookie'] ?? []]
+      .flat()
+      .map((c) => String(c).split(';')[0])
+      .join('; ');
+    const login = await app.inject({
+      method: 'POST',
+      url: '/login',
+      headers: { cookie: pageCookies, 'content-type': 'application/x-www-form-urlencoded' },
+      payload: new URLSearchParams({
+        username: 'alice',
+        password: 'correct horse battery',
+        _csrf: token,
+      }).toString(),
+    });
+    expect(login.statusCode).toBe(302);
+    const cookie = [login.headers['set-cookie'] ?? []]
+      .flat()
+      .map((c) => String(c).split(';')[0])
+      .join('; ');
+    const web = await app.inject({ method: 'GET', url: '/account', headers: { cookie } });
+    expect(web.statusCode).toBe(200);
     const res = await ping({ cookie, 'x-client-version': '0.1.0' });
     expect(res.statusCode).toBe(401);
   });
@@ -171,6 +190,12 @@ describe('GET /api/v1/ping', () => {
     expect(res.json().error).toBe('not_found');
     const web = await app.inject({ method: 'GET', url: '/nope' });
     expect(web.headers['content-type']).toMatch(/text\/html/);
+  });
+
+  it('answers 401 on an unknown API path without a key', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/v1/nope' });
+    expect(res.statusCode).toBe(401);
+    expect(res.json().error).toBe('invalid_key');
   });
 
   it('does not log the API key', async () => {
@@ -218,6 +243,5 @@ describe('rate limiting', () => {
     expect(res.statusCode).toBe(429);
     expect(res.json().error).toBe('rate_limited');
     expect((await ping({}, '203.0.113.10')).statusCode).toBe(401);
-    expect(aliceId).toBeTruthy();
   }, 60_000);
 });
