@@ -52,6 +52,7 @@
 - **Monétisation intacte** : l'encart ne recouvre ni ne déplace Marchand, Officiers, Boutique, la barre de pub ou le footer, sur desktop comme sur mobile (`AGENTS.md` §1.7).
 - Le masquage de l'encart OGLight porte exactement `// GRAY AREA: requires ToolDev approval before publishing — see AGENTS.md §3`.
 - **Commentaires** : uniquement le code complexe, les décisions discutables et les choix de conformité, sur une ligne avec renvoi (`// AGENTS.md §4: passive read, no game request`). Voir `CLAUDE.md`.
+- **Build et consommation de `@app/shared`** : `@app/shared` expose `"exports": { ".": "./src/index.ts" }` (consommé en source par Vitest, Vite et le bundler serveur ; jamais compilé seul). Le serveur est **bundlé avec tsdown** vers `apps/server/dist/{index,cli}.js` (ESM, cible node26), `@node-rs/argon2` et `pg` restant externes. Les imports relatifs restent sans extension.
 - **Langues** : code, commits et documentation technique en anglais ; interface en français et en anglais. Messages de commit sur une seule ligne, sans co-author.
 - **Inconnu ≠ 0** : toute valeur absente est `null` de bout en bout (parseur, base, API, affichage « ? »).
 - **Isolation** : toute requête serveur est filtrée par l'utilisateur authentifié, sans exception.
@@ -139,7 +140,7 @@ Branche : `feature/repo-bootstrap`. **Avant de commencer** : créer `develop` de
 ### Tâche 0.1 : Monorepo, outillage et test témoin
 
 **Files :**
-- Create : `package.json` (privé, `packageManager: pnpm@12.x`, scripts `test`, `lint`, `typecheck`, `build`), `pnpm-workspace.yaml` (`apps/*`, `packages/*`), `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`, ES2023, moduleResolution bundler), `biome.json`, `vitest.workspace.ts`, `.gitignore`, `.editorconfig`, `.nvmrc` (`26`), `LICENSE` (MIT, 2026, auteur du dépôt), `README.md` (but, structure, commandes)
+- Create : `package.json` (privé, `packageManager: pnpm@12.x`, scripts `test`, `lint`, `typecheck`, `build`), `pnpm-workspace.yaml` (`apps/*`, `packages/*`), `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`, ES2023, moduleResolution bundler), `biome.json`, `vitest.config.ts` (`test.projects` : Vitest 5 n'a plus de fichier workspace), `.gitignore`, `.editorconfig`, `.nvmrc` (`26`), `LICENSE` (MIT, 2026, auteur du dépôt), `README.md` (but, structure, commandes)
 - Create : `packages/shared/{package.json,tsconfig.json,src/index.ts}`, `apps/server/{package.json,tsconfig.json,src/index.ts}`, `apps/userscript/{package.json,tsconfig.json,src/main.ts}`
 - Test : `packages/shared/test/smoke.test.ts`
 
@@ -428,6 +429,7 @@ Tables de la migration 0001 (design §6.3), toutes avec `created_at timestamptz 
 - `events(id bigserial pk, account_id bigint fk, external_key text, kind text null, status text check in ('ok','unrecognized','conflict'), occurred_at timestamptz null, day date null, data jsonb null, parser_version int, first_observation_id bigint fk observations, unique(account_id, external_key))`, avec un index `(account_id, day)`
 - `universe_settings(user_id uuid fk, server_id int, lang text, msu_metal numeric default 3, msu_crystal numeric default 2, msu_deuterium numeric default 1, expedition_ship_ratio int default 100, ignore_expe_ships_loss bool default false, ignore_consumption bool default false, include_trades_in_balance bool default false, pk(user_id, server_id, lang))`
 
+- [ ] **Step 0 : outillage serveur.** Ajouter le build tsdown du serveur (`pnpm --filter @app/server build` produit `dist/index.js` et `dist/cli.js`), `"types": ["node"]` dans `apps/server/tsconfig.json`, le champ `exports` de `@app/shared`, et `timeout-minutes: 15` sur le job CI (téléchargement des images testcontainers).
 - [ ] **Step 1 : tests.** `loadConfig` rejette un `SESSION_SECRET` trop court et applique les valeurs par défaut. Après migration, les 8 tables existent, et une deuxième clé API active pour le même utilisateur viole l'index partiel.
 - [ ] **Step 2 : lancer.** `pnpm --filter @app/server test`. Attendu : FAIL. Docker doit tourner.
 - [ ] **Step 3 : implémenter** avec le `Migrator` de Kysely et un `FileMigrationProvider`.
