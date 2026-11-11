@@ -18,7 +18,7 @@ pnpm lint        # Biome
 pnpm build
 ```
 
-Requires Node 24 and pnpm 10.
+Requires Node 26 (`nvm use`) and pnpm 12 (`npm i -g pnpm@12`; pnpm then switches to the `packageManager` version).
 
 ## Documentation
 
