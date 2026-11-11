@@ -5,5 +5,5 @@ export * from './events';
 export * from './observation';
 export * from './parsers/expedition';
 export * from './parsers/lifeform';
-export * from './parsers/raw';
+export { rawInt, rawJson } from './parsers/raw';
 export * from './ships';

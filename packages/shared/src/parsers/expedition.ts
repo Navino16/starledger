@@ -2,15 +2,7 @@ import { z } from 'zod';
 import { shipCountsSchema } from '../domain';
 import type { ExpeditionEvent, ExpeditionResult, ExpeditionSize, ParseResult } from '../events';
 import type { MessageObservation } from '../observation';
-import {
-  coordsOf,
-  externalKey,
-  occurredAtOf,
-  type Raw,
-  rawInt,
-  rawJson,
-  unrecognized,
-} from './raw';
+import { coordsOf, Invalid, need, type Raw, rawInt, rawJson, tryBuild } from './raw';
 
 const amount = z.number().int().nonnegative();
 const resourcesGainedSchema = z.object({
@@ -40,13 +32,6 @@ const SIMPLE_RESULTS: Record<string, ExpeditionResult> = {
 };
 
 const SIZES: Record<number, ExpeditionSize> = { 2: 'small', 1: 'medium', 0: 'large' };
-
-class Invalid extends Error {}
-
-function need<T>(value: T | null | 'invalid', attr: string): T | null {
-  if (value === 'invalid') throw new Invalid(`invalid ${attr}`);
-  return value;
-}
 
 function classifyNavigation(raw: Raw): ExpeditionResult {
   const nav = need(rawJson(raw, 'navigation', navigationSchema), 'navigation');
@@ -111,12 +96,5 @@ function build(obs: MessageObservation): ExpeditionEvent {
 }
 
 export function parseExpedition(obs: MessageObservation): ParseResult {
-  const occurredAt = occurredAtOf(obs.raw);
-  if (occurredAt === null) return unrecognized(obs, 'missing or invalid timestamp', null);
-  try {
-    return { status: 'ok', externalKey: externalKey(obs), occurredAt, event: build(obs) };
-  } catch (e) {
-    if (e instanceof Invalid) return unrecognized(obs, e.message, occurredAt);
-    throw e;
-  }
+  return tryBuild(obs, build);
 }

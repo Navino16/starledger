@@ -50,6 +50,15 @@ describe('parseExpedition', () => {
     expect(parseExpedition(renamed)).toEqual(parseExpedition(ships));
   });
 
+  it('keeps no localized item name', () => {
+    const item = observationOf(fixtures, 'expedition-item.json');
+    const renamed = withRaw(item, {
+      itemsgained:
+        '[{"id":"a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6","amount":1,"name":"Bronzener Detroid"}]',
+    });
+    expect(parseExpedition(renamed)).toEqual(parseExpedition(item));
+  });
+
   it.each([
     [0.5, 0, 'early'],
     [1, 2, 'late'],
