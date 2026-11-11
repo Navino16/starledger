@@ -25,7 +25,7 @@
 
 | Scope | Sujet | Statut |
 |---|---|---|
-| 0 | Socle du dépôt | ✅ |
+| 0 | Socle du dépôt et CI | ◐ |
 | 1 | Shared : observations et parseurs de messages | ☐ |
 | 2 | Shared : jours et calcul des stats | ☐ |
 | 3 | Serveur : socle, utilisateurs, connexion web | ☐ |
@@ -40,6 +40,7 @@
 | 12 | Transports entre joueurs | ⛔ attend les captures (design §9.2) |
 | 13 | Anomalies | ⛔ attend les captures (design §9.1) |
 | 14 | Dossier de tolérance et publication | ☐ |
+| 15 | Renovate | ☐ (après création du remote) |
 
 ## Global Constraints
 
@@ -146,6 +147,29 @@ Branche : `feature/repo-bootstrap`. **Avant de commencer** : créer `develop` de
 - [x] **Step 2 : écrire le test témoin.** `expect(VERSION).toMatch(/^\d+\.\d+\.\d+$/)`, avec `export const VERSION = '0.1.0'` dans `packages/shared/src/index.ts`.
 - [x] **Step 3 : lancer les vérifications.** `pnpm install && pnpm test && pnpm typecheck && pnpm lint`. Attendu : tout PASS.
 - [x] **Step 4 : commit.** `git commit -m "Bootstrap pnpm monorepo with shared, server and userscript packages"`
+
+### Tâche 0.2 : Intégration continue GitHub Actions
+
+**Files :**
+- Create : `.github/workflows/ci.yml`
+- Create : `.ncurc.json` (`{"cooldown": "1d"}`, déjà fait par le contrôleur, à commiter avec la tâche)
+
+Workflow `ci.yml` :
+- déclencheurs : `push` sur `main` et `develop`, et `pull_request` ;
+- `permissions: contents: read` au niveau du workflow ;
+- `concurrency` par ref, avec `cancel-in-progress: true` ;
+- un job `check` sur `ubuntu-latest` :
+  1. checkout ;
+  2. installation de pnpm (`pnpm/action-setup`, version lue dans `packageManager`, pas de version en dur) ;
+  3. installation de Node (`actions/setup-node`, `node-version-file: .nvmrc`, cache pnpm) ;
+  4. `pnpm install --frozen-lockfile`, puis `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`.
+- Chaque action est **épinglée sur un SHA de commit** avec la version en commentaire (`uses: actions/checkout@<sha> # v5.x.y`), à la dernière release publiée depuis plus de 24 h (vérifiée via `gh api repos/<owner>/<repo>/releases/latest`).
+
+- [ ] **Step 1 : écrire le workflow.**
+- [ ] **Step 2 : le valider en local.** `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest -color`. Attendu : aucune erreur.
+- [ ] **Step 3 : simuler les commandes du job en local**, dans l'ordre et sur une copie propre : `rm -rf node_modules && pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test && pnpm build`. Attendu : tout PASS.
+- [ ] **Step 4 : commit.** `git commit -m "Add GitHub Actions CI workflow"`
+- [ ] **Step 5 (après création du remote) :** vérifier que la CI passe sur la PR du scope 0.
 
 ---
 
@@ -1007,3 +1031,14 @@ Branche : `feature/toleration-release`. **Prérequis** : nom du projet choisi (d
 - [ ] **Step 3 :** `pnpm test && pnpm lint && pnpm typecheck`. Attendu : PASS.
 - [ ] **Step 4 : commit.** `git commit -m "Prepare toleration submission and release metadata"`
 - [ ] **Step 5 (utilisateur) :** figer la version (tag), ouvrir le fil dans Submissions & API Requests, et ne rien publier pendant la revue. Après la tolérance, publier sur Greasy Fork.
+
+## Scope 15 — Renovate
+
+Branche : `feature/renovate`. **Prérequis** : dépôt sur GitHub, et application Renovate installée sur le dépôt par l'utilisateur.
+
+Travail prévu :
+- `renovate.json` : preset `config:recommended`, `minimumReleaseAge: "1 day"` (alignée sur pnpm 12 et ncu) ;
+- regroupement des mises à jour mineures et correctives ;
+- mise à jour des SHA des GitHub Actions (`helpers:pinGitHubActionDigests`) ;
+- `@types/node` limité à la version majeure de `.nvmrc` ;
+- PR vers `develop`.
