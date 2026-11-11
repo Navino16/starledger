@@ -1,5 +1,6 @@
 import {
   API_RATE_LIMIT_PER_MINUTE,
+  type ApiError,
   isVersionBelow,
   MIN_CLIENT_VERSION,
   parseSemver,
@@ -11,6 +12,7 @@ import { authenticateApiKey } from '../auth/api-keys';
 import type { Database } from '../db/schema';
 import { observationRoutes } from './routes-observations';
 import { pingRoutes } from './routes-ping';
+import { statsRoutes } from './routes-stats';
 
 export interface ApiUser {
   userId: string;
@@ -25,7 +27,7 @@ declare module 'fastify' {
 
 const BEARER = /^bearer +(\S+)$/i;
 
-function sendError(reply: FastifyReply, status: number, error: string, message: string) {
+function sendError(reply: FastifyReply, status: number, error: ApiError, message: string) {
   return reply.status(status).send({ error, message });
 }
 
@@ -109,4 +111,5 @@ export async function apiPlugin(app: FastifyInstance, opts: { db: Kysely<Databas
 
   await app.register(pingRoutes);
   await app.register(observationRoutes, { db });
+  await app.register(statsRoutes, { db });
 }

@@ -1,3 +1,6 @@
+import type { StatsSummary, ValuationSettings } from './stats';
+import type { Period } from './time';
+
 export const API_VERSION = 1;
 export const MIN_CLIENT_VERSION = '0.1.0';
 export const API_RATE_LIMIT_PER_MINUTE = 120;
@@ -21,3 +24,25 @@ export function isVersionBelow(version: string, minimum: string): boolean {
   }
   return false;
 }
+
+export type StatsPeriod = Period;
+
+export type StatsResponse = {
+  period: StatsPeriod;
+  range: { from: string; to: string } | null;
+  generatedAt: number;
+  summary: StatsSummary;
+  counts: { unrecognized: number };
+  settings: ValuationSettings;
+};
+
+export type ApiError =
+  | 'invalid_key'
+  | 'invalid_payload'
+  | 'client_outdated'
+  | 'rate_limited'
+  | 'payload_too_large'
+  | 'not_found'
+  | 'server_error'
+  | 'not_configured'
+  | 'unreachable';
