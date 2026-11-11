@@ -1,0 +1,9 @@
+.git
+.github
+.superpowers
+.reports
+.env
+**/node_modules
+**/dist
+**/coverage
+docs
