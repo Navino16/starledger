@@ -36,7 +36,7 @@ const dispatch = (over: Record<string, unknown> = {}) => ({
 
 const batch = (observations: unknown[]) => ({
   clientVersion: '0.1.0',
-  deviceId: 'device-1',
+  deviceId: '5b1f0c3e-7a4d-4e21-9d6a-0c8f3b2a1e11',
   observations,
 });
 

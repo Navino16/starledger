@@ -9,6 +9,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Kysely } from 'kysely';
 import { authenticateApiKey } from '../auth/api-keys';
 import type { Database } from '../db/schema';
+import { observationRoutes } from './routes-observations';
 import { pingRoutes } from './routes-ping';
 
 export interface ApiUser {
@@ -55,6 +56,9 @@ export async function apiPlugin(app: FastifyInstance, opts: { db: Kysely<Databas
     if (status >= 500) {
       request.log.error(error);
       return sendError(reply, 500, 'server_error', 'Internal server error.');
+    }
+    if (status === 413) {
+      return sendError(reply, 413, 'payload_too_large', 'Request body is too large.');
     }
     return sendError(reply, status, 'invalid_payload', error.message);
   });
@@ -104,4 +108,5 @@ export async function apiPlugin(app: FastifyInstance, opts: { db: Kysely<Databas
   });
 
   await app.register(pingRoutes);
+  await app.register(observationRoutes, { db });
 }

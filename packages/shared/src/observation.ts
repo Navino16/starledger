@@ -47,9 +47,13 @@ export const observationSchema = z.discriminatedUnion('kind', [
 ]);
 export type Observation = z.infer<typeof observationSchema>;
 
-export const observationBatchSchema = z.object({
-  clientVersion: z.string(),
-  deviceId: z.string(),
+// Lax envelope: observations are validated one by one so a bad item is rejected without failing the batch.
+export const observationBatchEnvelopeSchema = z.object({
+  clientVersion: z.string().min(1).max(32),
+  deviceId: z.uuid(),
+  observations: z.array(z.unknown()).max(MAX_BATCH),
+});
+export const observationBatchSchema = observationBatchEnvelopeSchema.extend({
   observations: z.array(observationSchema).max(MAX_BATCH),
 });
 export type ObservationBatch = z.infer<typeof observationBatchSchema>;
