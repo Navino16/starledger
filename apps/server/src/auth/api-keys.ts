@@ -10,8 +10,9 @@ const hashKey = (key: string) => createHash('sha256').update(key).digest('hex');
 
 export async function generateApiKey(db: Kysely<Database>, userId: string): Promise<string> {
   const key = KEY_PREFIX + randomBytes(32).toString('base64url');
-  // One transaction: the partial unique index allows a single active key per user.
+  // The user row lock serializes concurrent regenerations; the partial unique index allows one active key.
   await db.transaction().execute(async (trx) => {
+    await trx.selectFrom('users').select('id').where('id', '=', userId).forUpdate().execute();
     await trx
       .updateTable('api_keys')
       .set({ revoked_at: new Date() })

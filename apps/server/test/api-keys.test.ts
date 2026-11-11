@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app';
 import { authenticateApiKey, generateApiKey, revokeApiKey } from '../src/auth/api-keys';
 import type { Config } from '../src/config';
@@ -76,6 +76,11 @@ async function accountPage(cookie: string) {
 }
 
 describe('api keys', () => {
+  beforeEach(async () => {
+    await revokeApiKey(t.db, aliceId);
+    await revokeApiKey(t.db, bobId);
+  });
+
   it('generates a slk_ key that authenticates', async () => {
     const key = await generateApiKey(t.db, aliceId);
     expect(key).toMatch(/^slk_[\w-]{43}$/);
@@ -107,7 +112,7 @@ describe('api keys', () => {
     await revokeApiKey(t.db, bobId);
   });
 
-  it('returns null for malformed keys without querying', async () => {
+  it('returns null for malformed keys', async () => {
     for (const bad of [
       '',
       'slk_',
@@ -118,6 +123,26 @@ describe('api keys', () => {
       expect(await authenticateApiKey(t.db, bad)).toBeNull();
     }
     expect(await authenticateApiKey(t.db, `slk_${'a'.repeat(43)}`)).toBeNull();
+  });
+
+  it('serializes concurrent regenerations', async () => {
+    const keys = await Promise.all([generateApiKey(t.db, aliceId), generateApiKey(t.db, aliceId)]);
+    const results = await Promise.all(keys.map((k) => authenticateApiKey(t.db, k)));
+    expect(results.filter(Boolean)).toHaveLength(1);
+    const active = await t.db
+      .selectFrom('api_keys')
+      .select('id')
+      .where('user_id', '=', aliceId)
+      .where('revoked_at', 'is', null)
+      .execute();
+    expect(active).toHaveLength(1);
+  });
+
+  it('keeps another user key valid across regeneration and revocation', async () => {
+    const bobKey = await generateApiKey(t.db, bobId);
+    await generateApiKey(t.db, aliceId);
+    await revokeApiKey(t.db, aliceId);
+    expect(await authenticateApiKey(t.db, bobKey)).toEqual({ userId: bobId });
   });
 
   it('revoking without an active key is a no-op', async () => {

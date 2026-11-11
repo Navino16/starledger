@@ -170,12 +170,14 @@ describe('web auth', () => {
     );
     const dead = createDb('postgres://u:p@127.0.0.1:1/db');
     const deadApp = buildApp(config, dead);
-    const res = await deadApp.inject({
-      method: 'GET',
-      url: '/healthz',
-      headers: { cookie: cookieOf(login) },
-    });
-    expect(res.statusCode).toBe(503);
+    for (const url of ['/healthz', '/healthz?probe=1']) {
+      const res = await deadApp.inject({
+        method: 'GET',
+        url,
+        headers: { cookie: cookieOf(login) },
+      });
+      expect(res.statusCode).toBe(503);
+    }
     await deadApp.close();
     await dead.destroy();
   });

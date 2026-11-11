@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Kysely } from 'kysely';
 import { generateApiKey, getActiveApiKey, revokeApiKey } from '../auth/api-keys';
 import type { Database } from '../db/schema';
@@ -11,8 +11,8 @@ export async function accountRoutes(app: FastifyInstance, opts: { db: Kysely<Dat
   const withCsrf = { preHandler: [requireUser, app.csrfProtection] };
 
   const accountPage = async (
-    request: Parameters<typeof renderPage>[0],
-    reply: Parameters<typeof renderPage>[1],
+    request: FastifyRequest,
+    reply: FastifyReply,
     newKey: string | null,
   ) => {
     const user = request.user as WebUser;
@@ -24,7 +24,7 @@ export async function accountRoutes(app: FastifyInstance, opts: { db: Kysely<Dat
       isAdmin: user.isAdmin,
       apiKey: active && {
         prefix: active.prefix,
-        createdAt: active.createdAt.toLocaleDateString(user.locale),
+        createdAt: active.createdAt.toLocaleDateString(user.locale, { timeZone: 'UTC' }),
       },
       newKey,
     });
