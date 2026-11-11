@@ -33,7 +33,7 @@
 | 5 | Serveur : API d'ingestion et de stats | ✅ |
 | 6 | Docker et déploiement homelab | ✅ |
 | 7 | Userscript : socle, file, options, consentement | ✅ |
-| 8 | Userscript : collecte des messages | ☐ |
+| 8 | Userscript : collecte des messages | ✅ |
 | 9 | Userscript : encart et détail | ☐ |
 | 10 | Validation PTS : vraies captures, reparse, audit | ☐ |
 | 11 | Carburant | ☐ (vérifications PTS en tâche 1) |
@@ -873,14 +873,14 @@ Branche : `feature/userscript-messages`.
   - `readServerUtcOffset(win): number | null` : utilise `win.serverTime` et `computeServerUtcOffsetMinutes`, avec `-new Date().getTimezoneOffset()` comme décalage du navigateur ;
   - `todayKey(win): string | null`.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - Une meta `s123-fr.ogame.gameforge.com` donne `serverId` 123 et `lang` `'fr'`.
   - Une meta absente donne `null`.
   - Avec `serverTime` simulé à +6 h et un navigateur à UTC−5, le décalage vaut 60.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Read account identity and server time offset from the page"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Read account identity and server time offset from the page"`
 
 ### Tâche 8.2 : Extraction des messages et branchement passif
 
@@ -895,16 +895,16 @@ Branche : `feature/userscript-messages`.
   - `installMessageCollector(win, onObservations)`. On utilise `$(document).on('ajaxSuccess', …)` et on filtre `settings.url` sur `action=getMessagesList`, en ignorant `showTrash=true`. On parse alors `win.ogame.messages.content.join('')` avec `DOMParser`. Une lecture initiale du DOM a aussi lieu au chargement. Commentaire de conformité : `// AGENTS.md §4: passive read of a player-triggered response, no game request`.
 - Après chaque extraction non vide : `queue.enqueue`, puis `queue.flush`, puis rafraîchissement de l'encart (scope 9).
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - La fixture HTML (2 expéditions, 1 rapport d'espionnage) donne 2 observations, avec `raw.expeditionresult` présent et `msgId` numérique.
   - Un même message vu deux fois sur la même page n'est mis en file qu'une fois (ensemble des `msgId` vus par chargement de page).
   - Un `ajaxSuccess` sur une autre URL ou avec `showTrash=true` ne déclenche rien.
   - Aucun appel à `fetch` ou `XMLHttpRequest` pendant la collecte : les deux sont espionnés dans jsdom.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : auto-audit** (`AGENTS.md` §7), noté pour la PR.
-- [ ] **Step 6 : commit.** `git commit -m "Collect displayed fleet messages passively"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : auto-audit** (`AGENTS.md` §7), noté pour la PR.
+- [x] **Step 6 : commit.** `git commit -m "Collect displayed fleet messages passively"`
 
 ---
 

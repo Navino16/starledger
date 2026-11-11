@@ -132,6 +132,22 @@ Décisions prises pendant l'exécution du plan (scopes 1 à 7). Chaque entrée i
 | Scope 7: Ruling (course inter-onglets) | La course d'enfilage entre onglets (cache de valeurs par onglet de Tampermonkey) est réglée au pré-vol du scope 8, là où l'enfilage commence ; rien n'enfile au scope 7. Chaque collecteur revérifie le consentement avant chaque enfilage. | Aucun maintenant ; au scope 8, une observation peut être perdue ou dupliquée. |
 | Scope 7: Ruling (clé retirée, ping) | Un bouton « Supprimer la clé » (design §5.7) ; un corps 2xx de ping sans `username` texte vaut `server_error` ; `@noframes` ajouté ; `GM_deleteValue` retiré des droits ; `@connect *` commenté (serveur choisi par l'utilisateur, après consentement, AGENTS.md §1.9). | Aucun. |
 
+### Scope 8 — Userscript : collecte
+
+| Sujet | Décision | Coût si faux |
+|---|---|---|
+| Scope 8: Ruling H | `@grant unsafeWindow` ajouté, utilisé UNIQUEMENT pour lire les globales de la page (`serverTime`, `ogame.messages.content`) et attacher un écouteur jQuery `ajaxSuccess` ; jamais pour appeler une fonction du jeu ni envoyer une requête. `build.test` vérifie la nouvelle liste exacte et le commentaire `//! AGENTS.md §4: passive read of page globals, no game function called`. | Un relecteur questionne `unsafeWindow` ; l'alternative (script injecté dans la page) est pire. |
+| Scope 8: Ruling I | Course d'enfilage entre onglets acceptée comme limite documentée : un message perdu dans la fenêtre de quelques ms est recollecté à la prochaine consultation de la page, le serveur dédoublonne. | Observation manquante rare jusqu'à la relecture de la page. |
+| Scope 8: Ruling J | Le collecteur relit le consentement (réglages frais) avant chaque enfilage et ne fait rien sans lui ; il n'est installé que si le consentement est vrai (AGENTS.md §1.9). | Aucun. |
+| Task 8.2: Ruling (décalage) | Le décalage UTC du serveur est calculé UNE fois au démarrage (page fraîche) et passé au contexte du collecteur ; `serverTime` peut être figé au chargement et dériver face à `Date.now()`. | Aucun (le scope 10 vérifie `serverTime` sur le PTS). |
+| Task 8.2: Ruling (installation) | Le collecteur n'est installé qu'au démarrage avec consentement ; un consentement donné en cours de page démarre la collecte au chargement suivant. Compte ou décalage illisible : rien n'est installé (inconnu ≠ 0). | Les messages lus sur la page de consentement ne sont collectés qu'à la consultation suivante. |
+| Task 8.2: Ruling (ids vus) | Les `msgId` sont marqués vus avant l'enfilage ; ceux refusés par une file pleine sont retentés au chargement suivant. | Aucun (l'état « file pleine » est affiché). |
+| Scope 8: Ruling (revue) | La revue de 8.2 vaut revue de tâche ET revue finale de branche (8.1 déjà revue). | Aucun. |
+| Scope 8: Ruling (garde) | Chaque point d'entrée de notre code dans la pile d'appels du jeu (écouteur `ajaxSuccess`, `deliver` au démarrage, `main`) est dans un try/catch qui avale et ne relance jamais : AGENTS.md §4/§1.5, ne jamais altérer une requête du jeu. | Nos erreurs sont silencieuses (pas de bruit console dans la page du jeu). |
+| Scope 8: Ruling (todayKey) | `todayKey(offsetMinutes)` prend le décalage calculé une fois au démarrage. | Aucun. |
+
+À vérifier sur le PTS au scope 10 (Chrome et Firefox avec Tampermonkey) : `ogame.messages.content` est rempli avant l'`ajaxSuccess` global ; `getMessagesList` déclenche bien des événements globaux ; le jQuery de la page peut appeler notre fonction du bac à sable (Firefox peut exiger `exportFunction`) ; les vrais `data-raw-*` restent dans les limites du schéma.
+
 ## Écart noté
 
 Le design §6.4 prévoit la lecture et l'écriture des réglages par l'API ; le plan ne prévoit que la lecture (dans la réponse de stats). Aucune écriture par l'API dans le MVP.
