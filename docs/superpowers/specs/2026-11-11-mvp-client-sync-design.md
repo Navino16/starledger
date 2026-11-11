@@ -216,7 +216,7 @@ On reproduit le calcul d'OGLight, puisque c'est la référence à laquelle l'uti
 - un combat **perdu en défense** sur sa propre planète compte un butin négatif ;
 - les combats ne comprenant que des sondes **sont comptés** comme les autres : sondes perdues dans les pertes, butin éventuel dans les gains. C'est un écart volontaire par rapport à OGLight, demandé par l'utilisateur. Ces combats restent identifiables pour un filtrage futur.
 - les **débris créés** par un combat (25) sont stockés et affichés, **jamais comptés**. Seul le recyclage (32) compte, ce qui évite de compter deux fois.
-- les combats en un round (48) comptent seulement pour leurs **pertes de vaisseaux**, sauf si ce ne sont que des sondes.
+- les combats en un round (48) comptent seulement pour leurs **pertes de vaisseaux**, sondes seules comprises (confirmé par l'utilisateur le 2026-11-11, même écart qu'au point précédent).
 
 **Tuile MSU :**
 - (gains − pertes de vaisseaux valorisées à leur coût − carburant enregistré), convertis en MSU ;

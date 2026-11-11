@@ -701,7 +701,8 @@ Algorithme, appliqué à chaque observation dans son propre savepoint :
   - Après ingestion de deux expéditions (aujourd'hui et hier), `period=day` en compte une et `period=all` deux.
   - Avec un réglage `ignoreConsumption`, il est appliqué au résumé.
   - **Une clé d'un utilisateur A qui demande un compte de B obtient un résumé vide et `counts.unrecognized` à 0** (Review Focus 5).
-  - Un `today` mal formé renvoie un 400 `invalid_payload`.
+  - Un `today` mal formé renvoie un 400 `invalid_payload`, y compris une date inexistante comme `2026-02-31` : la date doit se reformater à l'identique, une regex ne suffit pas.
+  - `StatsPeriod` est un alias de `Period` (`time.ts`) : un seul nom exporté.
 - [ ] **Step 2 : lancer.** Attendu : FAIL.
 - [ ] **Step 3 : implémenter.** On récupère les événements `ok` et `conflict` du compte (filtré par `user_id`) sur la plage, puis on appelle `computeStats`.
 - [ ] **Step 4 : lancer.** Attendu : PASS.
@@ -970,7 +971,9 @@ Branche : `feature/pts-validation`. **Prérequis utilisateur** : serveur déploy
 - Create : `packages/shared/test/fixtures/messages-real/*.json`, avec `"synthetic": false`. Elles sont produites par une commande de debug du script (`GM_registerMenuCommand` « Exporter les observations en file (debug) »), qui télécharge la file en JSON sans rien envoyer.
 - Modify : les parseurs selon les écarts constatés, et `docs/ogame-data-formats.md` (marquer « verified on PTS <date> » ou corriger).
 
-- [ ] **Step 1 :** l'utilisateur affiche sur le PTS chaque type de message listé au design §9.2 et exporte la file.
+- [ ] **Step 1 :** l'utilisateur affiche sur le PTS chaque type de message listé au design §9.2 et exporte la file. Captures à inclure en plus :
+  - une expédition `combatPirates` ou `combatAliens` (41) **et** son rapport de combat en position 16 (25) : les pertes de vaisseaux ne doivent être déduites qu'une fois dans `computeStats` (aujourd'hui, les deux sources sont déduites) ;
+  - un combat de défense sans réparation, un combat sans butin : confirmer que le jeu omet les listes vides ou écrit `[]`.
 - [ ] **Step 2 : écrire les tests** à partir des captures, avec les résultats attendus vérifiés à la main contre le message affiché. Lancer : les écarts apparaissent en FAIL.
 - [ ] **Step 3 : corriger** les parseurs et incrémenter `PARSER_VERSION`.
 - [ ] **Step 4 : lancer** `pnpm test`. Attendu : PASS.
