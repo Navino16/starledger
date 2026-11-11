@@ -210,6 +210,7 @@ Couverture :
 - [x] Badge Codecov dans le README : `https://img.shields.io/codecov/c/github/Navino16/<repo>?style=flat-square&label=Coverage`, avec un lien vers `https://codecov.io/gh/Navino16/<repo>`.
 - [x] Section « Codecov » dans le `CLAUDE.md` du projet : URL du projet et requêtes `curl` vers l'API v2 avec `$CODECOV_API_TOKEN` (totaux, couverture par fichier, comparaison de PR). Pas de serveur MCP Codecov : aucun n'est officiel.
 - [x] Ruleset de branche « Main/Develop », copié sur `budget` : merge squash uniquement, historique linéaire, checks obligatoires `Lint`, `Typecheck`, `Build`, `Test (unit + coverage)` et `CodeQL` (configuration par défaut activée), et blocage sur les alertes CodeQL.
+- [ ] **Réactiver CodeQL dans le ruleset** (check obligatoire `CodeQL`, `integration_id` 57789, et règle `code_scanning` : alertes ≥ errors, alertes de sécurité ≥ high) après le premier merge `develop` → `main`. Tant que `main` ne contient que de la documentation, CodeQL ne détecte aucun langage et ne produit jamais de check. Il est donc retiré temporairement du ruleset (2026-11-11, décision de l'utilisateur). Modèle complet : `gh api repos/Navino16/bilan/rulesets/25401979`.
 - [ ] Vérifier que la CI passe sur la PR du scope 0.
 
 ---
