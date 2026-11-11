@@ -17,9 +17,12 @@ export const coordsSchema = z.object({
 });
 export type Coords = z.infer<typeof coordsSchema>;
 
+export const MAX_SERVER_ID = 2_147_483_647;
+export const LANG_PATTERN = /^[a-z]{2,3}$/;
+
 export const accountRefSchema = z.object({
-  serverId: z.number().int(),
-  lang: z.string(),
+  serverId: z.number().int().min(1).max(MAX_SERVER_ID),
+  lang: z.string().regex(LANG_PATTERN),
   playerId: z.number().int(),
   playerName: z.string().nullable(),
 });

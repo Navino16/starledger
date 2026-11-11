@@ -21,17 +21,17 @@
 </form>
 <% } %>
 <h2><%= it.t('account.settingsTitle') %></h2>
-<% if (it.settingsError) { %><p class="error" role="alert"><%= it.settingsError %></p><% } %>
 <% if (it.settings.length === 0) { %>
 <p><%= it.t('settings.none') %></p>
 <% } %>
 <% for (const u of it.settings) { %>
-<form method="post" action="/account/settings/<%= u.serverId %>/<%= u.lang %>">
+<form method="post" action="/account/settings/<%= encodeURIComponent(u.serverId) %>/<%= encodeURIComponent(u.lang) %>">
+  <% if (u.error) { %><p class="error" role="alert"><%= u.error %></p><% } %>
   <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
   <h3><%= it.t('settings.universe', { serverId: String(u.serverId), lang: u.lang }) %></h3>
-  <p><label><%= it.t('settings.msuMetal') %> <input type="number" name="msuMetal" step="any" min="0" max="100" required value="<%= u.msuRatio[0] %>"></label></p>
-  <p><label><%= it.t('settings.msuCrystal') %> <input type="number" name="msuCrystal" step="any" min="0" max="100" required value="<%= u.msuRatio[1] %>"></label></p>
-  <p><label><%= it.t('settings.msuDeuterium') %> <input type="number" name="msuDeuterium" step="any" min="0" max="100" required value="<%= u.msuRatio[2] %>"></label></p>
+  <p><label><%= it.t('settings.msuMetal') %> <input type="number" name="msuMetal" step="any" min="0.01" max="100" required value="<%= u.msuMetal %>"></label></p>
+  <p><label><%= it.t('settings.msuCrystal') %> <input type="number" name="msuCrystal" step="any" min="0.01" max="100" required value="<%= u.msuCrystal %>"></label></p>
+  <p><label><%= it.t('settings.msuDeuterium') %> <input type="number" name="msuDeuterium" step="any" min="0.01" max="100" required value="<%= u.msuDeuterium %>"></label></p>
   <p><label><%= it.t('settings.expeditionShipRatio') %> <input type="number" name="expeditionShipRatio" step="1" min="0" max="100" required value="<%= u.expeditionShipRatio %>"></label></p>
   <p><label><input type="checkbox" name="ignoreExpeShipsLoss"<%= u.ignoreExpeShipsLoss ? ' checked' : '' %>> <%= it.t('settings.ignoreExpeShipsLoss') %></label></p>
   <p><label><input type="checkbox" name="ignoreConsumption"<%= u.ignoreConsumption ? ' checked' : '' %>> <%= it.t('settings.ignoreConsumption') %></label></p>
