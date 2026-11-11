@@ -1,5 +1,6 @@
 import { loadSettings, saveSettings } from '../storage';
-import { el, isHttpUrl, mountBox, type UiContext } from './dom';
+import { setDestination } from '../sync/destination';
+import { el, isHttpUrl, isInsecureUrl, mountBox, type UiContext } from './dom';
 
 export function renderConfigureBox(ctx: UiContext, onConfigure: () => void): void {
   const { doc, t } = ctx;
@@ -9,19 +10,21 @@ export function renderConfigureBox(ctx: UiContext, onConfigure: () => void): voi
 }
 
 export function renderConsent(ctx: UiContext, onAccepted: () => void): void {
-  const { doc, t, gm } = ctx;
+  const { doc, t, gm, queue } = ctx;
   const url = el(doc, 'input', {
     type: 'text',
     id: 'starledger-url',
     value: loadSettings(gm).serverUrl ?? '',
   });
   const destination = el(doc, 'strong', { id: 'starledger-destination' });
+  const warning = el(doc, 'div', { className: 'starledger-warning' });
   const error = el(doc, 'div', { className: 'starledger-status' });
   const accept = el(doc, 'button', { type: 'button', textContent: t('consentAccept') });
   const cancel = el(doc, 'button', { type: 'button', textContent: t('consentCancel') });
 
   const refresh = () => {
     destination.textContent = url.value.trim() || t('consentNoServer');
+    warning.textContent = isInsecureUrl(url.value) ? t('httpWarning') : '';
   };
   url.addEventListener('input', refresh);
   refresh();
@@ -32,7 +35,8 @@ export function renderConsent(ctx: UiContext, onAccepted: () => void): void {
       error.textContent = t('invalidUrl');
       return;
     }
-    saveSettings(gm, { serverUrl: value, consent: true });
+    setDestination(gm, queue, value, null);
+    saveSettings(gm, { consent: true });
     onAccepted();
   });
   cancel.addEventListener('click', () =>
@@ -59,6 +63,7 @@ export function renderConsent(ctx: UiContext, onAccepted: () => void): void {
       ),
       el(doc, 'label', { textContent: t('serverUrl') }, url),
       el(doc, 'p', { textContent: `${t('consentDestination')} ` }, destination),
+      warning,
       error,
       accept,
       ' ',

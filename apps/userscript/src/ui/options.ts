@@ -1,6 +1,7 @@
 import { errorKey } from '../i18n';
 import { loadSettings, saveSettings } from '../storage';
 import { createApi } from '../sync/api';
+import { setDestination } from '../sync/destination';
 import { CLIENT_VERSION } from '../version';
 import { renderConfigureBox, renderConsent } from './consent';
 import { el, isHttpUrl, isInsecureUrl, mountBox, PANEL_ID, type UiContext } from './dom';
@@ -62,9 +63,9 @@ export function renderOptions(ctx: UiContext): void {
     if (!values) return;
     const { urlChanged, ...patch } = values;
     if (urlChanged) {
-      // AGENTS.md §1.9: consent was given for another destination, ask again
-      saveSettings(gm, { ...patch, consent: false });
-      queue.clear();
+      //! AGENTS.md §1.9: consent was given for another destination, ask again
+      setDestination(gm, queue, patch.serverUrl, key.value.trim() || null);
+      saveSettings(gm, { consent: false });
       setOglightHidden(gm, doc, false);
       renderConsent(ctx, () => renderOptions(ctx));
       return;

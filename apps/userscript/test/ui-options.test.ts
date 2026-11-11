@@ -332,6 +332,66 @@ describe('options hardening', () => {
   });
 });
 
+describe('destination change on the consent screen', () => {
+  const setUrl = (value: string) => {
+    const input = document.querySelector('#starledger-url') as HTMLInputElement;
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+  };
+  beforeEach(() => {
+    saveSettings(gm, { consent: true, serverUrl: 'https://a.example.org', apiKey: 'keyA' });
+  });
+
+  it('withdraw, edit the URL and accept drops the key and queue, so nothing is sent', async () => {
+    main(gm, document);
+    gm.menus[0]?.fn();
+    byText('Withdraw consent').click();
+    createQueue(gm).enqueue([obs('a')]);
+    click('#starledger-box button');
+    setUrl('https://b.example.org');
+    byText('I consent').click();
+    expect(loadSettings(gm)).toMatchObject({ apiKey: null, consent: true });
+    expect(createQueue(gm).size()).toBe(0);
+    document.body.innerHTML = '';
+    page('en');
+    main(gm, document);
+    await flush();
+    expect(gm.requests).toHaveLength(0);
+  });
+
+  it('Save B with a key, then editing to C on the consent screen drops the key for B', () => {
+    main(gm, document);
+    gm.menus[0]?.fn();
+    setUrl('https://b.example.org');
+    (document.querySelector('#starledger-key') as HTMLInputElement).value = 'keyB';
+    byText('Save').click();
+    expect(loadSettings(gm).apiKey).toBe('keyB');
+    setUrl('https://c.example.org');
+    byText('I consent').click();
+    expect(loadSettings(gm)).toMatchObject({ serverUrl: 'https://c.example.org', apiKey: null });
+  });
+
+  it('accepting with the same URL keeps the key and the queue', () => {
+    main(gm, document);
+    gm.menus[0]?.fn();
+    byText('Withdraw consent').click();
+    createQueue(gm).enqueue([obs('a')]);
+    click('#starledger-box button');
+    byText('I consent').click();
+    expect(loadSettings(gm)).toMatchObject({ apiKey: 'keyA', consent: true });
+    expect(createQueue(gm).size()).toBe(1);
+  });
+
+  it('warns about http:// on the consent screen', () => {
+    main(gm, document);
+    gm.menus[0]?.fn();
+    byText('Withdraw consent').click();
+    click('#starledger-box button');
+    setUrl('http://192.168.1.2:3000');
+    expect(document.body.textContent).toContain('key will travel in clear text');
+  });
+});
+
 describe('consent version', () => {
   it('counts stored consent without a version as no consent', () => {
     gm.set('starledger.settings', { consent: true, deviceId: 'd', serverUrl: 'https://x.test' });
