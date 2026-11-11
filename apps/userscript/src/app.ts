@@ -1,3 +1,5 @@
+import { installMessageCollector, type PageWindow } from './collect/messages';
+import { readAccount, readServerUtcOffset } from './env/page';
 import type { Gm } from './gm';
 import { createT, detectLang } from './i18n';
 import { isAllowedUniverse } from './pts-guard';
@@ -11,7 +13,24 @@ import { renderOptions } from './ui/options';
 import { UI_CSS } from './ui/styles';
 import { CLIENT_VERSION } from './version';
 
-export function main(gm: Gm, doc: Document): void {
+export function main(
+  gm: Gm,
+  doc: Document,
+  win?: PageWindow & { serverTime?: unknown },
+  onCollected: () => void = () => {},
+): void {
+  //! AGENTS.md §4: our errors must never break the game's page or its ajax chain
+  try {
+    bootstrap(gm, doc, win, onCollected);
+  } catch {}
+}
+
+function bootstrap(
+  gm: Gm,
+  doc: Document,
+  win?: PageWindow & { serverTime?: unknown },
+  onCollected: () => void = () => {},
+): void {
   if (!isAllowedUniverse(doc)) return;
 
   const lang = detectLang(doc);
@@ -32,6 +51,31 @@ export function main(gm: Gm, doc: Document): void {
   }
 
   setOglightHidden(gm, doc, settings.hideOglightBox);
+
+  if (win) {
+    const account = readAccount(doc);
+    const serverUtcOffsetMinutes = readServerUtcOffset(win);
+    // Unknown is not 0: without both, nothing is collected
+    if (account && serverUtcOffsetMinutes !== null) {
+      installMessageCollector(win, {
+        doc,
+        ctx: { account, serverUtcOffsetMinutes },
+        onObservations: (observations) => {
+          const current = loadSettings(gm);
+          //! AGENTS.md §1.9: consent re-read before every enqueue
+          if (!current.consent) return;
+          const { accepted } = ctx.queue.enqueue(observations);
+          if (accepted === 0) return;
+          if (current.serverUrl && current.apiKey) {
+            //! AGENTS.md §4: our server only, after a player-triggered response, no game request
+            const api = createApi(gm, current, CLIENT_VERSION);
+            void ctx.queue.flush(api, current.deviceId, () => loadSettings(gm).consent);
+          }
+          onCollected();
+        },
+      });
+    }
+  }
 
   if (settings.serverUrl && settings.apiKey) {
     //! AGENTS.md §4: our server only, on page load, no game request

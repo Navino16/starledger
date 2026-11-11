@@ -23,6 +23,7 @@ export default defineConfig({
           'GM_xmlhttpRequest',
           'GM_addStyle',
           'GM_registerMenuCommand',
+          'unsafeWindow',
         ],
         noframes: true,
         // AGENTS.md §1.9: only the user-configured server, contacted after consent; Tampermonkey asks before any undeclared domain
