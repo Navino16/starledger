@@ -50,6 +50,23 @@ describe('recycling', () => {
     expect(eventOf(parseMessage(obs))).toMatchObject({ coords: { position: 7 } });
   });
 
+  it('treats an absent metal or deuterium as 0', () => {
+    const obs = withRaw(recycling, { recycledresources: '{"crystal":600}' });
+    expect(eventOf(parseMessage(obs))).toMatchObject({
+      resources: { metal: 0, crystal: 600, deuterium: 0 },
+    });
+  });
+
+  it('falls back to coords when targetcoordinates is empty', () => {
+    const obs = withRaw(recycling, { targetcoordinates: '' });
+    expect(eventOf(parseMessage(obs))).toMatchObject({ coords: { position: 7 } });
+  });
+
+  it('is unrecognized when the timestamp is out of Date range', () => {
+    const obs = withRaw(recycling, { timestamp: '99999999999999999999' });
+    expect(parseMessage(obs)).toMatchObject({ status: 'unrecognized', occurredAt: null });
+  });
+
   it('treats an absent deuterium as 0', () => {
     expect(eventOf(parseMessage(recycling))).toMatchObject({
       resources: { metal: 1200, crystal: 800, deuterium: 0 },

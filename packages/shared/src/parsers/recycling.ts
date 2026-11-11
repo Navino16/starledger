@@ -5,15 +5,15 @@ import type { MessageObservation } from '../observation';
 import { Invalid, need, rawJson, tryBuild } from './raw';
 
 const amount = z.number().nonnegative();
-// docs/ogame-data-formats.md §3.5: deuterium may be absent, meaning 0
+// docs/ogame-data-formats.md §3.5: an absent resource inside the container means 0
 const recycledSchema = z.object({
-  metal: amount,
-  crystal: amount,
+  metal: amount.default(0),
+  crystal: amount.default(0),
   deuterium: amount.default(0),
 });
 
 function build(obs: MessageObservation): RecyclingEvent {
-  const coordsRaw = obs.raw.targetcoordinates ?? obs.raw.coords;
+  const coordsRaw = obs.raw.targetcoordinates || obs.raw.coords;
   if (coordsRaw === undefined) throw new Invalid('missing coords');
   const coords = parseCoords(coordsRaw);
   if (coords === null) throw new Invalid('invalid coords');
