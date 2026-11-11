@@ -10,7 +10,7 @@
 - `apps/userscript` (Vite + vite-plugin-monkey) lit passivement le DOM et les réponses AJAX, met les observations en file, les envoie et affiche l'encart.
 
 **Tech Stack :**
-- Node 24, pnpm 10, TypeScript (strict), Vitest, Biome
+- Node 26 (LTS), pnpm 12, TypeScript 7 (strict), Vitest 5, Biome 2
 - Serveur : Fastify 5, Kysely + `pg`, PostgreSQL 17, zod 4, Eta (`@fastify/view`), `@fastify/secure-session`, `@fastify/csrf-protection`, `@fastify/formbody`, `@fastify/rate-limit`, `@node-rs/argon2`
 - Userscript : vite-plugin-monkey, jsdom (tests)
 - Tests base de données : `@testcontainers/postgresql`
@@ -25,7 +25,7 @@
 
 | Scope | Sujet | Statut |
 |---|---|---|
-| 0 | Socle du dépôt | ☐ |
+| 0 | Socle du dépôt et CI | ◐ |
 | 1 | Shared : observations et parseurs de messages | ☐ |
 | 2 | Shared : jours et calcul des stats | ☐ |
 | 3 | Serveur : socle, utilisateurs, connexion web | ☐ |
@@ -40,6 +40,7 @@
 | 12 | Transports entre joueurs | ⛔ attend les captures (design §9.2) |
 | 13 | Anomalies | ⛔ attend les captures (design §9.1) |
 | 14 | Dossier de tolérance et publication | ☐ |
+| 15 | Renovate | ☐ (après création du remote) |
 
 ## Global Constraints
 
@@ -51,6 +52,7 @@
 - **Monétisation intacte** : l'encart ne recouvre ni ne déplace Marchand, Officiers, Boutique, la barre de pub ou le footer, sur desktop comme sur mobile (`AGENTS.md` §1.7).
 - Le masquage de l'encart OGLight porte exactement `// GRAY AREA: requires ToolDev approval before publishing — see AGENTS.md §3`.
 - **Commentaires** : uniquement le code complexe, les décisions discutables et les choix de conformité, sur une ligne avec renvoi (`// AGENTS.md §4: passive read, no game request`). Voir `CLAUDE.md`.
+- **Build et consommation de `@app/shared`** : `@app/shared` expose `"exports": { ".": "./src/index.ts" }` (consommé en source par Vitest, Vite et le bundler serveur ; jamais compilé seul). Le serveur est **bundlé avec tsdown** vers `apps/server/dist/{index,cli}.js` (ESM, cible node26), `@node-rs/argon2` et `pg` restant externes. Les imports relatifs restent sans extension.
 - **Langues** : code, commits et documentation technique en anglais ; interface en français et en anglais. Messages de commit sur une seule ligne, sans co-author.
 - **Inconnu ≠ 0** : toute valeur absente est `null` de bout en bout (parseur, base, API, affichage « ? »).
 - **Isolation** : toute requête serveur est filtrée par l'utilisateur authentifié, sans exception.
@@ -58,6 +60,7 @@
 - **Valeurs par défaut de valorisation** (reprises d'OGLight) : MSU `3:2:1`, `expeditionShipRatio` 100, `ignoreExpeShipsLoss` false, `ignoreConsumption` false. Pour les échanges, `includeTradesInBalance` false.
 - **Formule MSU** : `ceil(m + c·r0/r1 + d·r0/r2)`. OGLight utilise `d·r0`, ce qui revient au même quand r2 = 1.
 - **Auto-audit** : la checklist de `AGENTS.md` §7 est déroulée et ses résultats sont notés dans la PR de chaque scope qui touche `apps/userscript`.
+- **Dépendances** : avant chaque ajout, vérifier la dernière version avec `npx npm-check-updates --workspaces --root`. Exception assumée : `@types/node` suit la version majeure de Node (26). La politique `minimumReleaseAge` de pnpm 12 (versions publiées depuis moins de 24 h refusées) est respectée : on ne contourne jamais avec `minimumReleaseAgeExclude`.
 - **Tests sur le PTS uniquement** (Singularity, en_808) tant que l'outil n'est pas toléré.
 
 ## Review Focus
@@ -137,14 +140,78 @@ Branche : `feature/repo-bootstrap`. **Avant de commencer** : créer `develop` de
 ### Tâche 0.1 : Monorepo, outillage et test témoin
 
 **Files :**
-- Create : `package.json` (privé, `packageManager: pnpm@10.x`, scripts `test`, `lint`, `typecheck`, `build`), `pnpm-workspace.yaml` (`apps/*`, `packages/*`), `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`, ES2023, moduleResolution bundler), `biome.json`, `vitest.workspace.ts`, `.gitignore`, `.editorconfig`, `.nvmrc` (`24`), `LICENSE` (MIT, 2026, auteur du dépôt), `README.md` (but, structure, commandes)
+- Create : `package.json` (privé, `packageManager: pnpm@12.x`, scripts `test`, `lint`, `typecheck`, `build`), `pnpm-workspace.yaml` (`apps/*`, `packages/*`), `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`, ES2023, moduleResolution bundler), `biome.json`, `vitest.config.ts` (`test.projects` : Vitest 5 n'a plus de fichier workspace), `.gitignore`, `.editorconfig`, `.nvmrc` (`26`), `LICENSE` (MIT, 2026, auteur du dépôt), `README.md` (but, structure, commandes)
 - Create : `packages/shared/{package.json,tsconfig.json,src/index.ts}`, `apps/server/{package.json,tsconfig.json,src/index.ts}`, `apps/userscript/{package.json,tsconfig.json,src/main.ts}`
 - Test : `packages/shared/test/smoke.test.ts`
 
-- [ ] **Step 1 : installer pnpm.** `corepack enable && corepack prepare pnpm@latest-10 --activate`. Vérifier : `pnpm -v` affiche `10.x`.
-- [ ] **Step 2 : écrire le test témoin.** `expect(VERSION).toMatch(/^\d+\.\d+\.\d+$/)`, avec `export const VERSION = '0.1.0'` dans `packages/shared/src/index.ts`.
-- [ ] **Step 3 : lancer les vérifications.** `pnpm install && pnpm test && pnpm typecheck && pnpm lint`. Attendu : tout PASS.
-- [ ] **Step 4 : commit.** `git commit -m "Bootstrap pnpm monorepo with shared, server and userscript packages"`
+- [x] **Step 1 : installer pnpm.** Node 26 n'embarque plus corepack : `nvm use && npm i -g pnpm@12`. pnpm bascule ensuite tout seul sur la version de `packageManager`. Vérifier : `pnpm -v` affiche `12.x`.
+- [x] **Step 2 : écrire le test témoin.** `expect(VERSION).toMatch(/^\d+\.\d+\.\d+$/)`, avec `export const VERSION = '0.1.0'` dans `packages/shared/src/index.ts`.
+- [x] **Step 3 : lancer les vérifications.** `pnpm install && pnpm test && pnpm typecheck && pnpm lint`. Attendu : tout PASS.
+- [x] **Step 4 : commit.** `git commit -m "Bootstrap pnpm monorepo with shared, server and userscript packages"`
+
+### Tâche 0.2 : Intégration continue GitHub Actions
+
+**Files :**
+- Create : `.github/workflows/ci.yml`
+- Create : `.ncurc.json` (`{"cooldown": "1d"}`, déjà fait par le contrôleur, à commiter avec la tâche)
+
+Workflow `ci.yml` :
+- déclencheurs : `push` sur `main` et `develop`, et `pull_request` ;
+- `permissions: contents: read` au niveau du workflow ;
+- `concurrency` par ref, avec `cancel-in-progress: true` ;
+- un job `check` sur `ubuntu-latest` :
+  1. checkout ;
+  2. installation de pnpm (`pnpm/action-setup`, version lue dans `packageManager`, pas de version en dur) ;
+  3. installation de Node (`actions/setup-node`, `node-version-file: .nvmrc`, cache pnpm) ;
+  4. `pnpm install --frozen-lockfile`, puis `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`.
+- Chaque action est **épinglée sur un SHA de commit** avec la version en commentaire (`uses: actions/checkout@<sha> # v5.x.y`), à la dernière release publiée depuis plus de 24 h (vérifiée via `gh api repos/<owner>/<repo>/releases/latest`).
+
+- [x] **Step 1 : écrire le workflow.**
+- [x] **Step 2 : le valider en local.** `docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:latest -color`. Attendu : aucune erreur.
+- [x] **Step 3 : simuler les commandes du job en local**, dans l'ordre et sur une copie propre : `rm -rf node_modules && pnpm install --frozen-lockfile && pnpm lint && pnpm typecheck && pnpm test && pnpm build`. Attendu : tout PASS.
+- [x] **Step 4 : commit.** `git commit -m "Add GitHub Actions CI workflow"`
+- [x] **Step 5 :** remplacé par les tâches 0.3 (alignement sur la convention CI des projets perso) et 0.4 (vérification sur GitHub).
+
+### Tâche 0.3 : Alignement sur la convention CI des projets perso, couverture
+
+Convention reprise de `budget` et `librarr`, avec les ajustements validés par l'utilisateur le 2026-11-11 : épinglage par SHA, Node lu dans `.nvmrc`, `timeout-minutes`, `persist-credentials: false`.
+
+**Files :**
+- Modify : `.github/workflows/ci.yml`, `package.json` (script `test:coverage`, devDependency `@vitest/coverage-v8`), `vitest.config.ts`, `.gitignore` (`.reports/`)
+
+Workflow `ci.yml` :
+- déclencheur : `pull_request` sur `[main, develop]` uniquement, sans `push` ;
+- `concurrency: { group: ci-${{ github.event.pull_request.number || github.ref }}, cancel-in-progress: true }` ;
+- `permissions: contents: read` ;
+- quatre jobs parallèles, dont les noms servent de checks obligatoires : `Lint`, `Typecheck`, `Build`, `Test (unit + coverage)` ;
+- pour chaque job : `runs-on: ubuntu-26.04` et `timeout-minutes: 15`, puis les étapes suivantes :
+  1. checkout avec `persist-credentials: false` ;
+  2. `pnpm/action-setup` sans version ;
+  3. `actions/setup-node` avec `node-version-file: .nvmrc` et `cache: pnpm` ;
+  4. `pnpm install --frozen-lockfile`, puis la commande du job (`pnpm lint`, `pnpm typecheck`, `pnpm build` ou `pnpm test:coverage`).
+- Le job Test ajoute deux envois `codecov/codecov-action` (épinglé par SHA, dernière release publiée depuis plus de 24 h), tous deux avec `token: ${{ secrets.CODECOV_TOKEN }}` et `fail_ci_if_error: false` :
+  - la couverture : `files: .reports/coverage/cobertura-coverage.xml` ;
+  - les résultats de tests : `if: ${{ !cancelled() }}`, `files: .reports/junit.xml`, `report_type: test_results`.
+
+Couverture :
+- `test:coverage` lance `vitest run --coverage` à la racine, sur tous les projets ;
+- provider `v8`, reporters `text` et `cobertura` vers `.reports/coverage/` ;
+- reporters de test `default` et `junit` (`outputFile.junit: .reports/junit.xml`) ;
+- pas de seuil bloquant.
+
+- [x] **Step 1 : vérifier les versions** avec `npx npm-check-updates`. `@vitest/coverage-v8` doit avoir la même version majeure que `vitest`.
+- [x] **Step 2 : écrire la config et le workflow.**
+- [x] **Step 3 : valider.** Lancer actionlint (Docker) : zéro erreur. Lancer `pnpm test:coverage` : les fichiers `.reports/coverage/cobertura-coverage.xml` et `.reports/junit.xml` existent. Puis `pnpm lint && pnpm typecheck && pnpm build`.
+- [x] **Step 4 : commit.** `git commit -m "Align CI with personal projects convention and add coverage"`
+
+### Tâche 0.4 : Mise en service sur GitHub (après création du remote)
+
+- [x] L'utilisateur crée le dépôt, le secret `CODECOV_TOKEN` et un token d'API Codecov en lecture, exporté en `CODECOV_API_TOKEN` dans son shell.
+- [x] Badge Codecov dans le README : `https://img.shields.io/codecov/c/github/Navino16/<repo>?style=flat-square&label=Coverage`, avec un lien vers `https://codecov.io/gh/Navino16/<repo>`.
+- [x] Section « Codecov » dans le `CLAUDE.md` du projet : URL du projet et requêtes `curl` vers l'API v2 avec `$CODECOV_API_TOKEN` (totaux, couverture par fichier, comparaison de PR). Pas de serveur MCP Codecov : aucun n'est officiel.
+- [x] Ruleset de branche « Main/Develop », copié sur `budget` : merge squash uniquement, historique linéaire, checks obligatoires `Lint`, `Typecheck`, `Build`, `Test (unit + coverage)` et `CodeQL` (configuration par défaut activée), et blocage sur les alertes CodeQL.
+- [ ] **Réactiver CodeQL dans le ruleset** (check obligatoire `CodeQL`, `integration_id` 57789, et règle `code_scanning` : alertes ≥ errors, alertes de sécurité ≥ high) après le premier merge `develop` → `main`. Tant que `main` ne contient que de la documentation, CodeQL ne détecte aucun langage et ne produit jamais de check. Il est donc retiré temporairement du ruleset (2026-11-11, décision de l'utilisateur). Modèle complet : `gh api repos/Navino16/bilan/rulesets/25401979`.
+- [ ] Vérifier que la CI passe sur la PR du scope 0.
 
 ---
 
@@ -403,6 +470,7 @@ Tables de la migration 0001 (design §6.3), toutes avec `created_at timestamptz 
 - `events(id bigserial pk, account_id bigint fk, external_key text, kind text null, status text check in ('ok','unrecognized','conflict'), occurred_at timestamptz null, day date null, data jsonb null, parser_version int, first_observation_id bigint fk observations, unique(account_id, external_key))`, avec un index `(account_id, day)`
 - `universe_settings(user_id uuid fk, server_id int, lang text, msu_metal numeric default 3, msu_crystal numeric default 2, msu_deuterium numeric default 1, expedition_ship_ratio int default 100, ignore_expe_ships_loss bool default false, ignore_consumption bool default false, include_trades_in_balance bool default false, pk(user_id, server_id, lang))`
 
+- [ ] **Step 0 : outillage serveur.** Ajouter le build tsdown du serveur (`pnpm --filter @app/server build` produit `dist/index.js` et `dist/cli.js`), `"types": ["node"]` dans `apps/server/tsconfig.json`, le champ `exports` de `@app/shared`, et `timeout-minutes: 15` sur le job CI (téléchargement des images testcontainers).
 - [ ] **Step 1 : tests.** `loadConfig` rejette un `SESSION_SECRET` trop court et applique les valeurs par défaut. Après migration, les 8 tables existent, et une deuxième clé API active pour le même utilisateur viole l'index partiel.
 - [ ] **Step 2 : lancer.** `pnpm --filter @app/server test`. Attendu : FAIL. Docker doit tourner.
 - [ ] **Step 3 : implémenter** avec le `Migrator` de Kysely et un `FileMigrationProvider`.
@@ -649,7 +717,7 @@ Branche : `feature/docker`.
 
 **Files :**
 - Create :
-  - `Dockerfile` : multi-étapes, base `node:24-alpine`, build du serveur seul, exécution sous l'utilisateur `node`, `HEALTHCHECK` sur `/healthz` ;
+  - `Dockerfile` : multi-étapes, base `node:26-alpine`, pnpm installé par `npm i -g pnpm@<version de packageManager>` (pas de corepack), build du serveur seul, exécution sous l'utilisateur `node`, `HEALTHCHECK` sur `/healthz` ;
   - `compose.yaml` : services `app` et `postgres:17-alpine`, volume `pgdata`, `app` qui dépend de `postgres` en état healthy, et migrations au démarrage (`node dist/cli.js migrate && node dist/index.js`) ;
   - `.env.example` ;
   - `.dockerignore` ;
@@ -675,7 +743,7 @@ Branche : `feature/userscript-foundation`. Tous les accès `GM_*` passent par un
     - grants `GM_getValue`, `GM_setValue`, `GM_deleteValue`, `GM_xmlhttpRequest`, `GM_addStyle`, `GM_registerMenuCommand` ;
     - `connect: ['*']` ;
     - `build.minify: false` ;
-    - nom de travail ; `@updateURL` est ajouté au scope 14.
+    - `name: 'Starledger'` ; `@updateURL` est ajouté au scope 14.
   - `apps/userscript/src/gm.ts` : `interface Gm { get<T>(k, d: T): T; set(k, v): void; request(opts): Promise<{status:number; body:string}>; addStyle(css): HTMLStyleElement; menu(label, fn): void }`, plus `realGm` et `memoryGm()` (tests).
   - `apps/userscript/src/storage.ts` : `ClientSettings = { serverUrl: string | null; apiKey: string | null; consent: boolean; hideOglightBox: boolean; deviceId: string }`, avec `loadSettings(gm)` (génère et enregistre `deviceId` au premier appel) et `saveSettings(gm, patch)`.
 - Test : `apps/userscript/test/storage.test.ts`, `apps/userscript/test/build.test.ts`
@@ -988,7 +1056,7 @@ Travail prévu :
 
 ## Scope 14 — Dossier de tolérance et publication
 
-Branche : `feature/toleration-release`. **Prérequis** : nom du projet choisi (design §9.5), réponses écrites des ToolDevs aux questions du design §9.4, et remote GitHub public créé.
+Branche : `feature/toleration-release`. **Prérequis** : réponses écrites des ToolDevs aux questions du design §9.4.
 
 ### Tâche 14.1 : Métadonnées de diffusion et documents
 
@@ -1006,3 +1074,18 @@ Branche : `feature/toleration-release`. **Prérequis** : nom du projet choisi (d
 - [ ] **Step 3 :** `pnpm test && pnpm lint && pnpm typecheck`. Attendu : PASS.
 - [ ] **Step 4 : commit.** `git commit -m "Prepare toleration submission and release metadata"`
 - [ ] **Step 5 (utilisateur) :** figer la version (tag), ouvrir le fil dans Submissions & API Requests, et ne rien publier pendant la revue. Après la tolérance, publier sur Greasy Fork.
+
+## Scope 15 — Renovate
+
+Branche : `feature/renovate`. **Prérequis** : dépôt sur GitHub, et application Renovate installée sur le dépôt par l'utilisateur. Pas de Dependabot.
+
+Travail prévu : `.github/renovate.json`, repris de la convention des projets perso (`flixpatrol` et `Varken`), avec les ajustements validés le 2026-11-11 :
+- `extends` : `config:recommended`, `:dependencyDashboard`, `helpers:pinGitHubActionDigests` ;
+- `baseBranchPatterns: ["develop"]`, `labels: ["dependencies"]`, `schedule: ["before 6am on monday"]` ;
+- `minimumReleaseAge: "1 day"` et `internalChecksFilter: "strict"`, obligatoires avec pnpm 12 ;
+- `platformAutomerge: false` et `automergeSchedule: ["at any time"]` ;
+- trois groupes en automerge :
+  - npm : mineur et correctif ;
+  - github-actions : mineur, correctif, `digest` et `pinDigest` ;
+  - dockerfile : mineur, correctif et `digest` ;
+- `@types/node` avec `allowedVersions: "<=26"`.

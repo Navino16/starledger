@@ -2,7 +2,7 @@
 
 Date : 2026-11-11 · Statut : à valider
 Référence fonctionnelle : [`docs/spec-fonctionnelles.md`](../../spec-fonctionnelles.md) (ci-après « spec »).
-Nom du projet : à définir (nom de travail : `ogame-dashboard`).
+Nom du projet : **Starledger** (dépôt `Navino16/starledger`, public).
 
 ## 1. Intention
 
@@ -344,7 +344,7 @@ Ils reprennent la spec §12, restreints au périmètre du MVP :
 4. **Questions aux ToolDevs** (forum Development) :
    - peut-on masquer l'encart d'un autre outil toléré ?
    - les rapports de combat bruts contiennent des noms, identifiants et coordonnées d'**autres joueurs**. Peut-on les envoyer et les conserver sur notre serveur, ou faut-il les retirer côté client avant l'envoi ? La réponse peut modifier le principe « on conserve le brut » du §6.3.
-5. **Nom du projet** : à définir avant le dépôt de tolérance et la publication.
+5. ~~**Nom du projet**~~ : réglé, **Starledger** (2026-11-11).
 
 ## 10. Procédure de tolérance OGame
 
