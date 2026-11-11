@@ -25,7 +25,7 @@
 
 | Scope | Sujet | Statut |
 |---|---|---|
-| 0 | Socle du dépôt et CI | ◐ |
+| 0 | Socle du dépôt et CI | ✅ |
 | 1 | Shared : observations et parseurs de messages | ☐ |
 | 2 | Shared : jours et calcul des stats | ☐ |
 | 3 | Serveur : socle, utilisateurs, connexion web | ☐ |
