@@ -4,7 +4,20 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
+    "build": "tsdown",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@app/shared": "workspace:*",
+    "kysely": "^0.29.8",
+    "pg": "^8.23.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@testcontainers/postgresql": "^12.2.1",
+    "@types/pg": "^8.23.1",
+    "testcontainers": "^12.2.1",
+    "tsdown": "^0.23.7"
   }
 }
