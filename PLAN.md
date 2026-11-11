@@ -25,7 +25,7 @@
 
 | Scope | Sujet | Statut |
 |---|---|---|
-| 0 | Socle du dépôt | ☐ |
+| 0 | Socle du dépôt | ✅ |
 | 1 | Shared : observations et parseurs de messages | ☐ |
 | 2 | Shared : jours et calcul des stats | ☐ |
 | 3 | Serveur : socle, utilisateurs, connexion web | ☐ |
@@ -141,10 +141,10 @@ Branche : `feature/repo-bootstrap`. **Avant de commencer** : créer `develop` de
 - Create : `packages/shared/{package.json,tsconfig.json,src/index.ts}`, `apps/server/{package.json,tsconfig.json,src/index.ts}`, `apps/userscript/{package.json,tsconfig.json,src/main.ts}`
 - Test : `packages/shared/test/smoke.test.ts`
 
-- [ ] **Step 1 : installer pnpm.** `corepack enable && corepack prepare pnpm@latest-10 --activate`. Vérifier : `pnpm -v` affiche `10.x`.
-- [ ] **Step 2 : écrire le test témoin.** `expect(VERSION).toMatch(/^\d+\.\d+\.\d+$/)`, avec `export const VERSION = '0.1.0'` dans `packages/shared/src/index.ts`.
-- [ ] **Step 3 : lancer les vérifications.** `pnpm install && pnpm test && pnpm typecheck && pnpm lint`. Attendu : tout PASS.
-- [ ] **Step 4 : commit.** `git commit -m "Bootstrap pnpm monorepo with shared, server and userscript packages"`
+- [x] **Step 1 : installer pnpm.** `corepack enable && corepack prepare pnpm@latest-10 --activate`. Vérifier : `pnpm -v` affiche `10.x`.
+- [x] **Step 2 : écrire le test témoin.** `expect(VERSION).toMatch(/^\d+\.\d+\.\d+$/)`, avec `export const VERSION = '0.1.0'` dans `packages/shared/src/index.ts`.
+- [x] **Step 3 : lancer les vérifications.** `pnpm install && pnpm test && pnpm typecheck && pnpm lint`. Attendu : tout PASS.
+- [x] **Step 4 : commit.** `git commit -m "Bootstrap pnpm monorepo with shared, server and userscript packages"`
 
 ---
 
