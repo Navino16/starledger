@@ -37,9 +37,9 @@ describe('built userscript', () => {
         'GM_registerMenuCommand',
         'GM_setValue',
         'GM_xmlhttpRequest',
+        'unsafeWindow',
       ].sort(),
     );
-    expect(script).not.toContain('unsafeWindow');
   });
 
   it('runs in the top frame only', () => {
@@ -52,6 +52,10 @@ describe('built userscript', () => {
     );
     expect(script).toContain('AGENTS.md §5');
     expect(script).toContain('AGENTS.md §1.9');
+    expect(script).toContain('AGENTS.md §4: passive read of page globals, no game function called');
+    expect(script).toContain(
+      'AGENTS.md §4: passive read of a player-triggered response, no game request',
+    );
   });
 
   it('is not minified', () => {

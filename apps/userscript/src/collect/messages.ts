@@ -1,0 +1,115 @@
+import {
+  type AccountRef,
+  type MessageObservation,
+  messageObservationSchema,
+  TRACKED_MESSAGE_TYPES,
+} from '@app/shared';
+
+export type ExtractContext = {
+  account: AccountRef;
+  serverUtcOffsetMinutes: number;
+  subtabId?: number | null;
+};
+
+const TRACKED: readonly number[] = TRACKED_MESSAGE_TYPES;
+
+function toInt(value: string | null | undefined): number | null {
+  return value !== null && value !== undefined && /^-?\d+$/.test(value.trim())
+    ? Number(value.trim())
+    : null;
+}
+
+function readRaw(el: HTMLElement | null): Record<string, string> {
+  const raw: Record<string, string> = {};
+  for (const [key, value] of Object.entries(el?.dataset ?? {})) {
+    if (value !== undefined && /^raw[A-Z]/.test(key)) raw[key.slice(3).toLowerCase()] = value;
+  }
+  return raw;
+}
+
+export function extractMessageObservations(
+  root: ParentNode,
+  ctx: ExtractContext,
+): MessageObservation[] {
+  const subtabId =
+    ctx.subtabId !== undefined
+      ? ctx.subtabId
+      : toInt(
+          root.querySelector<HTMLElement>('.innerTabItem.active[data-subtab-id]')?.dataset.subtabId,
+        );
+  const result: MessageObservation[] = [];
+  for (const msg of root.querySelectorAll<HTMLElement>('div.msg[data-msg-id]')) {
+    const raw = readRaw(msg.querySelector<HTMLElement>('.rawMessageData'));
+    const messageType = toInt(raw.messagetype);
+    if (messageType === null || !TRACKED.includes(messageType)) continue;
+    const parsed = messageObservationSchema.safeParse({
+      kind: 'message',
+      clientObservationId: crypto.randomUUID(),
+      account: ctx.account,
+      observedAt: Date.now(),
+      serverUtcOffsetMinutes: ctx.serverUtcOffsetMinutes,
+      msgId: toInt(msg.dataset.msgId),
+      messageType,
+      subtabId,
+      raw,
+    });
+    if (parsed.success) result.push(parsed.data);
+  }
+  return result;
+}
+
+type AjaxSettings = { url?: unknown; data?: unknown };
+type AjaxHandler = (event: unknown, xhr: unknown, settings: AjaxSettings) => void;
+
+export type PageWindow = {
+  document: Document;
+  $?: (target: unknown) => { on(event: string, handler: AjaxHandler): unknown };
+  ogame?: { messages?: { content?: unknown } };
+};
+
+function isMessagesListRequest(settings: AjaxSettings): boolean {
+  if (typeof settings?.url !== 'string') return false;
+  let url: URL;
+  try {
+    url = new URL(settings.url, 'https://invalid.example');
+  } catch {
+    return false;
+  }
+  if (url.searchParams.get('action') !== 'getMessagesList') return false;
+  const body = typeof settings.data === 'string' ? new URLSearchParams(settings.data) : null;
+  return url.searchParams.get('showTrash') !== 'true' && body?.get('showTrash') !== 'true';
+}
+
+export type CollectorDeps = {
+  ctx: ExtractContext;
+  onObservations: (observations: MessageObservation[]) => void;
+};
+
+export function installMessageCollector(win: PageWindow, deps: CollectorDeps): void {
+  const seen = new Set<number>();
+
+  const deliver = (observations: MessageObservation[]) => {
+    const fresh = observations.filter((o) => !seen.has(o.msgId));
+    if (fresh.length === 0) return;
+    for (const o of fresh) seen.add(o.msgId);
+    deps.onObservations(fresh);
+  };
+
+  deliver(extractMessageObservations(win.document, deps.ctx));
+
+  //! AGENTS.md §4: passive read of a player-triggered response, no game request
+  win.$?.(win.document).on('ajaxSuccess', (_event, _xhr, settings) => {
+    if (!isMessagesListRequest(settings)) return;
+    const content = win.ogame?.messages?.content;
+    if (!Array.isArray(content)) return;
+    const root = new DOMParser().parseFromString(content.join(''), 'text/html');
+    const body = typeof settings.data === 'string' ? new URLSearchParams(settings.data) : null;
+    const subtabId =
+      toInt(body?.get('activeSubTab')) ??
+      toInt(
+        win.document.querySelector<HTMLElement>('.innerTabItem.active[data-subtab-id]')?.dataset
+          .subtabId,
+      );
+    deliver(extractMessageObservations(root, { ...deps.ctx, subtabId }));
+  });
+}
