@@ -40,6 +40,16 @@ The password is read from the terminal without echo. To script it, pipe it inste
 `printf '%s' "$PASSWORD" | docker compose exec -T app node dist/cli.js create-admin --username admin`.
 Then sign in at `PUBLIC_URL/login` and generate an API key from the account page.
 
+## Reparse
+
+After a parser update, re-interpret stored events from their raw observations (unrecognized events, and events stored by an older parser):
+
+```sh
+docker compose exec app node dist/cli.js reparse [--user <username>]
+```
+
+It prints `updated`, `stillUnrecognized`, `newConflicts` (and `skipped` for events the database rejected). Without `--user` it covers all users.
+
 ## Reverse proxy and HTTPS
 
 Put a reverse proxy (Caddy, nginx, Traefik) in front of the app and terminate HTTPS there. `PUBLIC_URL` must be the HTTPS address users see. The proxy must forward `X-Forwarded-For` and `X-Forwarded-Proto`.

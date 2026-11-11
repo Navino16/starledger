@@ -5,6 +5,7 @@ import { loadConfig } from './config';
 import { createDb } from './db/db';
 import { migrateToLatest } from './db/migrate';
 import type { Database } from './db/schema';
+import { reparseEvents, UnknownUserError } from './ingest/reparse';
 import { createUser } from './users/users';
 
 export interface CliIo {
@@ -20,6 +21,7 @@ export interface CliIo {
 const USAGE = `Usage:
   node dist/cli.js create-admin --username <name>   (pipe the password via stdin)
   node dist/cli.js migrate
+  node dist/cli.js reparse [--user <username>]
 `;
 
 const MAX_PASSWORD_BYTES = 1024;
@@ -94,6 +96,27 @@ export async function runCli(argv: string[], io: CliIo): Promise<number> {
       io.stdout.write(`Admin "${user.username}" created\n`);
       return 0;
     }
+    if (command === 'reparse') {
+      let user: string | undefined;
+      try {
+        user = parseArgs({ args: rest, options: { user: { type: 'string' } } }).values.user;
+      } catch (error) {
+        throw new UsageError((error as Error).message);
+      }
+      const log = {
+        warn: (obj: object, msg: string) => io.stderr.write(`${msg} ${JSON.stringify(obj)}\n`),
+      };
+      try {
+        const r = await reparseEvents(io.db, { username: user, log });
+        io.stdout.write(
+          `updated: ${r.updated}\nstillUnrecognized: ${r.stillUnrecognized}\nnewConflicts: ${r.newConflicts}\nskipped: ${r.skipped}\n`,
+        );
+        return 0;
+      } catch (error) {
+        if (error instanceof UnknownUserError) throw new Error(error.message);
+        throw error;
+      }
+    }
     io.stderr.write(USAGE);
     return 2;
   } catch (error) {
@@ -108,7 +131,7 @@ export async function runCli(argv: string[], io: CliIo): Promise<number> {
 
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
-  if (argv[0] !== 'migrate' && argv[0] !== 'create-admin') {
+  if (argv[0] !== 'migrate' && argv[0] !== 'create-admin' && argv[0] !== 'reparse') {
     process.stderr.write(USAGE);
     process.exit(2);
   }
