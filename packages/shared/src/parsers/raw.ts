@@ -22,7 +22,9 @@ export function rawJson<T>(raw: Raw, key: string, schema: z.ZodType<T>): T | nul
 export function rawInt(raw: Raw, key: string): number | null | 'invalid' {
   const value = raw[key];
   if (value === undefined || value === '') return null;
-  return /^-?\d+$/.test(value) ? Number(value) : 'invalid';
+  if (!/^-?\d+$/.test(value)) return 'invalid';
+  const n = Number(value);
+  return Number.isSafeInteger(n) ? n : 'invalid';
 }
 
 export function externalKey(obs: MessageObservation): string {
@@ -37,10 +39,14 @@ export function unrecognized(
   return { status: 'unrecognized', externalKey: externalKey(obs), occurredAt, reason };
 }
 
-// docs/ogame-data-formats.md §2: timestamp is Unix seconds
+const MAX_DATE_MS = 8.64e15;
+
+// docs/ogame-data-formats.md §2: timestamp is Unix seconds; range is the valid JS Date span
 export function occurredAtOf(raw: Raw): number | null {
   const ts = rawInt(raw, 'timestamp');
-  return typeof ts === 'number' ? ts * 1000 : null;
+  if (typeof ts !== 'number') return null;
+  const ms = ts * 1000;
+  return ms > 0 && ms <= MAX_DATE_MS ? ms : null;
 }
 
 export function coordsOf(raw: Raw): Coords | null {
