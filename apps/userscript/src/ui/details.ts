@@ -49,11 +49,27 @@ const OUTCOME_KEYS: Record<string, MessageKey> = {
 
 const num = (v: unknown): string => formatAmount(typeof v === 'number' ? v : null);
 
-function resourcesText(
+type Cell = (string | Node)[];
+
+function amount(doc: Document, res: string, value: unknown): HTMLElement {
+  const node = el(doc, 'span', { className: 'starledger-amount', textContent: num(value) });
+  node.dataset.res = res;
+  return node;
+}
+
+function resourcesCell(
+  doc: Document,
   t: T,
   r: { metal?: number; crystal?: number; deuterium?: number } | undefined,
-) {
-  return `${t('resMetal')} ${num(r?.metal)} · ${t('resCrystal')} ${num(r?.crystal)} · ${t('resDeuterium')} ${num(r?.deuterium)}`;
+): Cell {
+  return [
+    `${t('resMetal')} `,
+    amount(doc, 'metal', r?.metal),
+    ` · ${t('resCrystal')} `,
+    amount(doc, 'crystal', r?.crystal),
+    ` · ${t('resDeuterium')} `,
+    amount(doc, 'deuterium', r?.deuterium),
+  ];
 }
 
 function outcomesList(doc: Document, t: T, outcomes: Record<string, number> | undefined) {
@@ -140,17 +156,18 @@ function balanceTable(doc: Document, t: T, stats: StatsResponse) {
     ),
   );
   const fuelCell = fuel?.unknownCount > 0 ? `? (${fuel.unknownCount})` : num(fuel?.recorded);
+  const toCell = (c: Cell) => el(doc, 'td', {}, ...c);
   for (const [key, label] of CATEGORIES) {
-    const cells =
+    const cells: Cell[] =
       key === 'fuel'
-        ? [t(label), '-', '-', ignoreFuel ? `${fuelCell} (${t('fuelIgnored')})` : fuelCell]
+        ? [[t(label)], ['-'], ['-'], [ignoreFuel ? `${fuelCell} (${t('fuelIgnored')})` : fuelCell]]
         : [
-            t(label),
-            resourcesText(t, balance?.[key]?.gains),
-            resourcesText(t, balance?.[key]?.losses),
-            '-',
+            [t(label)],
+            resourcesCell(doc, t, balance?.[key]?.gains),
+            resourcesCell(doc, t, balance?.[key]?.losses),
+            ['-'],
           ];
-    const row = el(doc, 'tr', {}, ...cells.map((c) => el(doc, 'td', { textContent: c })));
+    const row = el(doc, 'tr', {}, ...cells.map(toCell));
     row.dataset.category = key;
     table.append(row);
     if (key === 'wreckfields') {
@@ -159,8 +176,8 @@ function balanceTable(doc: Document, t: T, stats: StatsResponse) {
         doc,
         'tr',
         {},
-        ...[t('catDiscoveries'), discoveriesText(t, stats), '-', '-'].map((c) =>
-          el(doc, 'td', { textContent: c }),
+        ...([[t('catDiscoveries')], [discoveriesText(t, stats)], ['-'], ['-']] as Cell[]).map(
+          toCell,
         ),
       );
       disc.dataset.category = 'discoveries';
@@ -172,10 +189,14 @@ function balanceTable(doc: Document, t: T, stats: StatsResponse) {
     'tr',
     {},
     el(doc, 'td', { textContent: t('catNet') }),
-    el(doc, 'td', {
-      colSpan: 3,
-      textContent: `${resourcesText(t, tiles)} · ${t('tileMsu')} ${num(tiles?.msu)}`,
-    }),
+    el(
+      doc,
+      'td',
+      { colSpan: 3 },
+      ...resourcesCell(doc, t, tiles),
+      ` · ${t('tileMsu')} `,
+      amount(doc, 'msu', tiles?.msu),
+    ),
   );
   net.dataset.category = 'net';
   table.append(net);

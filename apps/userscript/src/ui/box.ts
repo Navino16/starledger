@@ -1,7 +1,7 @@
 import type { ApiError, StatsResponse } from '@app/shared';
 import { errorKey, type MessageKey, type T } from '../i18n';
 import type { SyncState } from '../sync/queue';
-import { el, mountBox, PANEL_ID } from './dom';
+import { configureBoxContent, el, mountBox, PANEL_ID } from './dom';
 import { formatAmount, formatTime } from './format';
 
 const STATS_VIEW = 'stats';
@@ -44,6 +44,8 @@ function fuelValue(stats: StatsResponse | null): string {
   return unknownCount > 0 ? `? (${unknownCount})` : formatAmount(recorded);
 }
 
+const DOT_CLASS = { up_to_date: 'is-ok', pending: 'is-pending', error: 'is-error' } as const;
+
 function statusText(model: BoxModel, t: T): string {
   const { state } = model;
   if (state.status === 'error' && state.error) {
@@ -60,14 +62,7 @@ export function renderBox(container: HTMLElement, model: BoxModel, handlers: Box
   const { t, onConfigure, onOpenDetails } = handlers;
 
   if (!model.consent || !model.configured) {
-    const button = el(doc, 'button', {
-      type: 'button',
-      textContent: t(model.consent ? 'configureServer' : 'configure'),
-    });
-    button.addEventListener('click', onConfigure);
-    container.replaceChildren(
-      el(doc, 'div', {}, el(doc, 'strong', { textContent: t('boxTitle') }), ' ', button),
-    );
+    container.replaceChildren(...configureBoxContent(doc, t, onConfigure).children);
     return;
   }
 
@@ -88,16 +83,31 @@ export function renderBox(container: HTMLElement, model: BoxModel, handlers: Box
   tiles.append(fuel);
   tiles.addEventListener('click', onOpenDetails);
 
-  const header = el(doc, 'div', {}, el(doc, 'strong', { textContent: t('boxTitle') }));
+  const { state } = model;
+  const dot = el(doc, 'span', {
+    className: `starledger-dot ${DOT_CLASS[state.status] ?? 'is-ok'}`,
+  });
+  if (state.status === 'error' && state.error) dot.title = t(errorKey(state.error));
+  const header = el(
+    doc,
+    'div',
+    { className: 'starledger-head' },
+    el(doc, 'strong', { textContent: t('boxTitle') }),
+    el(
+      doc,
+      'span',
+      { className: 'starledger-state' },
+      dot,
+      el(doc, 'span', { className: 'starledger-status', textContent: statusText(model, t) }),
+    ),
+  );
   if (model.stale) {
     const text =
       model.statsAt === null ? t('stale') : t('staleAt', { time: formatTime(model.statsAt) });
-    header.append(' ', el(doc, 'em', { className: 'starledger-stale', textContent: text }));
+    header.append(el(doc, 'em', { className: 'starledger-stale', textContent: text }));
   }
 
-  const lines = [
-    el(doc, 'div', { className: 'starledger-status', textContent: statusText(model, t) }),
-  ];
+  const lines: HTMLElement[] = [];
   if (model.statsError && model.state.error !== model.statsError) {
     lines.push(
       el(doc, 'div', {

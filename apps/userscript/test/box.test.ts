@@ -133,6 +133,30 @@ describe('renderBox', () => {
     expect(render(model({ state: failing })).box.textContent).toContain('Server unreachable');
   });
 
+  it('colours the status dot by sync state', () => {
+    const dot = (m: BoxModel) => render(m).box.querySelector('.starledger-dot');
+    expect(dot(model())?.classList.contains('is-ok')).toBe(true);
+    expect(dot(model({ state: state({ status: 'pending', pending: 2 }) }))?.classList).toContain(
+      'is-pending',
+    );
+    const failing = dot(model({ state: state({ status: 'error', error: 'unreachable' }) }));
+    expect(failing?.classList).toContain('is-error');
+    expect(failing?.getAttribute('title')).toBe('Server unreachable');
+  });
+
+  it('marks cached figures as stale', () => {
+    expect(render(model({ stale: true })).box.querySelector('.starledger-stale')).not.toBeNull();
+    expect(render(model()).box.querySelector('.starledger-stale')).toBeNull();
+  });
+
+  it('labels the CTA in both languages', () => {
+    expect(MESSAGES.en.configureSync).toBe('⚙ Configure sync');
+    expect(MESSAGES.fr.configureSync).toBe('⚙ Configurer la synchro');
+    expect(
+      render(model({ consent: false })).box.querySelector('.starledger-cta')?.textContent,
+    ).toBe(t('configureSync'));
+  });
+
   it('shows the stats error next to cached figures', () => {
     const { box } = render(model({ stale: true, statsError: 'invalid_key' }));
     expect(box.textContent).toContain('Invalid key');
@@ -156,7 +180,7 @@ describe('renderBox', () => {
 
   it('shows the server CTA when consent is given but the server is not configured', () => {
     const { box, onConfigure } = render(model({ configured: false, stats: null }));
-    expect(box.textContent).toContain(t('configureServer'));
+    expect(box.textContent).toContain(t('configureSync'));
     box.querySelector('button')?.click();
     expect(onConfigure).toHaveBeenCalledTimes(1);
     expect(box.querySelector('[data-tile]')).toBeNull();
@@ -225,7 +249,7 @@ describe('box in the page', () => {
     saveSettings(gm, { consent: true });
     main(gm, document, win);
     await tick();
-    expect(document.getElementById('starledger-box')?.textContent).toContain(t('configureServer'));
+    expect(document.getElementById('starledger-box')?.textContent).toContain(t('configureSync'));
     expect(gm.requests).toHaveLength(0);
   });
 

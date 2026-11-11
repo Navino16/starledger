@@ -1,9 +1,8 @@
 import type { ApiError } from '@app/shared';
 
 const en = {
-  configure: 'Configure',
+  configureSync: '⚙ Configure sync',
   boxTitle: 'Starledger',
-  configureServer: 'Configure server and key',
   tileMetal: 'Metal',
   tileCrystal: 'Crystal',
   tileDeuterium: 'Deuterium',
@@ -115,9 +114,8 @@ export type MessageKey = keyof typeof en;
 export type Lang = 'fr' | 'en';
 
 const fr: Record<MessageKey, string> = {
-  configure: 'Configurer',
+  configureSync: '⚙ Configurer la synchro',
   boxTitle: 'Starledger',
-  configureServer: 'Configurer le serveur et la clé',
   tileMetal: 'Métal',
   tileCrystal: 'Cristal',
   tileDeuterium: 'Deutérium',

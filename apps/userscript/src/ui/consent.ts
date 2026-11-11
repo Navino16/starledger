@@ -1,12 +1,10 @@
 import { loadSettings, saveSettings } from '../storage';
 import { setDestination } from '../sync/destination';
-import { el, isHttpUrl, isInsecureUrl, mountBox, type UiContext } from './dom';
+import { configureBoxContent, el, isHttpUrl, isInsecureUrl, mountBox, type UiContext } from './dom';
 
 export function renderConfigureBox(ctx: UiContext, onConfigure: () => void): void {
   const { doc, t } = ctx;
-  const button = el(doc, 'button', { type: 'button', textContent: t('configure') });
-  button.addEventListener('click', onConfigure);
-  mountBox(doc, el(doc, 'div', {}, el(doc, 'strong', { textContent: t('boxTitle') }), ' ', button));
+  mountBox(doc, configureBoxContent(doc, t, onConfigure));
 }
 
 export function renderConsent(ctx: UiContext, onAccepted: () => void): void {
