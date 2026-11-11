@@ -9,6 +9,7 @@ import { createApi } from './sync/api';
 import { createQueue } from './sync/queue';
 import { mountStatsBox } from './ui/box';
 import { renderConsent } from './ui/consent';
+import { openDetails } from './ui/details';
 import type { UiContext } from './ui/dom';
 import { setOglightHidden } from './ui/oglight';
 import { renderOptions } from './ui/options';
@@ -68,7 +69,11 @@ function bootstrap(
       {
         t: ctx.t,
         onConfigure: current.consent ? openOptions : openConsent,
-        onOpenDetails: () => {},
+        onOpenDetails: () => {
+          if (account && serverUtcOffsetMinutes !== null) {
+            openDetails(ctx, { account, serverUtcOffsetMinutes });
+          }
+        },
       },
     );
   };

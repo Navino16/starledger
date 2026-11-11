@@ -1,4 +1,4 @@
-//! AGENTS.md §1.7: normal-flow blocks only, no fixed/absolute positioning, no overlap with monetization entries
+//! AGENTS.md §1.7: the box is a normal-flow block; only the user-opened, dismissible details dialog overlays the page
 export const UI_CSS = `
 .starledger-box{margin:8px 0;padding:6px;box-sizing:border-box;max-width:100%;font-size:12px;color:#ccc;background:#111}
 .starledger-box button,.starledger-box input{max-width:100%;box-sizing:border-box}
@@ -13,5 +13,11 @@ export const UI_CSS = `
 .starledger-label{font-size:10px;color:#888}
 .starledger-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .starledger-stale{color:#c90}
+.starledger-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
+.starledger-dialog{box-sizing:border-box;max-width:95vw;max-height:90vh;overflow:auto;padding:10px;font-size:12px;color:#ccc;background:#111}
+.starledger-dialog table{border-collapse:collapse;width:100%}
+.starledger-dialog td,.starledger-dialog th{padding:2px 6px;text-align:left;border-bottom:1px solid #222}
+.starledger-periods{margin:6px 0}
+.starledger-periods [aria-pressed=true]{font-weight:bold}
 @media (min-width:768px){.starledger-tile{padding:3px 6px}}
 `;
