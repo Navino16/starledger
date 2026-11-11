@@ -60,15 +60,37 @@ Décisions prises pendant l'exécution du plan (scopes 1 à 5). Chaque entrée i
 | Langue et serveur | `lang` = `[a-z]{2,3}`, `serverId` ≤ 2 147 483 647 (shared et route). | Code de langue exotique refusé à l'ingestion. |
 | Routes web | Regroupées dans un plugin qui charge la session ; `/healthz` et l'API en dehors. | Aucun. |
 
-### Scope 5 — API (en cours)
+### Scope 5 — API
 
 | Sujet | Décision | Coût si faux |
 |---|---|---|
-| Ordre des contrôles | Clé d'abord, puis version du client. | Aucun. |
+| Ordre des contrôles | Identification, limite de débit, puis rejet (401, version) dans `onRequest` : un appelant non authentifié n'oblige pas le serveur à lire un corps de 2 Mo. Le 413 vient donc après l'authentification. | Aucun. |
 | Limite de débit | 120/min par utilisateur, par IP si la clé est invalide ; jamais la clé brute. | Aucun. |
-| Version du client | Semver strict, pré-versions refusées : le userscript ne doit pas publier de tag `-beta`. | Version de test refusée. |
+| Version du client | Semver strict, pré-versions refusées : le userscript ne doit pas publier de tag `-beta`. Même règle pour `clientVersion` du corps. | Version de test refusée. |
 | Validation des lots | Enveloppe invalide → 400 ; observation invalide → `rejected` individuellement. | Aucun. |
-| Doublons | Comparaison sur l'événement interprété (un rapport FR/EN est un doublon) ; deux non-reconnus identiques = doublon. | Quelques relectures marquées en conflit. |
+| Doublons | Comparaison sur l'événement interprété (un rapport FR/EN est un doublon) ; deux non-reconnus identiques = doublon ; un conflit relu à l'identique du stocké = doublon. | Quelques relectures marquées en conflit. |
+| Nom du joueur | Mis à jour seulement si le nom reçu est non nul (COALESCE) : inconnu ≠ vide. | Un nom renommé puis inconnu reste périmé. |
+| Non reconnu | Une nouvelle lecture non reconnue ne dégrade ni ne marque en conflit un événement ok ou conflit (ack `duplicate`). | Une régression de parseur passe inaperçue dans les acks. |
+| Remplacement par un parseur amélioré | Non reconnu existant → nouvel ok : met aussi à jour `occurred_at`, `day`, `parser_version`. | Aucun. |
+| `devices.client_version` | Vient du `clientVersion` validé du corps. | Cosmétique. |
+| 413 | Renvoyé en JSON (`payload_too_large`) : l'API ne renvoie jamais de HTML. | Aucun. |
+| Erreurs en base | Un savepoint par observation ; seules les erreurs de données (SQLSTATE 22 et 23) donnent `rejected` + log ; toute autre erreur annule le lot, 500, le client réessaie. | Une erreur transitoire classée 22/23 perd une observation. |
+| Parseur qui lève | Traité comme non reconnu (journalisé), le brut est conservé pour reparse. | Un parseur cassé se cache dans les non-reconnus. |
+| `deviceId` | `z.uuid()` (colonne `uuid`) : le userscript génère un UUID (`crypto.randomUUID()`). | Le userscript doit s'y conformer. |
+| Événements non reconnus | `data = null` ; la raison se recalcule depuis `observations.payload`. | Aucun. |
+| `ApiError` | Tous les codes émis par le serveur plus ceux du client (`not_configured`, `unreachable`) ; `sendError` typé partout. | Aucun. |
+| Compte inconnu ou d'un autre utilisateur | Stats : 200 avec un résumé vide et `counts.unrecognized` à 0, jamais 404 (pas d'oracle d'existence entre utilisateurs). | Aucun. |
+| `today` | Requis pour toutes les périodes, y compris `all`. | Le client doit l'envoyer même pour `all`. |
+| `counts.unrecognized` | Tous les non-reconnus du compte, quelle que soit la période (leur jour peut être inconnu). | Le compteur ne suit pas la période choisie. |
+| Réglages dans les stats | `getValuationSettings` de l'appelant pour (serveur, langue), défauts si aucun. | Aucun. |
+| Bornes de saisie | `observedAt` et `sentAt` ≤ 8,64e15 (Date valide) ; `playerId` ≥ 0, comme la route de stats. | Aucun. |
+| Verrou de compte | Le `ON CONFLICT DO UPDATE` du compte sérialise les lots concurrents d'un même compte, ce qui rend la détection de doublons sans course. | Passer à DO NOTHING + SELECT rouvrirait la course. |
+
+**Notes pour le scope 7 (userscript)**
+
+- M4 : `MAX_BATCH` 200 × jusqu'à 64 Ko de `raw` peut dépasser la limite de corps de 2 Mo. Le userscript doit plafonner les lots par taille sérialisée et gérer un 413 sur un lot d'une seule observation, sinon la file reste bloquée.
+- `deviceId` doit être un UUID (`crypto.randomUUID()`) ; aucun tag de version pré-release.
+- M5 : deux lots concurrents touchant deux comptes dans l'ordre inverse peuvent s'interbloquer (40P01), donc 500 ; le client réessaie (accepté).
 
 ## Écart noté
 

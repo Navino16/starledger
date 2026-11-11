@@ -30,7 +30,7 @@
 | 2 | Shared : jours et calcul des stats | ✅ |
 | 3 | Serveur : socle, utilisateurs, connexion web | ✅ |
 | 4 | Serveur : invitations, clé API, réglages | ✅ |
-| 5 | Serveur : API d'ingestion et de stats | ☐ |
+| 5 | Serveur : API d'ingestion et de stats | ✅ |
 | 6 | Docker et déploiement homelab | ☐ |
 | 7 | Userscript : socle, file, options, consentement | ☐ |
 | 8 | Userscript : collecte des messages | ☐ |
@@ -636,11 +636,11 @@ Branche : `feature/server-api`.
   - erreurs JSON `{ error: 'invalid_key' | 'client_outdated' | 'invalid_payload' | 'rate_limited', message }` ;
   - rate-limit de 120 requêtes par minute et par clé.
 
-- [ ] **Step 1 : tests.** Pas de clé ou mauvaise clé → 401 `invalid_key`. Clé révoquée → 401. Version `0.0.1` → 426 `client_outdated`. Clé valide → 200 avec `username`.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add API key auth, ping endpoint and client version gate"`
+- [x] **Step 1 : tests.** Pas de clé ou mauvaise clé → 401 `invalid_key`. Clé révoquée → 401. Version `0.0.1` → 426 `client_outdated`. Clé valide → 200 avec `username`.
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add API key auth, ping endpoint and client version gate"`
 
 ### Tâche 5.2 : Ingestion d'un lot d'observations
 
@@ -668,7 +668,7 @@ Algorithme, appliqué à chaque observation dans son propre savepoint :
    - sinon, on garde `data` et on passe `status` à `conflict` → `conflict`.
 5. Une observation qui échoue à la validation devient `rejected`, avec la `reason` de zod. Les autres observations du lot sont traitées normalement.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - Un nouveau message donne `accepted`.
   - Le même `clientObservationId` renvoyé donne `duplicate`.
   - Le même `msgId` vu par un autre appareil (autre `clientObservationId`) avec le même brut donne `duplicate`, et un seul événement existe.
@@ -678,10 +678,10 @@ Algorithme, appliqué à chaque observation dans son propre savepoint :
   - Un message de type 33 donne `unrecognized`, et son brut est conservé dans `observations.payload`.
   - Un lot mêlant une observation valide et une invalide donne `accepted` et `rejected`.
   - Deux utilisateurs envoient le même `msgId` : chacun a son propre événement.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add idempotent observation ingestion with conflict tracking"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add idempotent observation ingestion with conflict tracking"`
 
 ### Tâche 5.3 : Endpoint de stats
 
@@ -704,16 +704,16 @@ Algorithme, appliqué à chaque observation dans son propre savepoint :
 
   Le client fournit `today`, parce qu'il connaît le jour serveur. Les événements `unrecognized` sont seulement comptés.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - Après ingestion de deux expéditions (aujourd'hui et hier), `period=day` en compte une et `period=all` deux.
   - Avec un réglage `ignoreConsumption`, il est appliqué au résumé.
   - **Une clé d'un utilisateur A qui demande un compte de B obtient un résumé vide et `counts.unrecognized` à 0** (Review Focus 5).
   - Un `today` mal formé renvoie un 400 `invalid_payload`, y compris une date inexistante comme `2026-02-31` : la date doit se reformater à l'identique, une regex ne suffit pas.
   - `StatsPeriod` est un alias de `Period` (`time.ts`) : un seul nom exporté.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.** On récupère les événements `ok` et `conflict` du compte (filtré par `user_id`) sur la plage, puis on appelle `computeStats`.
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add stats endpoint for the in-game box"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.** On récupère les événements `ok` et `conflict` du compte (filtré par `user_id`) sur la plage, puis on appelle `computeStats`.
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add stats endpoint for the in-game box"`
 
 ---
 
