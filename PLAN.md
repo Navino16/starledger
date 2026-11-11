@@ -27,7 +27,7 @@
 |---|---|---|
 | 0 | Socle du dépôt et CI | ✅ |
 | 1 | Shared : observations et parseurs de messages | ✅ |
-| 2 | Shared : jours et calcul des stats | ☐ |
+| 2 | Shared : jours et calcul des stats | ✅ |
 | 3 | Serveur : socle, utilisateurs, connexion web | ☐ |
 | 4 | Serveur : invitations, clé API, réglages | ☐ |
 | 5 | Serveur : API d'ingestion et de stats | ☐ |
@@ -375,15 +375,15 @@ Branche : `feature/shared-stats`.
   - `computeServerUtcOffsetMinutes(serverTimeMs: number, nowMs: number, browserUtcOffsetMinutes: number): number` : `(serverTime − now)` arrondi au quart d'heure, plus le décalage du navigateur ;
   - `periodRange(period: 'day'|'week'|'month'|'all', today: string): { from: string; to: string } | null` : semaine du lundi au dimanche, `all` vaut `null`.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - `dayKey(Date.UTC(2026,10,10,23,30), 60)` vaut `'2026-11-11'`, et `dayKey(…, 0)` vaut `'2026-11-10'`.
   - `computeServerUtcOffsetMinutes` : un navigateur à UTC−5 (−300) devant un serveur à UTC+1, avec un écart d'horloge de +6 h ± 40 s, donne 60.
   - `periodRange('week','2026-11-11')` (un mercredi) vaut `{from:'2026-11-09',to:'2026-11-15'}`.
   - `periodRange('month','2026-02-10')` va jusqu'au `2026-02-28`.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter**, sans dépendance de date externe.
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add server-day keys and period ranges"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter**, sans dépendance de date externe.
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add server-day keys and period ranges"`
 
 ### Tâche 2.2 : Calcul des stats
 
@@ -407,7 +407,10 @@ type StatsSummary = {
                  xpByLifeform: Record<string, number>; artefacts: number };
   wreckfields: { count: number; shipsRecovered: ShipCounts };
   conflictCount: number;
+  // added in scope 2 review: valued gains/losses per category (all ≥ 0), tiles = Σ(gains − losses)
+  balance: Record<'expeditions'|'combats'|'recycling'|'discoveries'|'wreckfields'|'fuel', { gains: Resources; losses: Resources }>;
 };
+// also added: discoveries.shipsLost; combats.shipsLost = non-expedition fights, combats.expeditionShipsLost = isExpedition fights
 ```
 
 Règles des tuiles (design §5.6), à implémenter exactement :
@@ -424,7 +427,7 @@ Règles des tuiles (design §5.6), à implémenter exactement :
 - **Jamais comptés** : les débris créés par un combat.
 - Les événements en `conflict` sont comptés avec leur premier état et incrémentent `conflictCount`.
 
-- [ ] **Step 1 : tests**, chacun sur une liste d'événements construite à la main :
+- [x] **Step 1 : tests**, chacun sur une liste d'événements construite à la main :
   - une expédition de 1000 métal donne `tiles.metal` 1000 et `msu` 1000 ;
   - deux expéditions de 1000 métal donnent 2000. Deux événements distincts aux gains identiques comptent chacun ;
   - 3 petits transporteurs (202) trouvés avec un ratio de 50 % donnent métal +3000 et cristal +3000 ;
@@ -435,10 +438,10 @@ Règles des tuiles (design §5.6), à implémenter exactement :
   - un carburant `consumption: null` donne `fuel.unknownCount` 1 et `fuel.recorded` 0 ;
   - avec `msuRatio [3,2,1]`, m=0, c=200 et d=100 donnent un MSU de 600 ;
   - une liste vide donne toutes les valeurs à 0 et `conflictCount` à 0.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter** une fonction pure, sans mutation des entrées.
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add stats computation with OGLight-equivalent valuation"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter** une fonction pure, sans mutation des entrées.
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add stats computation with OGLight-equivalent valuation"`
 
 ---
 
