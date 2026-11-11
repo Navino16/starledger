@@ -154,7 +154,7 @@ describe('with consent', () => {
     expect((document.querySelector('#starledger-hide') as HTMLInputElement).checked).toBe(true);
   });
 
-  it('does not add the hide rule twice and tolerates a fresh document', () => {
+  it('does not add the hide rule twice when the panel is reopened', () => {
     saveSettings(gm, { hideOglightBox: true });
     main(gm, document);
     gm.menus[0]?.fn();
@@ -223,6 +223,141 @@ describe('with consent', () => {
     expect(loadSettings(gm).consent).toBe(false);
     expect(createQueue(gm).size()).toBe(0);
     expect(document.querySelectorAll('#starledger-box button')).toHaveLength(1);
+  });
+});
+
+describe('options hardening', () => {
+  const type = (sel: string, value: string) => {
+    const input = document.querySelector(sel) as HTMLInputElement;
+    input.value = value;
+    input.dispatchEvent(new Event('input'));
+  };
+  const text = () => document.querySelector('#starledger-box')?.textContent ?? '';
+
+  beforeEach(() => {
+    saveSettings(gm, { consent: true, serverUrl: 'https://sl.example.org', apiKey: 'secret' });
+    main(gm, document);
+    gm.menus[0]?.fn();
+  });
+
+  it('Test with a changed URL and an empty key sends no request', async () => {
+    type('#starledger-url', 'https://other.example.org');
+    byText('Test connection').click();
+    await flush();
+    expect(gm.requests).toHaveLength(0);
+    expect(text()).toContain('Enter the API key for this server');
+  });
+
+  it('Test with a changed URL uses only the typed key', async () => {
+    gm.respondWith(() => ({
+      status: 200,
+      body: JSON.stringify({ ok: true, username: 'bob', apiVersion: 1 }),
+    }));
+    type('#starledger-url', 'https://other.example.org');
+    type('#starledger-key', '  newkey ');
+    byText('Test connection').click();
+    await flush();
+    expect(gm.requests[0]?.url).toBe('https://other.example.org/api/v1/ping');
+    expect(gm.requests[0]?.headers?.Authorization).toBe('Bearer newkey');
+  });
+
+  it('Save with a changed URL and no key is refused', () => {
+    type('#starledger-url', 'https://other.example.org');
+    byText('Save').click();
+    expect(loadSettings(gm)).toMatchObject({ serverUrl: 'https://sl.example.org', consent: true });
+    expect(text()).toContain('Enter the API key for this server');
+  });
+
+  it('Save with a changed URL resets consent and shows the consent screen with the new URL', () => {
+    createQueue(gm).enqueue([obs('a')]);
+    type('#starledger-url', 'https://other.example.org');
+    type('#starledger-key', 'newkey');
+    byText('Save').click();
+    expect(loadSettings(gm)).toMatchObject({
+      serverUrl: 'https://other.example.org',
+      apiKey: 'newkey',
+      consent: false,
+    });
+    expect(createQueue(gm).size()).toBe(0);
+    expect(document.querySelector('#starledger-destination')?.textContent).toBe(
+      'https://other.example.org',
+    );
+  });
+
+  it('Save with the same URL keeps consent and the stored key', () => {
+    byText('Save').click();
+    expect(loadSettings(gm)).toMatchObject({ consent: true, apiKey: 'secret' });
+  });
+
+  it('Remove key clears the stored key and the placeholder', () => {
+    const key = document.querySelector('#starledger-key') as HTMLInputElement;
+    expect(key.placeholder).not.toBe('');
+    byText('Remove key').click();
+    expect(loadSettings(gm).apiKey).toBeNull();
+    expect(key.placeholder).toBe('');
+  });
+
+  it.each([
+    'https://s808-en.ogame.gameforge.com',
+    'https://x.gameforge.com',
+    'https://gameforge.com/',
+  ])('rejects the game host %s', (value) => {
+    type('#starledger-url', value);
+    type('#starledger-key', 'k');
+    byText('Save').click();
+    expect(loadSettings(gm).serverUrl).toBe('https://sl.example.org');
+    expect(text()).toContain('not an OGame server');
+  });
+
+  it('warns about http:// URLs only', () => {
+    type('#starledger-url', 'http://192.168.1.2:3000');
+    expect(text()).toContain('key will travel in clear text');
+    type('#starledger-url', 'https://sl.example.org');
+    expect(text()).not.toContain('key will travel in clear text');
+  });
+
+  it('trims the key and disables browser autofill', () => {
+    const key = document.querySelector('#starledger-key') as HTMLInputElement;
+    expect(key.autocomplete).toBe('new-password');
+    key.value = '  spaced  ';
+    byText('Save').click();
+    expect(loadSettings(gm).apiKey).toBe('spaced');
+  });
+
+  it.each(['{}', 'null'])('treats a 2xx ping body %s as a server error', async (body) => {
+    gm.respondWith(() => ({ status: 200, body }));
+    byText('Test connection').click();
+    await flush();
+    expect(text()).toContain('Server error');
+  });
+});
+
+describe('consent version', () => {
+  it('counts stored consent without a version as no consent', () => {
+    gm.set('starledger.settings', { consent: true, deviceId: 'd', serverUrl: 'https://x.test' });
+    expect(loadSettings(gm).consent).toBe(false);
+    main(gm, document);
+    expect(document.querySelectorAll('#starledger-box button')).toHaveLength(1);
+  });
+
+  it('counts an older version as no consent and a current one as consent', () => {
+    gm.set('starledger.settings', { consent: true, consentVersion: 0, deviceId: 'd' });
+    expect(loadSettings(gm).consent).toBe(false);
+    saveSettings(gm, { consent: true });
+    expect(loadSettings(gm).consent).toBe(true);
+  });
+
+  it('tolerates a non-object stored value', () => {
+    gm.set('starledger.settings', null);
+    expect(loadSettings(gm).consent).toBe(false);
+  });
+
+  it('names the data §1.9 lists on the consent screen', () => {
+    main(gm, document);
+    click('#starledger-box button');
+    const text = document.body.textContent ?? '';
+    for (const word of ['player id and name', 'fleet departures', 'departure time', 'viewed'])
+      expect(text).toContain(word);
   });
 });
 

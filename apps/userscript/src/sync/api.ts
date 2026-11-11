@@ -42,7 +42,7 @@ export function createApi(gm: Gm, settings: ClientSettings, clientVersion: strin
 
     let res: GmResponse;
     try {
-      // AGENTS.md §4: requests go only to the user's own server, never to the game
+      //! AGENTS.md §4: requests go only to the user's own server, never to the game
       res = await gm.request({
         method,
         url: `${serverUrl.replace(/\/+$/, '')}${path}`,
@@ -65,7 +65,12 @@ export function createApi(gm: Gm, settings: ClientSettings, clientVersion: strin
   }
 
   return {
-    ping: () => call<PingData>('GET', '/api/v1/ping'),
+    ping: async (): Promise<ApiResult<PingData>> => {
+      const result = await call<PingData | null>('GET', '/api/v1/ping');
+      if (!result.ok) return result;
+      if (typeof result.data?.username !== 'string') return { ok: false, error: 'server_error' };
+      return { ok: true, data: result.data };
+    },
     sendBatch: (batch: ObservationBatch) => call<BatchAck>('POST', '/api/v1/observations', batch),
     getStats: (q: StatsQuery) => {
       const query = Object.entries(q)

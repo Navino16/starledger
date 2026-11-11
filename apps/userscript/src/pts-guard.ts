@@ -1,4 +1,4 @@
-// AGENTS.md §5: PTS only until toleration, removed in scope 14
+//! AGENTS.md §5: PTS only until toleration, removed in scope 14
 export const PTS_UNIVERSES = ['s808-en.ogame.gameforge.com'];
 
 export function isAllowedUniverse(doc: Document): boolean {

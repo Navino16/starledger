@@ -21,7 +21,7 @@ export const realGm: Gm = {
   set: (key, value) => GM_setValue(key, value as Tampermonkey.StorageValue),
   request: (opts) =>
     new Promise((resolve, reject) => {
-      // The engine enforces `timeout`; no timer of ours (AGENTS.md §1.2/§1.3)
+      //! The engine enforces `timeout`; no timer of ours (AGENTS.md §1.2/§1.3)
       GM_xmlhttpRequest({
         method: opts.method,
         url: opts.url,

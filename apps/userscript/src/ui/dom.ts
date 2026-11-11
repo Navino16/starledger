@@ -23,7 +23,7 @@ export function el<K extends keyof HTMLElementTagNameMap>(
 
 export const PANEL_ID = 'starledger-box';
 
-// AGENTS.md §1.7: inserted under #links, monetization entries untouched
+//! AGENTS.md §1.7: inserted under #links, monetization entries untouched
 export function mountBox(doc: Document, box: HTMLElement): boolean {
   const links = doc.getElementById('links');
   if (!links) return false;
@@ -37,8 +37,15 @@ export function mountBox(doc: Document, box: HTMLElement): boolean {
 export function isHttpUrl(value: string): boolean {
   try {
     const u = new URL(value);
-    return u.protocol === 'http:' || u.protocol === 'https:';
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false;
+    //! AGENTS.md §4: never a request to the game
+    const host = u.hostname.replace(/\.$/, '').toLowerCase();
+    return host !== 'gameforge.com' && !host.endsWith('.gameforge.com');
   } catch {
     return false;
   }
+}
+
+export function isInsecureUrl(value: string): boolean {
+  return value.trim().toLowerCase().startsWith('http://');
 }

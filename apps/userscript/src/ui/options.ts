@@ -3,7 +3,7 @@ import { loadSettings, saveSettings } from '../storage';
 import { createApi } from '../sync/api';
 import { CLIENT_VERSION } from '../version';
 import { renderConfigureBox, renderConsent } from './consent';
-import { el, isHttpUrl, mountBox, PANEL_ID, type UiContext } from './dom';
+import { el, isHttpUrl, isInsecureUrl, mountBox, PANEL_ID, type UiContext } from './dom';
 import { setOglightHidden } from './oglight';
 
 export function renderOptions(ctx: UiContext): void {
@@ -19,7 +19,7 @@ export function renderOptions(ctx: UiContext): void {
     type: 'password',
     id: 'starledger-key',
     placeholder: settings.apiKey ? t('keySet') : '',
-    autocomplete: 'off',
+    autocomplete: 'new-password',
   });
   const hide = el(doc, 'input', {
     type: 'checkbox',
@@ -27,26 +27,51 @@ export function renderOptions(ctx: UiContext): void {
     checked: settings.hideOglightBox,
   });
   const status = el(doc, 'div', { className: 'starledger-status' });
+  const warning = el(doc, 'div', { className: 'starledger-warning' });
   const save = el(doc, 'button', { type: 'button', textContent: t('save') });
   const test = el(doc, 'button', { type: 'button', textContent: t('testConnection') });
   const withdraw = el(doc, 'button', { type: 'button', textContent: t('withdraw') });
+  const removeKey = el(doc, 'button', { type: 'button', textContent: t('removeKey') });
   const close = el(doc, 'button', { type: 'button', textContent: t('close') });
 
+  const refreshWarning = () => {
+    warning.textContent = isInsecureUrl(url.value) ? t('httpWarning') : '';
+  };
+  url.addEventListener('input', refreshWarning);
+  refreshWarning();
+
+  // A changed URL never reuses the stored key: it would leak to another server.
   const typed = () => {
     const value = url.value.trim();
     if (!isHttpUrl(value)) {
       status.textContent = t('invalidUrl');
       return null;
     }
-    return { serverUrl: value, apiKey: key.value || loadSettings(gm).apiKey };
+    const current = loadSettings(gm);
+    const urlChanged = value !== current.serverUrl;
+    const typedKey = key.value.trim();
+    if (urlChanged && !typedKey) {
+      status.textContent = t('keyRequired');
+      return null;
+    }
+    return { serverUrl: value, apiKey: typedKey || current.apiKey, urlChanged };
   };
 
   save.addEventListener('click', () => {
     const values = typed();
     if (!values) return;
-    saveSettings(gm, values);
+    const { urlChanged, ...patch } = values;
+    if (urlChanged) {
+      // AGENTS.md §1.9: consent was given for another destination, ask again
+      saveSettings(gm, { ...patch, consent: false });
+      queue.clear();
+      setOglightHidden(gm, doc, false);
+      renderConsent(ctx, () => renderOptions(ctx));
+      return;
+    }
+    saveSettings(gm, patch);
     key.value = '';
-    key.placeholder = values.apiKey ? t('keySet') : '';
+    key.placeholder = patch.apiKey ? t('keySet') : '';
     status.textContent = t('saved');
   });
 
@@ -54,11 +79,22 @@ export function renderOptions(ctx: UiContext): void {
     const values = typed();
     if (!values) return;
     status.textContent = t('testing');
-    const api = createApi(gm, { ...loadSettings(gm), ...values }, CLIENT_VERSION);
+    const api = createApi(
+      gm,
+      { ...loadSettings(gm), serverUrl: values.serverUrl, apiKey: values.apiKey },
+      CLIENT_VERSION,
+    );
     const result = await api.ping();
     status.textContent = result.ok
       ? t('connected', { name: result.data.username })
       : t(errorKey(result.error));
+  });
+
+  removeKey.addEventListener('click', () => {
+    saveSettings(gm, { apiKey: null });
+    key.value = '';
+    key.placeholder = '';
+    status.textContent = t('keyRemoved');
   });
 
   hide.addEventListener('change', () => {
@@ -84,10 +120,13 @@ export function renderOptions(ctx: UiContext): void {
       el(doc, 'label', { textContent: t('serverUrl') }, url),
       el(doc, 'label', { textContent: t('apiKey') }, key),
       el(doc, 'label', {}, hide, ` ${t('hideOglight')}`),
+      warning,
       status,
       save,
       ' ',
       test,
+      ' ',
+      removeKey,
       ' ',
       withdraw,
       ' ',

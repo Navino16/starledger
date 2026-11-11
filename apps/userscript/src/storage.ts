@@ -10,18 +10,26 @@ export type ClientSettings = {
 
 const KEY = 'starledger.settings';
 
-type Stored = Partial<ClientSettings>;
+// Bump when the consent wording changes: older stored consent counts as none.
+export const CONSENT_VERSION = 1;
+
+type Stored = Partial<ClientSettings> & { consentVersion?: number };
+
+function persist(gm: Gm, settings: ClientSettings): void {
+  gm.set(KEY, { ...settings, consentVersion: settings.consent ? CONSENT_VERSION : 0 });
+}
 
 export function loadSettings(gm: Gm): ClientSettings {
-  const stored = gm.get<Stored>(KEY, {});
+  const raw = gm.get<unknown>(KEY, {});
+  const stored: Stored = typeof raw === 'object' && raw ? raw : {};
   const settings: ClientSettings = {
     serverUrl: stored.serverUrl ?? null,
     apiKey: stored.apiKey ?? null,
-    consent: stored.consent ?? false,
+    consent: stored.consent === true && (stored.consentVersion ?? 0) >= CONSENT_VERSION,
     hideOglightBox: stored.hideOglightBox ?? false,
     deviceId: stored.deviceId ?? crypto.randomUUID(),
   };
-  if (!stored.deviceId) gm.set(KEY, settings);
+  if (!stored.deviceId) persist(gm, settings);
   return settings;
 }
 
@@ -30,6 +38,6 @@ export function saveSettings(
   patch: Partial<Omit<ClientSettings, 'deviceId'>>,
 ): ClientSettings {
   const next = { ...loadSettings(gm), ...patch };
-  gm.set(KEY, next);
+  persist(gm, next);
   return next;
 }

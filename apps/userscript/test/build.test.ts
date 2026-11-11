@@ -33,7 +33,6 @@ describe('built userscript', () => {
     expect(grants).toEqual(
       [
         'GM_addStyle',
-        'GM_deleteValue',
         'GM_getValue',
         'GM_registerMenuCommand',
         'GM_setValue',
@@ -41,6 +40,18 @@ describe('built userscript', () => {
       ].sort(),
     );
     expect(script).not.toContain('unsafeWindow');
+  });
+
+  it('runs in the top frame only', () => {
+    expect(script).toMatch(/@noframes/);
+  });
+
+  it('keeps the compliance markers in the built file', () => {
+    expect(script).toContain(
+      'GRAY AREA: requires ToolDev approval before publishing — see AGENTS.md §3',
+    );
+    expect(script).toContain('AGENTS.md §5');
+    expect(script).toContain('AGENTS.md §1.9');
   });
 
   it('is not minified', () => {

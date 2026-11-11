@@ -26,7 +26,7 @@ export function main(gm: Gm, doc: Document): void {
 
   const settings = loadSettings(gm);
   if (!settings.consent) {
-    // AGENTS.md §1.9: nothing is collected or sent before explicit consent
+    //! AGENTS.md §1.9: nothing is collected or sent before explicit consent
     renderConfigureBox(ctx, openConsent);
     return;
   }
@@ -34,7 +34,7 @@ export function main(gm: Gm, doc: Document): void {
   setOglightHidden(gm, doc, settings.hideOglightBox);
 
   if (settings.serverUrl && settings.apiKey) {
-    // AGENTS.md §4: our server only, on page load, no game request
+    //! AGENTS.md §4: our server only, on page load, no game request
     const api = createApi(gm, settings, CLIENT_VERSION);
     void ctx.queue.flush(api, settings.deviceId, () => loadSettings(gm).consent);
   }

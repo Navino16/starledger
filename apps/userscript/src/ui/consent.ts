@@ -53,6 +53,7 @@ export function renderConsent(ctx: UiContext, onAccepted: () => void): void {
         {},
         el(doc, 'li', { textContent: t('consentReports') }),
         el(doc, 'li', { textContent: t('consentFleets') }),
+        el(doc, 'li', { textContent: t('consentViews') }),
         el(doc, 'li', { textContent: t('consentAccount') }),
         el(doc, 'li', { textContent: t('consentDevice') }),
       ),

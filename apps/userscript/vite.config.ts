@@ -4,7 +4,11 @@ import pkg from './package.json' with { type: 'json' };
 
 export default defineConfig({
   define: { __CLIENT_VERSION__: JSON.stringify(pkg.version) },
-  build: { minify: false },
+  build: {
+    minify: false,
+    // Keeps the `//!` compliance comments in the built file reviewers read (AGENTS.md §0)
+    rolldownOptions: { output: { comments: { legal: true } } },
+  },
   plugins: [
     monkey({
       entry: 'src/main.ts',
@@ -16,11 +20,12 @@ export default defineConfig({
         grant: [
           'GM_getValue',
           'GM_setValue',
-          'GM_deleteValue',
           'GM_xmlhttpRequest',
           'GM_addStyle',
           'GM_registerMenuCommand',
         ],
+        noframes: true,
+        // AGENTS.md §1.9: only the user-configured server, contacted after consent; Tampermonkey asks before any undeclared domain
         connect: ['*'],
       },
       build: { fileName: 'starledger.user.js' },
