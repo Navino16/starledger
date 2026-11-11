@@ -289,7 +289,7 @@ describe('queue', () => {
   });
 
   it('contains no timer', () => {
-    const src = readFileSync(join(process.cwd(), 'src/sync/queue.ts'), 'utf8');
+    const src = readFileSync(join(import.meta.dirname, '../src/sync/queue.ts'), 'utf8');
     expect(src).not.toMatch(/setInterval|setTimeout/);
   });
 });
