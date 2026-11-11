@@ -187,12 +187,6 @@ describe('computeStats', () => {
     expect(s.combats.debrisCreated.metal).toBe(10000);
   });
 
-  it('ignores debris and loot of short combats', () => {
-    const s = run([shortCombat({ shipsLost: { '202': 1 } })]);
-    expect(s.combats.lootSigned).toEqual(res());
-    expect(s.combats.debrisCreated).toEqual(res());
-  });
-
   it('subtracts fuel from deuterium unless ignored', () => {
     expect(run([fuel(300)]).tiles.deuterium).toBe(-300);
     const ignored = run([fuel(300)], { ignoreConsumption: true });
@@ -229,7 +223,7 @@ describe('computeStats', () => {
     expect(run(events, { ignoreExpeShipsLoss: true }).tiles.metal).toBe(-2000);
   });
 
-  it('counts expedition combats (25) and 48 together, outcomes from 25 only', () => {
+  it('counts full and short combats together, outcomes from full combats only', () => {
     const s = run([
       combat({ outcome: 'won' }),
       combat({ outcome: 'draw' }),
@@ -237,6 +231,89 @@ describe('computeStats', () => {
     ]);
     expect(s.combats).toMatchObject({ count: 3, won: 1, lost: 0, draw: 1 });
     expect(s.combats.shipsLost).toEqual({ '202': 1 });
+  });
+
+  it('computes MSU without float noise from fractional ship ratios', () => {
+    const s = run([expedition({ shipsFound: { '202': 1 } })], { expeditionShipRatio: 35 });
+    expect(s.tiles.metal).toBe(700);
+    expect(s.tiles.crystal).toBe(700);
+    expect(s.tiles.msu).toBe(1750);
+  });
+
+  it('never returns -0 for MSU', () => {
+    expect(Object.is(run([]).tiles.msu, 0)).toBe(true);
+  });
+
+  it('splits expedition and regular combat ship losses', () => {
+    const s = run([
+      combat({ isExpedition: true, shipsLost: { '202': 1 } }),
+      shortCombat({ isExpedition: true, shipsLost: { '202': 2 } }),
+      combat({ shipsLost: { '210': 1 } }),
+    ]);
+    expect(s.combats.expeditionShipsLost).toEqual({ '202': 3 });
+    expect(s.combats.shipsLost).toEqual({ '210': 1 });
+  });
+
+  it('records discovery ship losses', () => {
+    const s = run([discovery({ result: 'ship_lost', shipsLost: { '202': 2 } })]);
+    expect(s.discoveries.shipsLost).toEqual({ '202': 2 });
+    expect(s.balance.discoveries.losses).toEqual(res(4000, 4000));
+  });
+
+  it('fills the per-category balance with positive gains and losses', () => {
+    const s = run([
+      expedition({ resources: res(100), shipsFound: { '202': 1 }, shipsLost: { '210': 1 } }),
+      combat({ loot: res(500, 20), lootSign: 1, shipsLost: { '202': 1 } }),
+      combat({ loot: res(70), lootSign: -1 }),
+      recycling({ resources: res(10, 5) }),
+      wreck({ shipsRecovered: { '202': 1 } }),
+      fuel(300),
+    ]);
+    expect(s.balance.expeditions).toEqual({ gains: res(2100, 2000), losses: res(0, 1000) });
+    expect(s.balance.combats).toEqual({ gains: res(500, 20), losses: res(2070, 2000) });
+    expect(s.balance.recycling).toEqual({ gains: res(10, 5), losses: res() });
+    expect(s.balance.wreckfields.gains).toEqual(res(2000, 2000));
+    expect(s.balance.fuel).toEqual({ gains: res(), losses: res(0, 0, 300) });
+  });
+
+  it.each([
+    {},
+    { ignoreExpeShipsLoss: true },
+    { ignoreConsumption: true },
+    { ignoreExpeShipsLoss: true, ignoreConsumption: true },
+  ])('balance nets exactly to the tiles with %j', (flags) => {
+    const s = run(
+      [
+        expedition({
+          resources: res(1000, 10, 5),
+          shipsFound: { '202': 2 },
+          shipsLost: { '202': 1 },
+        }),
+        discovery({ result: 'ship_lost', shipsLost: { '210': 1 } }),
+        combat({ isExpedition: true, loot: res(300), shipsLost: { '202': 1 } }),
+        combat({ loot: res(40, 30, 20), lootSign: -1, shipsLost: { '210': 3 } }),
+        shortCombat({ isExpedition: true, shipsLost: { '202': 1 } }),
+        shortCombat({ shipsLost: { '210': 1 } }),
+        recycling({ resources: res(100, 50, 25) }),
+        wreck({ shipsRecovered: { '202': 2 } }),
+        fuel(300),
+        fuel(null),
+      ],
+      { expeditionShipRatio: 50, ...flags },
+    );
+    const net = res();
+    for (const { gains, losses } of Object.values(s.balance)) {
+      for (const k of ['metal', 'crystal', 'deuterium'] as const) {
+        expect(gains[k]).toBeGreaterThanOrEqual(0);
+        expect(losses[k]).toBeGreaterThanOrEqual(0);
+        net[k] += gains[k] - losses[k];
+      }
+    }
+    expect(net).toEqual({
+      metal: s.tiles.metal,
+      crystal: s.tiles.crystal,
+      deuterium: s.tiles.deuterium,
+    });
   });
 
   it('adds recycling and wreckfield recoveries', () => {
