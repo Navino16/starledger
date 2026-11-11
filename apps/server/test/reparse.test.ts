@@ -237,8 +237,9 @@ describe('reparseEvents', () => {
       return {
         status: 'ok',
         externalKey: `msg:${bad.msgId}`,
-        occurredAt: Number.NaN,
-        event: { kind: 'expedition' } as never,
+        occurredAt: 1_790_000_100_000,
+        // jsonb rejects \u0000 with SQLSTATE 22P05 (data error class)
+        event: { kind: 'expedition', note: '\u0000' } as never,
       };
     });
     const warn = vi.fn();
