@@ -458,7 +458,7 @@ Branche : `feature/server-foundation`.
     - `SESSION_SECRET`, 64 caractères hexadécimaux ;
     - `PORT`, 3000 par défaut ;
     - `PUBLIC_URL` ;
-    - `TRUST_PROXY`, `true` par défaut ;
+    - `TRUST_PROXY`, `loopback,linklocal,uniquelocal` par défaut (revue du scope 3 ; accepte aussi `true`, `false`, un nombre de sauts ou une liste d'IP/CIDR) ;
     - `OPEN_SIGNUP`, `false` par défaut.
   - `apps/server/src/db/{db.ts,schema.ts,migrate.ts}` et `apps/server/src/db/migrations/0001_init.ts`.
 - Test : `apps/server/test/helpers/db.ts` (un conteneur PostgreSQL 17 par fichier de test via testcontainers, puis les migrations), `apps/server/test/config.test.ts`, `apps/server/test/migrations.test.ts`
