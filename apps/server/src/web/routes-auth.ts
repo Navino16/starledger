@@ -1,5 +1,5 @@
 import fastifyRateLimit from '@fastify/rate-limit';
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Kysely } from 'kysely';
 import type { Database } from '../db/schema';
 import { verifyCredentials } from '../users/users';
@@ -8,7 +8,7 @@ import { type Locale, negotiateLocale, translator } from './i18n';
 
 const LOGIN_MAX_PER_MINUTE = 10;
 
-const localeOf = (request: FastifyRequest): Locale =>
+export const localeOf = (request: FastifyRequest): Locale =>
   sessionUser(request)?.locale ?? negotiateLocale(request.headers['accept-language']);
 
 export async function renderPage(
@@ -31,7 +31,6 @@ export async function renderPage(
 export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Database> }) {
   const { db } = opts;
 
-  // AGENTS.md §1.3: rate limit applies to POST /login only, not globally.
   await app.register(fastifyRateLimit, { global: false });
 
   app.get('/', async (request, reply) =>
@@ -67,6 +66,7 @@ export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Databa
           error: t('login.invalid'),
         });
       }
+      request.session.regenerate();
       request.session.set('userId', user.id);
       request.session.set('username', user.username);
       request.session.set('locale', user.locale);
@@ -87,5 +87,28 @@ export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Databa
       title: t('account.title'),
       username: user.username,
     });
+  });
+}
+
+export function registerErrorPages(app: FastifyInstance) {
+  app.setErrorHandler(async (error: FastifyError, request, reply) => {
+    const status = error.statusCode ?? 500;
+    const t = translator(localeOf(request));
+    let message: string | null = null;
+    if (status === 429) message = t('errors.rateLimit');
+    else if (error.code?.startsWith('FST_CSRF_')) message = t('errors.csrf');
+    if (message) {
+      return reply.status(status).view('error.eta', {
+        locale: localeOf(request),
+        t,
+        title: t('errors.title'),
+        message,
+      });
+    }
+    if (status >= 500) {
+      request.log.error(error);
+      return reply.status(500).send({ statusCode: 500, error: 'Internal Server Error' });
+    }
+    return reply.status(status).send({ statusCode: status, error: error.name });
   });
 }

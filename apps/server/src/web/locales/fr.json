@@ -13,6 +13,7 @@
     "logout": "Déconnexion"
   },
   "errors": {
+    "title": "Erreur",
     "csrf": "Jeton de formulaire invalide ou absent. Rechargez la page et réessayez.",
     "rateLimit": "Trop de tentatives. Réessayez dans une minute."
   }

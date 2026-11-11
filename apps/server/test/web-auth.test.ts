@@ -3,6 +3,7 @@ import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app';
 import type { Config } from '../src/config';
+import { createDb } from '../src/db/db';
 import { createUser } from '../src/users/users';
 import { startTestDb, type TestDb } from './helpers/db';
 
@@ -13,7 +14,7 @@ const config: Config = {
   sessionSecret: 'ab'.repeat(32),
   port: 3000,
   publicUrl: 'http://localhost:3000',
-  trustProxy: true,
+  trustProxy: 1,
   openSignup: false,
 };
 
@@ -124,6 +125,41 @@ describe('web auth', () => {
     });
     expect(logout.statusCode).toBe(302);
     expect(logout.headers.location).toBe('/login');
+    const cleared = String(logout.headers['set-cookie']);
+    expect(cleared).toMatch(/session=;/);
+    expect(cleared).toMatch(/Max-Age=0|Expires=Thu, 01 Jan 1970/i);
+    const after = await app.inject({
+      method: 'GET',
+      url: '/account',
+      headers: { cookie: cookieOf(logout) },
+    });
+    expect(after.statusCode).toBe(302);
+    expect(after.headers.location).toBe('/login');
+  });
+
+  it('rejects POST /logout without a CSRF token with 403', async () => {
+    const res = await app.inject({ method: 'POST', url: '/logout', headers: form, payload: '' });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it('renders a localized page on CSRF failure', async () => {
+    const { cookie } = await loginPage({ 'accept-language': 'fr' });
+    const res = await postLogin(
+      { username: 'carol', password: PASSWORD },
+      { cookie, headers: { ...form, 'accept-language': 'fr' }, remoteAddress: '10.0.0.4' },
+    );
+    expect(res.statusCode).toBe(403);
+    expect(res.headers['content-type']).toMatch(/text\/html/);
+    expect(res.body).toContain('Jeton de formulaire invalide');
+  });
+
+  it('returns 503 on /healthz when the database is unreachable', async () => {
+    const dead = createDb('postgres://u:p@127.0.0.1:1/db');
+    const deadApp = buildApp(config, dead);
+    const res = await deadApp.inject({ method: 'GET', url: '/healthz' });
+    expect(res.statusCode).toBe(503);
+    await deadApp.close();
+    await dead.destroy();
   });
 
   it('marks the cookie Secure behind an HTTPS proxy', async () => {
@@ -181,7 +217,9 @@ describe('web auth', () => {
         { cookie, headers: form, remoteAddress: '10.9.9.9' },
       );
     for (let i = 0; i < 10; i++) expect((await attempt()).statusCode).toBe(200);
-    expect((await attempt()).statusCode).toBe(429);
+    const limited = await attempt();
+    expect(limited.statusCode).toBe(429);
+    expect(limited.body).toContain('Too many attempts');
     const other = await app.inject({ method: 'GET', url: '/login', remoteAddress: '10.9.9.9' });
     expect(other.statusCode).toBe(200);
   });
@@ -194,4 +232,21 @@ describe('build output', () => {
       expect(existsSync(new URL('../dist/web/views/login.eta', import.meta.url))).toBe(true);
     },
   );
+});
+
+describe('proxy trust', () => {
+  it('ignores forged X-Forwarded-For entries when counting login attempts', async () => {
+    const { token, cookie } = await loginPage();
+    const attempt = (n: number) =>
+      postLogin(
+        { username: 'nobody', password: 'whatever12345', _csrf: token },
+        {
+          cookie,
+          headers: { ...form, 'x-forwarded-for': `203.0.113.${n}, 198.51.100.7` },
+          remoteAddress: '10.8.8.8',
+        },
+      );
+    for (let i = 0; i < 10; i++) expect((await attempt(i)).statusCode).toBe(200);
+    expect((await attempt(99)).statusCode).toBe(429);
+  });
 });

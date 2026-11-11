@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import fastifyCsrfProtection from '@fastify/csrf-protection';
 import fastifyFormbody from '@fastify/formbody';
 import fastifySecureSession from '@fastify/secure-session';
@@ -7,13 +8,25 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { type Kysely, sql } from 'kysely';
 import type { Config } from './config';
 import type { Database } from './db/schema';
-import { authRoutes } from './web/routes-auth';
+import { authRoutes, registerErrorPages } from './web/routes-auth';
 
 // Resolves from src/ in tests and from dist/ once built (views are copied next to the bundle).
-const VIEWS_DIR = new URL('./web/views', import.meta.url).pathname;
+const VIEWS_DIR = fileURLToPath(new URL('./web/views', import.meta.url));
 
-export function buildApp(config: Config, db: Kysely<Database>): FastifyInstance {
-  const app = Fastify({ trustProxy: config.trustProxy });
+// Fastify's numeric trustProxy never trusts X-Forwarded-Proto, so a hop count becomes a function.
+function toTrustProxy(value: Config['trustProxy']) {
+  return typeof value === 'number' ? (_address: string, hop: number) => hop < value : value;
+}
+
+export function buildApp(
+  config: Config,
+  db: Kysely<Database>,
+  options: { logger?: boolean } = {},
+): FastifyInstance {
+  const app = Fastify({
+    trustProxy: toTrustProxy(config.trustProxy),
+    logger: options.logger ? { level: 'info' } : false,
+  });
 
   app.register(fastifyFormbody);
   app.register(fastifySecureSession, {
@@ -37,6 +50,7 @@ export function buildApp(config: Config, db: Kysely<Database>): FastifyInstance 
     }
   });
 
+  registerErrorPages(app);
   app.register(authRoutes, { db });
   return app;
 }

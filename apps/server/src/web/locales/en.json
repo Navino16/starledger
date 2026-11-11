@@ -13,6 +13,7 @@
     "logout": "Sign out"
   },
   "errors": {
+    "title": "Error",
     "csrf": "Invalid or missing form token. Reload the page and try again.",
     "rateLimit": "Too many attempts. Try again in a minute."
   }

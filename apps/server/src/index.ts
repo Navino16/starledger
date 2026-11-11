@@ -13,7 +13,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
   const db = createDb(config.databaseUrl);
-  const app = buildApp(config, db);
+  const app = buildApp(config, db, { logger: true });
 
   const shutdown = async () => {
     await app.close();

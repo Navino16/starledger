@@ -11,7 +11,7 @@ describe('loadConfig', () => {
   it('applies defaults', () => {
     const config = loadConfig(base);
     expect(config.port).toBe(3000);
-    expect(config.trustProxy).toBe(true);
+    expect(config.trustProxy).toBe(1);
     expect(config.openSignup).toBe(false);
     expect(config.publicUrl).toBe(base.PUBLIC_URL);
   });
@@ -21,6 +21,19 @@ describe('loadConfig', () => {
     expect(config.port).toBe(8080);
     expect(config.trustProxy).toBe(false);
     expect(config.openSignup).toBe(true);
+  });
+
+  it.each([
+    ['true', true],
+    ['false', false],
+    ['2', 2],
+    ['10.0.0.0/8, 192.168.1.1', ['10.0.0.0/8', '192.168.1.1']],
+  ])('parses TRUST_PROXY=%s', (raw, expected) => {
+    expect(loadConfig({ ...base, TRUST_PROXY: raw }).trustProxy).toEqual(expected);
+  });
+
+  it('rejects an empty TRUST_PROXY list entry', () => {
+    expect(() => loadConfig({ ...base, TRUST_PROXY: '10.0.0.1,' })).toThrow();
   });
 
   it('rejects a SESSION_SECRET that is too short', () => {
