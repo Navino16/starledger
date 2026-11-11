@@ -206,10 +206,10 @@ Couverture :
 
 ### Tâche 0.4 : Mise en service sur GitHub (après création du remote)
 
-- [ ] L'utilisateur crée le dépôt, le secret `CODECOV_TOKEN` et un token d'API Codecov en lecture, exporté en `CODECOV_API_TOKEN` dans son shell.
-- [ ] Badge Codecov dans le README : `https://img.shields.io/codecov/c/github/Navino16/<repo>?style=flat-square&label=Coverage`, avec un lien vers `https://codecov.io/gh/Navino16/<repo>`.
-- [ ] Section « Codecov » dans le `CLAUDE.md` du projet : URL du projet et requêtes `curl` vers l'API v2 avec `$CODECOV_API_TOKEN` (totaux, couverture par fichier, comparaison de PR). Pas de serveur MCP Codecov : aucun n'est officiel.
-- [ ] Ruleset de branche : checks obligatoires `Lint`, `Typecheck`, `Build` et `Test (unit + coverage)` sur `main` et `develop`.
+- [x] L'utilisateur crée le dépôt, le secret `CODECOV_TOKEN` et un token d'API Codecov en lecture, exporté en `CODECOV_API_TOKEN` dans son shell.
+- [x] Badge Codecov dans le README : `https://img.shields.io/codecov/c/github/Navino16/<repo>?style=flat-square&label=Coverage`, avec un lien vers `https://codecov.io/gh/Navino16/<repo>`.
+- [x] Section « Codecov » dans le `CLAUDE.md` du projet : URL du projet et requêtes `curl` vers l'API v2 avec `$CODECOV_API_TOKEN` (totaux, couverture par fichier, comparaison de PR). Pas de serveur MCP Codecov : aucun n'est officiel.
+- [x] Ruleset de branche « Main/Develop », copié sur `budget` : merge squash uniquement, historique linéaire, checks obligatoires `Lint`, `Typecheck`, `Build`, `Test (unit + coverage)` et `CodeQL` (configuration par défaut activée), et blocage sur les alertes CodeQL.
 - [ ] Vérifier que la CI passe sur la PR du scope 0.
 
 ---

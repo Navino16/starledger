@@ -1,5 +1,10 @@
 # Starledger
 
+<p>
+  <a href="https://github.com/Navino16/starledger/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Navino16/starledger/ci.yml?label=CI&style=flat-square" alt="CI"></a>
+  <a href="https://codecov.io/gh/Navino16/starledger"><img src="https://img.shields.io/codecov/c/github/Navino16/starledger?style=flat-square&label=Coverage" alt="Coverage"></a>
+</p>
+
 Shared stats tracker for OGame: a Tampermonkey userscript collects data the player already sees in the game, and a self-hosted server stores and displays it.
 
 ## Layout
