@@ -110,7 +110,10 @@ export function renderOptions(ctx: UiContext): void {
     renderConfigureBox(ctx, () => renderConsent(ctx, () => renderOptions(ctx)));
   });
 
-  close.addEventListener('click', () => doc.getElementById(PANEL_ID)?.remove());
+  close.addEventListener('click', () => {
+    doc.getElementById(PANEL_ID)?.remove();
+    ctx.refreshBox?.();
+  });
 
   mountBox(
     doc,

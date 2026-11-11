@@ -169,7 +169,7 @@ describe('collector wiring', () => {
     main(gm, document, win, onCollected);
     await flushTick();
     expect(onCollected).not.toHaveBeenCalled();
-    expect(gm.requests).toHaveLength(0);
+    expect(gm.requests.filter((r) => r.method === 'POST')).toHaveLength(0);
   });
 
   it('installs nothing without consent', () => {

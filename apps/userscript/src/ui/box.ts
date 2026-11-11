@@ -1,0 +1,119 @@
+import type { ApiError, StatsResponse } from '@app/shared';
+import { errorKey, type MessageKey, type T } from '../i18n';
+import type { SyncState } from '../sync/queue';
+import { el, mountBox, PANEL_ID } from './dom';
+import { formatAmount, formatTime } from './format';
+
+const STATS_VIEW = 'stats';
+
+export type BoxModel = {
+  state: SyncState;
+  stats: StatsResponse | null;
+  statsAt: number | null;
+  stale: boolean;
+  configured: boolean;
+  consent: boolean;
+  statsError?: ApiError | null;
+};
+
+export type BoxHandlers = { t: T; onConfigure: () => void; onOpenDetails: () => void };
+
+const TILES = [
+  ['metal', 'tileMetal'],
+  ['crystal', 'tileCrystal'],
+  ['deuterium', 'tileDeuterium'],
+  ['darkMatter', 'tileDarkMatter'],
+  ['artefacts', 'tileArtefacts'],
+  ['msu', 'tileMsu'],
+] as const satisfies readonly [keyof StatsResponse['summary']['tiles'], MessageKey][];
+
+function tile(doc: Document, label: string, value: string): HTMLElement {
+  return el(
+    doc,
+    'span',
+    { className: 'starledger-tile' },
+    el(doc, 'span', { className: 'starledger-label', textContent: label }),
+    el(doc, 'span', { className: 'starledger-value', textContent: value }),
+  );
+}
+
+function fuelValue(stats: StatsResponse | null): string {
+  if (!stats) return '?';
+  const { recorded, unknownCount } = stats.summary.fuel;
+  // Unknown is not 0: a departure without a known consumption makes the total unknown
+  return unknownCount > 0 ? `? (${unknownCount})` : formatAmount(recorded);
+}
+
+function statusText(model: BoxModel, t: T): string {
+  const { state } = model;
+  if (state.status === 'error' && state.error) {
+    return t('statusError', { error: t(errorKey(state.error)) });
+  }
+  if (state.status === 'pending') return t('statusPending', { n: String(state.pending) });
+  return state.lastSyncAt === null
+    ? t('statusUpToDateNever')
+    : t('statusUpToDate', { time: formatTime(state.lastSyncAt) });
+}
+
+export function renderBox(container: HTMLElement, model: BoxModel, handlers: BoxHandlers): void {
+  const doc = container.ownerDocument;
+  const { t, onConfigure, onOpenDetails } = handlers;
+
+  if (!model.consent || !model.configured) {
+    const button = el(doc, 'button', {
+      type: 'button',
+      textContent: t(model.consent ? 'configureServer' : 'configure'),
+    });
+    button.addEventListener('click', onConfigure);
+    container.replaceChildren(
+      el(doc, 'div', {}, el(doc, 'strong', { textContent: t('boxTitle') }), ' ', button),
+    );
+    return;
+  }
+
+  const { stats } = model;
+  const tiles = el(doc, 'button', {
+    type: 'button',
+    className: 'starledger-tiles',
+    title: t('detailsHint'),
+  });
+  for (const [key, label] of TILES) {
+    const node = tile(doc, t(label), formatAmount(stats ? stats.summary.tiles[key] : null));
+    node.dataset.tile = key;
+    tiles.append(node);
+  }
+  const fuel = tile(doc, t('tileFuel'), fuelValue(stats));
+  fuel.dataset.tile = 'fuel';
+  fuel.classList.add('starledger-fuel');
+  tiles.append(fuel);
+  tiles.addEventListener('click', onOpenDetails);
+
+  const header = el(doc, 'div', {}, el(doc, 'strong', { textContent: t('boxTitle') }));
+  if (model.stale) {
+    const text =
+      model.statsAt === null ? t('stale') : t('staleAt', { time: formatTime(model.statsAt) });
+    header.append(' ', el(doc, 'em', { className: 'starledger-stale', textContent: text }));
+  }
+
+  const lines = [
+    el(doc, 'div', { className: 'starledger-status', textContent: statusText(model, t) }),
+  ];
+  if (model.statsError && model.state.error !== model.statsError) {
+    lines.push(
+      el(doc, 'div', {
+        className: 'starledger-status',
+        textContent: t('statusError', { error: t(errorKey(model.statsError)) }),
+      }),
+    );
+  }
+  container.replaceChildren(header, tiles, ...lines);
+}
+
+export function mountStatsBox(doc: Document, model: BoxModel, handlers: BoxHandlers): void {
+  // Never replace an open settings or consent panel
+  const existing = doc.getElementById(PANEL_ID);
+  if (existing && existing.dataset.view !== STATS_VIEW) return;
+  const box = el(doc, 'div');
+  renderBox(box, model, handlers);
+  if (mountBox(doc, box)) box.dataset.view = STATS_VIEW;
+}

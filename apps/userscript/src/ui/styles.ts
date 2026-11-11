@@ -6,4 +6,12 @@ export const UI_CSS = `
 .starledger-box input[type=text],.starledger-box input[type=password]{width:100%}
 .starledger-box ul{margin:6px 0;padding-left:18px}
 .starledger-status{margin:6px 0}
+
+.starledger-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:100%;margin:4px 0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.starledger-tile{display:flex;flex-direction:column;min-width:0;padding:2px 4px;background:#1c1c1c}
+.starledger-fuel{grid-column:1/-1}
+.starledger-label{font-size:10px;color:#888}
+.starledger-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.starledger-stale{color:#c90}
+@media (min-width:768px){.starledger-tile{padding:3px 6px}}
 `;
