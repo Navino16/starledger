@@ -6,6 +6,7 @@ import fastifyView from '@fastify/view';
 import { Eta } from 'eta';
 import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { type Kysely, sql } from 'kysely';
+import { apiPlugin } from './api/plugin';
 import type { Config } from './config';
 import type { Database } from './db/schema';
 import { loadUser } from './web/auth';
@@ -78,6 +79,7 @@ export function buildApp(
     }
   });
 
+  app.register(apiPlugin, { db, prefix: '/api/v1' });
   app.register(webRoutes, { db, config });
   return app;
 }
