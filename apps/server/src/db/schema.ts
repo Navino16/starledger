@@ -88,9 +88,9 @@ export interface UniverseSettingsTable {
   user_id: string;
   server_id: number;
   lang: string;
-  msu_metal: Generated<Numeric>;
-  msu_crystal: Generated<Numeric>;
-  msu_deuterium: Generated<Numeric>;
+  msu_metal: Numeric;
+  msu_crystal: Numeric;
+  msu_deuterium: Numeric;
   expedition_ship_ratio: Generated<number>;
   ignore_expe_ships_loss: Generated<boolean>;
   ignore_consumption: Generated<boolean>;

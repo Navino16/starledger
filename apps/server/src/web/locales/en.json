@@ -18,13 +18,15 @@
     "regenerate": "Regenerate the API key (revokes the current one)",
     "revoke": "Revoke the API key",
     "apiKeyTitle": "API key",
-    "keyCreated": "API key created. Copy it now: it will not be shown again."
+    "keyCreated": "API key created. Copy it now: it will not be shown again.",
+    "settingsTitle": "Valuation settings"
   },
   "errors": {
     "title": "Error",
     "csrf": "Invalid or missing form token. Reload the page and try again.",
     "rateLimit": "Too many attempts. Try again in a minute.",
-    "forbidden": "You do not have access to this page."
+    "forbidden": "You do not have access to this page.",
+    "notFound": "Page not found."
   },
   "signup": {
     "title": "Create an account",
@@ -40,5 +42,18 @@
     "create": "Create an invitation",
     "created": "Invitation created. Copy this link now: it is valid for 72 hours, can be used once, and will not be shown again.",
     "invalid": "This invitation is no longer valid: it is unknown, expired or already used."
+  },
+  "settings": {
+    "universe": "Universe {serverId} ({lang})",
+    "none": "Valuation settings appear here once the userscript has sent data for a universe.",
+    "msuMetal": "MSU ratio: metal",
+    "msuCrystal": "MSU ratio: crystal",
+    "msuDeuterium": "MSU ratio: deuterium",
+    "expeditionShipRatio": "Expedition ship value (%)",
+    "ignoreExpeShipsLoss": "Ignore ship losses in expeditions",
+    "ignoreConsumption": "Ignore fuel consumption",
+    "includeTradesInBalance": "Include trades in the balance",
+    "save": "Save",
+    "invalid": "Invalid settings: ratios must be between 0 (excluded) and 100, and the ship value an integer from 0 to 100."
   }
 }

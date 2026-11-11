@@ -18,13 +18,15 @@
     "regenerate": "Régénérer la clé API (révoque l'actuelle)",
     "revoke": "Révoquer la clé API",
     "apiKeyTitle": "Clé API",
-    "keyCreated": "Clé API créée. Copiez-la maintenant : elle ne sera plus affichée."
+    "keyCreated": "Clé API créée. Copiez-la maintenant : elle ne sera plus affichée.",
+    "settingsTitle": "Réglages de valorisation"
   },
   "errors": {
     "title": "Erreur",
     "csrf": "Jeton de formulaire invalide ou absent. Rechargez la page et réessayez.",
     "rateLimit": "Trop de tentatives. Réessayez dans une minute.",
-    "forbidden": "Vous n'avez pas accès à cette page."
+    "forbidden": "Vous n'avez pas accès à cette page.",
+    "notFound": "Page introuvable."
   },
   "signup": {
     "title": "Créer un compte",
@@ -40,5 +42,18 @@
     "create": "Créer une invitation",
     "created": "Invitation créée. Copiez ce lien maintenant : il est valable 72 heures, utilisable une seule fois, et ne sera plus affiché.",
     "invalid": "Cette invitation n'est plus valide : elle est inconnue, expirée ou déjà utilisée."
+  },
+  "settings": {
+    "universe": "Univers {serverId} ({lang})",
+    "none": "Les réglages de valorisation apparaissent ici une fois que le userscript a envoyé des données pour un univers.",
+    "msuMetal": "Ratio MSU : métal",
+    "msuCrystal": "Ratio MSU : cristal",
+    "msuDeuterium": "Ratio MSU : deutérium",
+    "expeditionShipRatio": "Valeur des vaisseaux en expédition (%)",
+    "ignoreExpeShipsLoss": "Ignorer les pertes de vaisseaux en expédition",
+    "ignoreConsumption": "Ignorer la consommation de carburant",
+    "includeTradesInBalance": "Inclure les échanges dans le bilan",
+    "save": "Enregistrer",
+    "invalid": "Réglages invalides : les ratios doivent être compris entre 0 (exclu) et 100, et la valeur des vaisseaux un entier de 0 à 100."
   }
 }
