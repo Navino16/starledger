@@ -1,0 +1,41 @@
+{
+  "synthetic": true,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000009",
+    "account": { "serverId": 808, "lang": "en", "playerId": 100001, "playerName": "Tester" },
+    "observedAt": 1790000960000,
+    "serverUtcOffsetMinutes": 60,
+    "msgId": 5009,
+    "messageType": 41,
+    "subtabId": 22,
+    "raw": {
+      "messagetype": "41",
+      "timestamp": "1790000900",
+      "coords": "4:100:16",
+      "expeditionresult": "items",
+      "size": "0",
+      "itemsgained": "[{\"id\":\"a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6\",\"amount\":1,\"name\":\"Bronze Detroid Premium Item\"}]"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:5009",
+    "occurredAt": 1790000900000,
+    "event": {
+      "kind": "expedition",
+      "coords": { "galaxy": 4, "system": 100, "position": 16 },
+      "result": "item",
+      "size": "large",
+      "depletion": null,
+      "resources": null,
+      "darkMatter": null,
+      "shipsFound": null,
+      "shipsLost": null,
+      "itemId": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+      "lifeform": null,
+      "lifeformXp": null,
+      "artifacts": null
+    }
+  }
+}

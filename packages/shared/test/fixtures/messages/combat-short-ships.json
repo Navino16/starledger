@@ -1,0 +1,31 @@
+{
+  "synthetic": true,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000017",
+    "account": { "serverId": 808, "lang": "en", "playerId": 100001, "playerName": "Tester" },
+    "observedAt": 1790001760000,
+    "serverUtcOffsetMinutes": 60,
+    "msgId": 5017,
+    "messageType": 48,
+    "subtabId": 21,
+    "raw": {
+      "messagetype": "48",
+      "timestamp": "1790001700",
+      "coords": "4:100:11",
+      "shipslost": "{\"204\":4,\"210\":1}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:5017",
+    "occurredAt": 1790001700000,
+    "event": {
+      "kind": "combat_short",
+      "coords": { "galaxy": 4, "system": 100, "position": 11 },
+      "isExpedition": false,
+      "isProbeOnly": false,
+      "shipsLost": { "204": 4, "210": 1 }
+    }
+  }
+}
