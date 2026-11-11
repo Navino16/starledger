@@ -51,7 +51,31 @@ export type LifeformDiscoveryEvent = {
   shipsLost: ShipCounts | null;
 };
 
-export type ParsedEvent = ExpeditionEvent | LifeformDiscoveryEvent;
+export type CombatOutcome = 'won' | 'lost' | 'draw';
+
+export type CombatEvent = {
+  kind: 'combat';
+  coords: Coords;
+  isExpedition: boolean;
+  isProbeOnly: boolean;
+  ownSide: 'attacker' | 'defender';
+  ownPlanetDefended: boolean;
+  outcome: CombatOutcome;
+  loot: Resources;
+  lootSign: 1 | -1 | 0;
+  debrisCreated: Resources;
+  shipsLost: ShipCounts;
+};
+
+export type ShortCombatEvent = {
+  kind: 'combat_short';
+  coords: Coords;
+  isExpedition: boolean;
+  isProbeOnly: boolean;
+  shipsLost: ShipCounts;
+};
+
+export type ParsedEvent = ExpeditionEvent | LifeformDiscoveryEvent | CombatEvent | ShortCombatEvent;
 
 export type ParseResult =
   | { status: 'ok'; externalKey: string; occurredAt: number; event: ParsedEvent }
