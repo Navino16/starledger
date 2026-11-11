@@ -5,7 +5,7 @@ import { loadConfig } from './config';
 import { createDb } from './db/db';
 import { migrateToLatest } from './db/migrate';
 import type { Database } from './db/schema';
-import { reparseEvents, UnknownUserError } from './ingest/reparse';
+import { reparseEvents } from './ingest/reparse';
 import { createUser } from './users/users';
 
 export interface CliIo {
@@ -106,16 +106,11 @@ export async function runCli(argv: string[], io: CliIo): Promise<number> {
       const log = {
         warn: (obj: object, msg: string) => io.stderr.write(`${msg} ${JSON.stringify(obj)}\n`),
       };
-      try {
-        const r = await reparseEvents(io.db, { username: user, log });
-        io.stdout.write(
-          `updated: ${r.updated}\nstillUnrecognized: ${r.stillUnrecognized}\nnewConflicts: ${r.newConflicts}\nskipped: ${r.skipped}\n`,
-        );
-        return 0;
-      } catch (error) {
-        if (error instanceof UnknownUserError) throw new Error(error.message);
-        throw error;
-      }
+      const r = await reparseEvents(io.db, { username: user, log });
+      io.stdout.write(
+        `updated: ${r.updated}\nstillUnrecognized: ${r.stillUnrecognized}\nnewConflicts: ${r.newConflicts}\nskipped: ${r.skipped}\n`,
+      );
+      return 0;
     }
     io.stderr.write(USAGE);
     return 2;

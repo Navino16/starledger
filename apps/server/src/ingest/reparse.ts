@@ -96,10 +96,13 @@ async function reparseOne(
 
   const obs = row.payload as Observation;
   const result = interpret(obs, row.external_key, log);
-  const outcome = await mergeReading(trx, row, result, obs.serverUtcOffsetMinutes);
+  const outcome = await mergeReading(trx, row, result, obs.serverUtcOffsetMinutes, {
+    sameSource: true,
+  });
 
   if (outcome === 'replaced') counts.updated++;
   else if (outcome === 'new_conflict') counts.newConflicts++;
+  // An ok event that now reads as unrecognized keeps its data and is not counted.
   else if (row.status === 'unrecognized') counts.stillUnrecognized++;
 
   // Bump the version on every outcome so the event is not reprocessed on the next run.

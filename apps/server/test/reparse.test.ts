@@ -15,8 +15,7 @@ vi.mock('@app/shared', async (importOriginal) => {
 });
 
 let t: TestDb;
-let aliceId: string;
-let bobId: string;
+let userSeq = 0;
 let nextMsgId = 50_000;
 
 function expedition(rawPatch: Record<string, string> = {}): MessageObservation {
@@ -48,6 +47,19 @@ const send = (userId: string, obs: MessageObservation) =>
     deviceId: randomUUID(),
     observations: [obs],
   });
+
+async function freshUser() {
+  const username = `user${userSeq++}`;
+  const user = await createUser(t.db, {
+    username,
+    password: 'correct horse battery',
+    isAdmin: false,
+    locale: 'en',
+  });
+  return { id: user.id, username };
+}
+
+const NONE = { updated: 0, stillUnrecognized: 0, newConflicts: 0, skipped: 0 };
 
 const eventOf = (obs: MessageObservation) =>
   t.db
@@ -91,22 +103,35 @@ const sink = () => {
 
 beforeAll(async () => {
   t = await startTestDb();
-  const mk = (username: string) =>
-    createUser(t.db, { username, password: 'correct horse battery', isAdmin: false, locale: 'en' });
-  aliceId = (await mk('alice')).id;
-  bobId = (await mk('bob')).id;
 }, 120_000);
 
 afterAll(async () => {
   await t.teardown();
 });
 
+const unrecognizedOnce = (obs: MessageObservation) =>
+  vi.mocked(shared.parseMessage).mockImplementationOnce(() => ({
+    status: 'unrecognized',
+    externalKey: `msg:${obs.msgId}`,
+    occurredAt: null,
+    reason: 'still',
+  }));
+
+async function differentReadingOnce() {
+  const actual = await vi.importActual<typeof import('@app/shared')>('@app/shared');
+  vi.mocked(shared.parseMessage).mockImplementationOnce((o) => {
+    const res = actual.parseMessage(o);
+    if (res.status !== 'ok') return res;
+    return { ...res, event: { ...res.event, size: 99 } as typeof res.event };
+  });
+}
+
 describe('reparseEvents', () => {
   it('turns an unrecognized event into ok once the parser reads it', async () => {
-    const obs = await ingestUnrecognized(aliceId);
+    const u = await freshUser();
+    const obs = await ingestUnrecognized(u.id);
     expect((await eventOf(obs)).status).toBe('unrecognized');
-    const r = await reparseEvents(t.db, { username: 'alice' });
-    expect(r.updated).toBeGreaterThanOrEqual(1);
+    expect(await reparseEvents(t.db, { username: u.username })).toEqual({ ...NONE, updated: 1 });
     const e = await eventOf(obs);
     expect(e.status).toBe('ok');
     expect(e.kind).not.toBeNull();
@@ -115,75 +140,128 @@ describe('reparseEvents', () => {
   });
 
   it('leaves an up-to-date ok event untouched', async () => {
+    const u = await freshUser();
     const obs = expedition();
-    await send(aliceId, obs);
+    await send(u.id, obs);
     const before = await eventOf(obs);
-    await reparseEvents(t.db);
+    expect(await reparseEvents(t.db, { username: u.username })).toEqual(NONE);
     expect(await eventOf(obs)).toEqual(before);
   });
 
   it('bumps parser_version of an unchanged old event without altering it', async () => {
+    const u = await freshUser();
     const obs = expedition();
-    await send(aliceId, obs);
+    await send(u.id, obs);
     await setVersion(obs, 0);
     const before = await eventOf(obs);
-    const r = await reparseEvents(t.db, { username: 'alice' });
+    expect(await reparseEvents(t.db, { username: u.username })).toEqual(NONE);
     const after = await eventOf(obs);
     expect(after.parser_version).toBe(shared.PARSER_VERSION);
     expect({ ...after, parser_version: 0 }).toEqual({ ...before, parser_version: 0 });
-    const again = await reparseEvents(t.db, { username: 'alice' });
-    expect(again).toEqual({ updated: 0, stillUnrecognized: 0, newConflicts: 0, skipped: 0 });
-    expect(r.newConflicts).toBe(0);
   });
 
-  it('marks an old ok event as conflict when it now parses differently', async () => {
+  it('replaces an old ok event that now parses differently, without a conflict', async () => {
+    const u = await freshUser();
     const obs = expedition();
-    await send(aliceId, obs);
+    await send(u.id, obs);
     await setVersion(obs, 0);
-    const original = await eventOf(obs);
-    const actual = await vi.importActual<typeof import('@app/shared')>('@app/shared');
-    vi.mocked(shared.parseMessage).mockImplementationOnce((o) => {
-      const res = actual.parseMessage(o);
-      if (res.status !== 'ok') return res;
-      return { ...res, event: { ...res.event, size: 99 } as typeof res.event };
-    });
-    const r = await reparseEvents(t.db, { username: 'alice' });
-    expect(r.newConflicts).toBe(1);
+    await differentReadingOnce();
+    expect(await reparseEvents(t.db, { username: u.username })).toEqual({ ...NONE, updated: 1 });
     const e = await eventOf(obs);
-    expect(e.status).toBe('conflict');
-    expect(e.data).toEqual(original.data);
+    expect(e.status).toBe('ok');
+    expect(e.data).toMatchObject({ size: 99 });
     expect(e.parser_version).toBe(shared.PARSER_VERSION);
   });
 
+  it('replaces a conflict event with the valid re-read of its source observation', async () => {
+    const u = await freshUser();
+    const obs = expedition();
+    await send(u.id, obs);
+    const other = { ...expedition({ resourcesgained: '{"metal":5}' }), msgId: obs.msgId };
+    expect((await send(u.id, other)).results[0]?.status).toBe('conflict');
+    expect((await eventOf(obs)).status).toBe('conflict');
+    await setVersion(obs, 0);
+    expect(await reparseEvents(t.db, { username: u.username })).toEqual({ ...NONE, updated: 1 });
+    const e = await eventOf(obs);
+    expect(e.status).toBe('ok');
+    expect(e.data).toMatchObject({ kind: 'expedition' });
+  });
+
+  it('keeps an old ok event that now reads as unrecognized and counts nothing', async () => {
+    const u = await freshUser();
+    const obs = expedition();
+    await send(u.id, obs);
+    await setVersion(obs, 0);
+    const before = await eventOf(obs);
+    unrecognizedOnce(obs);
+    expect(await reparseEvents(t.db, { username: u.username })).toEqual(NONE);
+    const after = await eventOf(obs);
+    expect(after.status).toBe('ok');
+    expect(after.data).toEqual(before.data);
+    expect(after.parser_version).toBe(shared.PARSER_VERSION);
+  });
+
   it('counts events that stay unrecognized, including when the parser throws', async () => {
-    const a = await ingestUnrecognized(aliceId);
-    const b = await ingestUnrecognized(aliceId);
-    vi.mocked(shared.parseMessage).mockImplementationOnce(() => ({
-      status: 'unrecognized',
-      externalKey: `msg:${a.msgId}`,
-      occurredAt: null,
-      reason: 'still',
-    }));
+    const u = await freshUser();
+    const a = await ingestUnrecognized(u.id);
+    const b = await ingestUnrecognized(u.id);
+    unrecognizedOnce(a);
     vi.mocked(shared.parseMessage).mockImplementationOnce(() => {
       throw new Error('boom');
     });
     const warn = vi.fn();
-    const r = await reparseEvents(t.db, { username: 'alice', log: { warn } });
-    expect(r.stillUnrecognized).toBe(2);
+    const r = await reparseEvents(t.db, { username: u.username, log: { warn } });
+    expect(r).toEqual({ ...NONE, stillUnrecognized: 2 });
     expect(warn).toHaveBeenCalledTimes(1);
     expect((await eventOf(a)).status).toBe('unrecognized');
     expect((await eventOf(b)).status).toBe('unrecognized');
-    await reparseEvents(t.db, { username: 'alice' });
   });
 
   it('limits the run to the given user', async () => {
-    const mine = await ingestUnrecognized(aliceId);
-    const theirs = await ingestUnrecognized(bobId);
-    await reparseEvents(t.db, { username: 'bob' });
+    const alice = await freshUser();
+    const bob = await freshUser();
+    const mine = await ingestUnrecognized(alice.id);
+    const theirs = await ingestUnrecognized(bob.id);
+    expect(await reparseEvents(t.db, { username: bob.username })).toEqual({ ...NONE, updated: 1 });
     expect((await eventOf(theirs)).status).toBe('ok');
     expect((await eventOf(mine)).status).toBe('unrecognized');
-    await reparseEvents(t.db);
+    expect((await reparseEvents(t.db)).updated).toBeGreaterThanOrEqual(1);
     expect((await eventOf(mine)).status).toBe('ok');
+  });
+
+  it('skips an event the database rejects and continues the run', async () => {
+    const u = await freshUser();
+    const bad = await ingestUnrecognized(u.id);
+    const good = await ingestUnrecognized(u.id);
+    vi.mocked(shared.parseMessage).mockImplementationOnce(() => {
+      return {
+        status: 'ok',
+        externalKey: `msg:${bad.msgId}`,
+        occurredAt: Number.NaN,
+        event: { kind: 'expedition' } as never,
+      };
+    });
+    const warn = vi.fn();
+    const r = await reparseEvents(t.db, { username: u.username, log: { warn } });
+    expect(r).toEqual({ ...NONE, updated: 1, skipped: 1 });
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect((await eventOf(bad)).status).toBe('unrecognized');
+    expect((await eventOf(good)).status).toBe('ok');
+  });
+
+  it('aborts on a non-data error', async () => {
+    const u = await freshUser();
+    await ingestUnrecognized(u.id);
+    const failing = t.db.withPlugin({
+      transformQuery(args) {
+        if (args.node.kind === 'UpdateQueryNode') throw new Error('connection lost');
+        return args.node;
+      },
+      transformResult: async (args) => args.result,
+    });
+    await expect(reparseEvents(failing, { username: u.username })).rejects.toThrow(
+      'connection lost',
+    );
   });
 
   it('rejects an unknown user', async () => {
@@ -205,18 +283,38 @@ describe('runCli reparse', () => {
   };
 
   it('prints the counters', async () => {
-    await ingestUnrecognized(aliceId);
-    const r = await run(['--user', 'alice']);
+    const u = await freshUser();
+    await ingestUnrecognized(u.id);
+    const r = await run(['--user', u.username]);
     expect(r.code).toBe(0);
-    expect(r.out).toMatch(/updated: [1-9]/);
-    expect(r.out).toContain('stillUnrecognized: 0');
-    expect(r.out).toContain('newConflicts: 0');
+    expect(r.out).toBe('updated: 1\nstillUnrecognized: 0\nnewConflicts: 0\nskipped: 0\n');
   });
 
   it('exits non-zero on an unknown user', async () => {
     const r = await run(['--user', 'nobody']);
     expect(r.code).toBe(1);
     expect(r.err).toContain('Unknown user "nobody"');
+  });
+
+  it('exits non-zero on a non-data error', async () => {
+    const u = await freshUser();
+    await ingestUnrecognized(u.id);
+    const err = sink();
+    const failing = t.db.withPlugin({
+      transformQuery(args) {
+        if (args.node.kind === 'UpdateQueryNode') throw new Error('connection lost');
+        return args.node;
+      },
+      transformResult: async (args) => args.result,
+    });
+    const code = await runCli(['reparse', '--user', u.username], {
+      stdin: Readable.from([]),
+      stdout: sink().stream,
+      stderr: err.stream,
+      db: failing,
+    });
+    expect(code).toBe(1);
+    expect(err.text()).toContain('connection lost');
   });
 
   it('runs for all users without --user', async () => {

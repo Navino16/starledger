@@ -188,7 +188,9 @@ async function ingestValid(
     .where('external_key', '=', result.externalKey)
     .executeTakeFirstOrThrow();
 
-  const outcome = await mergeReading(trx, existing, result, obs.serverUtcOffsetMinutes);
+  const outcome = await mergeReading(trx, existing, result, obs.serverUtcOffsetMinutes, {
+    observationId: inserted.id,
+  });
   if (outcome === 'replaced') return 'accepted';
   if (outcome === 'conflict' || outcome === 'new_conflict') return 'conflict';
   return 'duplicate';
