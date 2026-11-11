@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app';
@@ -126,9 +127,48 @@ describe('api keys', () => {
   });
 
   it('serializes concurrent regenerations', async () => {
-    const keys = await Promise.all([generateApiKey(t.db, aliceId), generateApiKey(t.db, aliceId)]);
-    const results = await Promise.all(keys.map((k) => authenticateApiKey(t.db, k)));
-    expect(results.filter(Boolean)).toHaveLength(1);
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let locked = () => {};
+    const holding = new Promise<void>((resolve) => {
+      locked = resolve;
+    });
+    // Mimics a first regeneration paused between its revoke and its insert.
+    const first = t.db.transaction().execute(async (trx) => {
+      await trx.selectFrom('users').select('id').where('id', '=', aliceId).forUpdate().execute();
+      await trx
+        .updateTable('api_keys')
+        .set({ revoked_at: new Date() })
+        .where('user_id', '=', aliceId)
+        .where('revoked_at', 'is', null)
+        .execute();
+      locked();
+      await gate;
+      await trx
+        .insertInto('api_keys')
+        .values({
+          id: randomUUID(),
+          user_id: aliceId,
+          key_hash: 'f'.repeat(64),
+          key_prefix: 'slk_ffff',
+        })
+        .execute();
+    });
+    await holding;
+
+    let settled = false;
+    const second = generateApiKey(t.db, aliceId).finally(() => {
+      settled = true;
+    });
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    expect(settled).toBe(false);
+
+    release();
+    await first;
+    const key = await second;
+    expect(await authenticateApiKey(t.db, key)).toEqual({ userId: aliceId });
     const active = await t.db
       .selectFrom('api_keys')
       .select('id')
