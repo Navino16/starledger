@@ -1,6 +1,6 @@
-# OGame Dashboard
+# Starledger
 
-A shared OGame stats tracker: a Tampermonkey userscript collects data the player already sees in the game, and a self-hosted server stores and displays it.
+Shared stats tracker for OGame: a Tampermonkey userscript collects data the player already sees in the game, and a self-hosted server stores and displays it.
 
 ## Layout
 

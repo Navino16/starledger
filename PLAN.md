@@ -742,7 +742,7 @@ Branche : `feature/userscript-foundation`. Tous les accès `GM_*` passent par un
     - grants `GM_getValue`, `GM_setValue`, `GM_deleteValue`, `GM_xmlhttpRequest`, `GM_addStyle`, `GM_registerMenuCommand` ;
     - `connect: ['*']` ;
     - `build.minify: false` ;
-    - nom de travail ; `@updateURL` est ajouté au scope 14.
+    - `name: 'Starledger'` ; `@updateURL` est ajouté au scope 14.
   - `apps/userscript/src/gm.ts` : `interface Gm { get<T>(k, d: T): T; set(k, v): void; request(opts): Promise<{status:number; body:string}>; addStyle(css): HTMLStyleElement; menu(label, fn): void }`, plus `realGm` et `memoryGm()` (tests).
   - `apps/userscript/src/storage.ts` : `ClientSettings = { serverUrl: string | null; apiKey: string | null; consent: boolean; hideOglightBox: boolean; deviceId: string }`, avec `loadSettings(gm)` (génère et enregistre `deviceId` au premier appel) et `saveSettings(gm, patch)`.
 - Test : `apps/userscript/test/storage.test.ts`, `apps/userscript/test/build.test.ts`
@@ -1055,7 +1055,7 @@ Travail prévu :
 
 ## Scope 14 — Dossier de tolérance et publication
 
-Branche : `feature/toleration-release`. **Prérequis** : nom du projet choisi (design §9.5), réponses écrites des ToolDevs aux questions du design §9.4, et remote GitHub public créé.
+Branche : `feature/toleration-release`. **Prérequis** : réponses écrites des ToolDevs aux questions du design §9.4.
 
 ### Tâche 14.1 : Métadonnées de diffusion et documents
 
