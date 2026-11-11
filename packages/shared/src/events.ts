@@ -75,7 +75,26 @@ export type ShortCombatEvent = {
   shipsLost: ShipCounts;
 };
 
-export type ParsedEvent = ExpeditionEvent | LifeformDiscoveryEvent | CombatEvent | ShortCombatEvent;
+export type RecyclingEvent = {
+  kind: 'recycling';
+  coords: Coords;
+  isExpedition: boolean;
+  resources: Resources;
+};
+
+export type WreckfieldEvent = {
+  kind: 'wreckfield';
+  coords: Coords;
+  shipsRecovered: ShipCounts;
+};
+
+export type ParsedEvent =
+  | ExpeditionEvent
+  | LifeformDiscoveryEvent
+  | CombatEvent
+  | ShortCombatEvent
+  | RecyclingEvent
+  | WreckfieldEvent;
 
 export type ParseResult =
   | { status: 'ok'; externalKey: string; occurredAt: number; event: ParsedEvent }
