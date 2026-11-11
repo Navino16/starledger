@@ -6,7 +6,7 @@ type NullableTimestamp = ColumnType<
   Date | string | null | undefined,
   Date | string | null
 >;
-type BigInt = ColumnType<string, string | number | bigint, string | number | bigint>;
+type Int8 = ColumnType<string, string | number | bigint, string | number | bigint>;
 type Numeric = ColumnType<string, string | number | undefined, string | number>;
 
 export interface UsersTable {
@@ -42,7 +42,7 @@ export interface AccountsTable {
   user_id: string;
   server_id: number;
   lang: string;
-  player_id: BigInt;
+  player_id: Int8;
   player_name: string | null;
   created_at: Generated<Timestamp>;
 }
@@ -59,7 +59,7 @@ export interface DevicesTable {
 export interface ObservationsTable {
   id: Generated<string>;
   user_id: string;
-  account_id: BigInt;
+  account_id: Int8;
   device_id: string;
   client_observation_id: string;
   kind: string;
@@ -72,7 +72,7 @@ export interface ObservationsTable {
 
 export interface EventsTable {
   id: Generated<string>;
-  account_id: BigInt;
+  account_id: Int8;
   external_key: string;
   kind: string | null;
   status: 'ok' | 'unrecognized' | 'conflict';
@@ -80,7 +80,7 @@ export interface EventsTable {
   day: ColumnType<string | null, string | null | undefined, string | null>;
   data: ColumnType<unknown, string | null | undefined, string | null>;
   parser_version: number;
-  first_observation_id: BigInt;
+  first_observation_id: Int8;
   created_at: Generated<Timestamp>;
 }
 

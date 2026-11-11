@@ -1,3 +1,4 @@
+import { STATUS_CODES } from 'node:http';
 import fastifyRateLimit from '@fastify/rate-limit';
 import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Kysely } from 'kysely';
@@ -109,6 +110,8 @@ export function registerErrorPages(app: FastifyInstance) {
       request.log.error(error);
       return reply.status(500).send({ statusCode: 500, error: 'Internal Server Error' });
     }
-    return reply.status(status).send({ statusCode: status, error: error.name });
+    return reply
+      .status(status)
+      .send({ statusCode: status, error: STATUS_CODES[status] ?? 'Error' });
   });
 }

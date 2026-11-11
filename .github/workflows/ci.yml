@@ -59,7 +59,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
-      - run: test -f apps/server/dist/web/views/login.eta && test -f apps/server/dist/web/views/layout.eta && test -f apps/server/dist/web/views/account.eta
+      - shell: bash
+        run: diff <(ls apps/server/src/web/views) <(ls apps/server/dist/web/views)
 
   test:
     name: Test (unit + coverage)

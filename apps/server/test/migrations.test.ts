@@ -50,7 +50,7 @@ describe('migration 0001', () => {
         .insertInto('api_keys')
         .values({ id: randomUUID(), user_id: userId, key_hash: 'k2', key_prefix: 'p2' })
         .execute(),
-    ).rejects.toThrow();
+    ).rejects.toMatchObject({ code: '23505' });
     await t.db
       .updateTable('api_keys')
       .set({ revoked_at: sql`now()` })
