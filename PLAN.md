@@ -273,8 +273,8 @@ Branche : `feature/shared-parsers`. Référence des formats : `docs/ogame-data-f
   - `parseExpedition(obs): ParseResult`, `parseLifeformDiscovery(obs): ParseResult` ;
   - `ExpeditionEvent` : `{kind:'expedition', coords, result, size, depletion, resources, darkMatter, shipsFound, shipsLost, itemId, lifeform, lifeformXp, artifacts}` ;
   - `ExpeditionResult` : `'resources'|'darkmatter'|'nothing'|'ships'|'trader'|'item'|'blackhole'|'early'|'late'|'pirates'|'aliens'` ;
-  - `size` : `'small'|'medium'|'large'|null`, avec 2 = small, 1 = medium et 0 = large ;
-  - `LifeformDiscoveryEvent` : `{kind:'lifeform_discovery', coords, result:'none'|'artifacts'|'lifeform_xp'|'ship_lost'|'lifeform_found', lifeform, xp, artifacts, artifactsSize:'normal'|'big'|'huge'|'full'|null, shipsLost}`.
+  - `size` et `depletion` : l'entier brut du jeu ou `null`. Une valeur inconnue est gardée telle quelle ; les libellés sont exportés à part (`EXPEDITION_SIZES` : 2 = small, 1 = medium et 0 = large) et appliqués à l'affichage ;
+  - `LifeformDiscoveryEvent` : `{kind:'lifeform_discovery', coords, result:'none'|'artifacts'|'lifeform_xp'|'ship_lost'|'lifeform_found', lifeform, xp, artifacts, artifactsSize: string|null, shipsLost}`. `artifactsSize` garde la chaîne brute du jeu (`ARTIFACT_SIZES` liste les valeurs connues).
 
 - [x] **Step 1 : tests, pilotés par les fixtures.** Chaque fixture vérifie `toEqual(expected)`. Cas supplémentaires :
   - `resourcesgained` en JSON invalide : `unrecognized`, avec une `reason` qui contient `resourcesgained`.
@@ -305,7 +305,7 @@ Branche : `feature/shared-parsers`. Référence des formats : `docs/ogame-data-f
 - [x] **Step 1 : tests sur les fixtures**, plus les règles suivantes :
   - **Notre camp** : les entrées de `fleets` dont `player.id === obs.account.playerId`.
   - **`lootSign`** : +1 si on attaque et qu'on gagne ; −1 si `defenderspaceobject.owner.id` est le nôtre et que l'attaquant gagne ; 0 sinon, et toujours 0 en position 16.
-  - **`shipsLost`** : somme des `destroyedTotal` du dernier round sur nos `fleetId`, moins `repairedTechnologies` quand on défend notre planète. Seuls les ids ≥ 200 et < 300 sont gardés (les défenses ne sont pas des vaisseaux).
+  - **`shipsLost`** : somme des `destroyedTotal` du dernier round sur nos `fleetId`, moins `repairedTechnologies` quand on défend notre planète. Dans un `result` présent, `loot`, `debris` ou `repairedTechnologies` absents valent une liste vide (à vérifier sur le PTS au scope 10). Seuls les ids ≥ 200 et < 300 sont gardés (les défenses ne sont pas des vaisseaux).
   - **`debrisCreated`** : à partir de `result.debris.resources[].total`.
   - **`isProbeOnly`** : toutes les flottes attaquantes n'ont que la technologie 210.
   - **Combat en un round (48)** : `isProbeOnly` si `shipslost` n'a que la clé 210.
