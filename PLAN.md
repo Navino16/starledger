@@ -739,18 +739,21 @@ Branche : `feature/userscript-foundation`. Tous les accès `GM_*` passent par un
 **Files :**
 - Create :
   - `apps/userscript/vite.config.ts` (vite-plugin-monkey) :
-    - `match: ['https://*.ogame.gameforge.com/game/index.php*']` ;
+    - `match: ['https://s808-en.ogame.gameforge.com/game/index.php*']` : **PTS uniquement** (Singularity, en_808) jusqu'à la tolérance, retiré au scope 14 ;
     - grants `GM_getValue`, `GM_setValue`, `GM_deleteValue`, `GM_xmlhttpRequest`, `GM_addStyle`, `GM_registerMenuCommand` ;
     - `connect: ['*']` ;
     - `build.minify: false` ;
     - `name: 'Starledger'` ; `@updateURL` est ajouté au scope 14.
   - `apps/userscript/src/gm.ts` : `interface Gm { get<T>(k, d: T): T; set(k, v): void; request(opts): Promise<{status:number; body:string}>; addStyle(css): HTMLStyleElement; menu(label, fn): void }`, plus `realGm` et `memoryGm()` (tests).
+  - `apps/userscript/src/pts-guard.ts` : `PTS_UNIVERSES = ['s808-en.ogame.gameforge.com']` et `isAllowedUniverse(doc): boolean`, qui lit la meta `ogame-universe`. L'entrée du script l'appelle en premier et s'arrête si elle renvoie `false` : aucun encart, aucune collecte, aucun envoi. Commentaire de conformité : `// AGENTS.md §5: PTS only until toleration, removed in scope 14`.
   - `apps/userscript/src/storage.ts` : `ClientSettings = { serverUrl: string | null; apiKey: string | null; consent: boolean; hideOglightBox: boolean; deviceId: string }`, avec `loadSettings(gm)` (génère et enregistre `deviceId` au premier appel) et `saveSettings(gm, patch)`.
 - Test : `apps/userscript/test/storage.test.ts`, `apps/userscript/test/build.test.ts`
 
 - [ ] **Step 1 : tests.**
   - Le premier `loadSettings` génère un UUID stable, identique au deuxième appel.
   - Les valeurs par défaut sont `consent:false` et `hideOglightBox:false`.
+  - `isAllowedUniverse` renvoie `true` pour la meta `s808-en.ogame.gameforge.com`, et `false` pour `s1-fr.ogame.gameforge.com`, une meta absente ou vide.
+  - Le `.user.js` construit contient `@match https://s808-en.ogame.gameforge.com/game/index.php*` et aucun `@match` avec `*.ogame`.
   - Après `pnpm --filter @app/userscript build`, le `.user.js` contient `// ==UserScript==` et `@grant GM_xmlhttpRequest`, mais aucun `@grant unsafeWindow` en trop. La moyenne des longueurs de ligne reste inférieure à 200, ce qui prouve qu'il n'est pas minifié.
 - [ ] **Step 2 : lancer.** Attendu : FAIL.
 - [ ] **Step 3 : implémenter.**
@@ -1069,6 +1072,7 @@ Branche : `feature/toleration-release`. **Prérequis** : réponses écrites des 
   - `THIRD_PARTY_NOTICES`, seulement si du code d'OGLight a été repris.
 - Modify : `AGENTS.md`, resynchronisé depuis la source en mettant à jour l'en-tête.
 
+- [ ] **Step 0 :** retirer le garde-fou PTS : `@match` élargi à `https://*.ogame.gameforge.com/game/index.php*`, suppression de `pts-guard.ts`, de son appel et de ses tests. Cette version est celle soumise aux reviewers ; l'utilisateur ne l'installe pas sur ses comptes réels avant la tolérance.
 - [ ] **Step 1 :** si la réponse des ToolDevs sur le masquage d'OGLight est négative, retirer la fonctionnalité et ses tests. Si elle est positive, garder le marqueur `GRAY AREA` et citer l'accord dans le dossier.
 - [ ] **Step 2 :** construire (`pnpm build`), vérifier que le `.user.js` n'est pas minifié et que son en-tête est complet, puis faire une dernière passe sur le PTS.
 - [ ] **Step 3 :** `pnpm test && pnpm lint && pnpm typecheck`. Attendu : PASS.
