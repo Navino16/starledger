@@ -1,6 +1,6 @@
 # Journal des décisions
 
-Décisions prises pendant l'exécution du plan (scopes 1 à 5). Chaque entrée indique sa source, et pour les arbitrages pris sans l'utilisateur, ce qu'ils coûtent s'ils sont faux. À relire : les entrées marquées **À valider**.
+Décisions prises pendant l'exécution du plan (scopes 1 à 7). Chaque entrée indique sa source, et pour les arbitrages pris sans l'utilisateur, ce qu'ils coûtent s'ils sont faux. À relire : les entrées marquées **À valider**.
 
 ## Décisions de l'utilisateur
 
@@ -102,6 +102,35 @@ Décisions prises pendant l'exécution du plan (scopes 1 à 5). Chaque entrée i
 | `pnpm deploy` | `pnpm deploy --prod --legacy` (requis par pnpm 12) ; les 97 paquets de production correspondent au lockfile. | Aucun. |
 | `@app/shared` | Déplacé en `devDependencies` du serveur : il est bundlé par tsdown, donc absent de l'image. | Aucun. |
 | Revue et correctifs | Une seule revue pour la tâche et le scope ; une vague de correctifs (restauration, notes de déploiement, cache de couches, `.dockerignore`). | Aucun. |
+
+### Scope 7 — Userscript : socle
+
+| Sujet | Décision | Coût si faux |
+|---|---|---|
+| Scope 7: Ruling A | Le type d'erreur d'`ApiResult` est l'`ApiError` partagé : 401 `invalid_key`, 426 `client_outdated`, 429 `rate_limited`, 413 `payload_too_large`, 400 `invalid_payload`, 404 `not_found`, autre non-2xx `server_error`, réseau ou délai `unreachable`, JSON invalide sur un 2xx `server_error`. | L'interface doit traduire 9 codes au lieu de 5. |
+| Scope 7: Ruling B | `SyncState` gagne `rejected: number` (cumulatif, persisté avec la file). | Aucun. |
+| Scope 7: Ruling C | Un lot fait au plus 100 éléments et 1,5 Mo sérialisés ; un 413 sur un lot de plusieurs éléments le divise par deux et réessaie dans le même vidage (sans minuterie) ; un 413 sur un élément seul le retire et l'ajoute à `rejected`, sinon la file reste bloquée (note M4 du scope 5). | Une observation trop grosse est abandonnée. |
+| Scope 7: Ruling D | `build.test` lance le build Vite par programme dans un dossier temporaire (autonome, sans dépendre de l'ordre de la CI). | Test plus lent. |
+| Scope 7: Ruling E | `clientVersion` = version du `package.json` du userscript, injectée au build, testée contre `parseSemver` et `MIN_CLIENT_VERSION` ; `deviceId` = `crypto.randomUUID()`. | Aucun. |
+| Scope 7: Ruling F | L'option `timeout` de `GM_xmlhttpRequest` est permise : le délai est géré par le moteur GM, ce n'est ni une minuterie de notre code ni une action différée (AGENTS.md §1.2/§1.3). | Retirer l'option ; une requête bloquée garde le verrou du vidage jusqu'au déchargement de la page. |
+| Scope 7: Ruling G | Le masquage de l'encart OGLight est construit comme prévu, marqué GRAY AREA ; la publication reste bloquée tant que le ToolDev n'a pas répondu (AGENTS.md §3 permet le prototype). | Le masquage est retiré avant le scope 14. |
+| Task 7.1: Ruling | `vite ^8.3.7` (la 8.3.8 avait moins de 24 h, `minimumReleaseAge`) ; l'entrée `minimumReleaseAgeExclude` ajoutée par `pnpm add` est annulée. | Aucun : le caret prendra la 8.3.8 plus tard. |
+| Task 7.3: Ruling (retrait par id) | Les éléments sont retirés par `clientObservationId` depuis une lecture fraîche du stockage GM, jamais en réécrivant un instantané périmé (le stockage est partagé entre onglets). | Aucun. |
+| Task 7.3: Ruling (ack ambigu) | Un ack qui omet l'id d'un élément, ou un ack mal formé (`results` n'est pas un tableau), laisse l'élément en file (ack mal formé : état `server_error`) ; aucune donnée n'est perdue sur une réponse ambiguë. | Un élément déjà stocké par le serveur est renvoyé une fois (doublon). |
+| Task 7.3: Ruling (vidage complet) | Un appel à `flush()` vide tous les lots jusqu'à file vide ou erreur, sans minuterie. | Un long vidage sur un gros arriéré. |
+| Task 7.3: Ruling (file pleine) | « File pleine » est déduit de la taille stockée (≥ 5000) dans `state()`, pas d'un drapeau par onglet ; l'état vaut `error` avec `error` nul tant qu'elle est pleine, et l'interface le distingue par `pending` ≥ capacité. | L'interface demande un test de plus. |
+| Task 7.4: Ruling (encart) | Le petit encart « Configurer » est inséré sous `#links` (emplacement du futur encart de stats, design §4), en flux normal, jamais en `fixed`/`absolute`, jamais sur Marchand, Officiers, Boutique, la barre de pub ou le pied de page (AGENTS.md §1.7). | Déplacé au scope 9. |
+| Task 7.4: Ruling (démarrage) | Avec consentement, `main()` fait : garde PTS, réglages, commande de menu, état du masquage OGLight, un vidage de la file au chargement si URL et clé sont définies (design §5.5) ; les écouteurs de collecte relèvent du scope 8. | Aucun. |
+| Task 7.4: Ruling (retrait) | Retirer le consentement vide aussi la file locale et arrête tout envoi dans la page (AGENTS.md §1.9). | Des observations non envoyées sont perdues au retrait (choix de l'utilisateur). |
+| Task 7.4: Ruling (panneau) | Le panneau d'options est en ligne, sans cadre modal, en DOM pur, toutes les chaînes via i18n (fr/en, en par défaut selon la meta `ogame-language`). | Remis en forme au scope 9. |
+| Task 7.4: Ruling (clé) | Le champ de clé est `type=password` et la clé n'est jamais réaffichée (le placeholder indique « enregistrée »). | Aucun. |
+| Scope 7: Ruling (commentaires) | Les commentaires de conformité du userscript commencent par `//!` (texte identique) et le build garde les commentaires « legal » (`rolldownOptions.output.comments.legal`) ; `build.test` vérifie que les marqueurs survivent. Le défaut de vite-plugin-monkey les supprimait. | Préfixe cosmétique. |
+| Scope 7: Ruling (version de consentement) | Le consentement stocke `CONSENT_VERSION` (1) ; un consentement sans version ou plus ancien vaut absence de consentement, donc un changement de texte force un nouveau consentement. | Un clic de consentement en plus. |
+| Scope 7: Ruling (changement de serveur) | Changer l'URL exige une clé saisie (jamais la clé stockée, y compris pour « Tester ») et remet le consentement à zéro avec l'écran de consentement sur la nouvelle destination ; la file locale est aussi vidée (hors spec : sinon des données collectées pour le serveur A partiraient vers B). | Une étape de plus pour changer de serveur ; observations en attente perdues. |
+| Scope 7: Ruling (hôtes du jeu) | L'URL du serveur ne peut pas être un hôte OGame/Gameforge (`*.gameforge.com`), ce qui rend « aucune requête vers le jeu » démontrable par le code (AGENTS.md §4). | Aucun. |
+| Scope 7: Ruling (http) | `http://` est accepté avec un avertissement visible (homelab en LAN/localhost) plutôt que refusé. | Une clé en clair sur un réseau hostile malgré l'avertissement. |
+| Scope 7: Ruling (course inter-onglets) | La course d'enfilage entre onglets (cache de valeurs par onglet de Tampermonkey) est réglée au pré-vol du scope 8, là où l'enfilage commence ; rien n'enfile au scope 7. Chaque collecteur revérifie le consentement avant chaque enfilage. | Aucun maintenant ; au scope 8, une observation peut être perdue ou dupliquée. |
+| Scope 7: Ruling (clé retirée, ping) | Un bouton « Supprimer la clé » (design §5.7) ; un corps 2xx de ping sans `username` texte vaut `server_error` ; `@noframes` ajouté ; `GM_deleteValue` retiré des droits ; `@connect *` commenté (serveur choisi par l'utilisateur, après consentement, AGENTS.md §1.9). | Aucun. |
 
 ## Écart noté
 
