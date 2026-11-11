@@ -44,7 +44,7 @@ describe('without consent', () => {
     main(gm, document);
     expect(on).not.toHaveBeenCalled();
     expect(gm.requests).toHaveLength(0);
-    expect(document.querySelector('#links')?.nextElementSibling?.id).toBe('starledger-box');
+    expect(document.querySelector('#links')?.lastElementChild?.id).toBe('starledger-box');
     expect(document.querySelectorAll('#starledger-box button')).toHaveLength(1);
   });
 
