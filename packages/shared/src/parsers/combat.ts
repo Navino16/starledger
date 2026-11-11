@@ -90,8 +90,9 @@ function build(obs: MessageObservation): CombatEvent {
     else if (ownPlanetDefended && result.winner === 'attacker') lootSign = -1;
   }
 
-  const loot = required(result.loot ?? null, 'loot');
-  const debris = required(result.debris ?? null, 'debris');
+  // The game likely omits empty lists; to verify on PTS (scope 10)
+  const loot = result.loot ?? { resources: [] };
+  const debris = result.debris ?? { resources: [] };
 
   const ownIds = new Set(ownFleets.map((f) => f.fleetId));
   const lost: Record<string, number> = {};
@@ -104,8 +105,7 @@ function build(obs: MessageObservation): CombatEvent {
     }
   }
   if (ownPlanetDefended) {
-    const repaired = required(result.repairedTechnologies ?? null, 'repairedTechnologies');
-    for (const t of repaired) {
+    for (const t of result.repairedTechnologies ?? []) {
       const destroyed = lost[t.technologyId];
       if (destroyed !== undefined) {
         lost[t.technologyId] = Math.max(0, destroyed - t.amount);

@@ -75,12 +75,23 @@ describe('parseCombat', () => {
     expect(parseCombat(withRaw(attackWon, { result })).status).toBe('unrecognized');
   });
 
-  it('is unrecognized naming repairedTechnologies when an own defended planet lacks it', () => {
+  it('treats an absent loot or debris as zero', () => {
+    const base = JSON.parse(attackWon.raw.result ?? '{}');
+    delete base.loot;
+    delete base.debris;
+    expect(
+      eventOf(parseCombat(withRaw(attackWon, { result: JSON.stringify(base) }))),
+    ).toMatchObject({
+      loot: { metal: 0, crystal: 0, deuterium: 0 },
+      debrisCreated: { metal: 0, crystal: 0, deuterium: 0 },
+    });
+  });
+
+  it('subtracts no repair when an own defended planet lacks repairedTechnologies', () => {
     const base = JSON.parse(defenseLost.raw.result ?? '{}');
     delete base.repairedTechnologies;
-    const r = parseCombat(withRaw(defenseLost, { result: JSON.stringify(base) }));
-    expect(r.status).toBe('unrecognized');
-    if (r.status === 'unrecognized') expect(r.reason).toContain('repairedTechnologies');
+    const r = eventOf(parseCombat(withRaw(defenseLost, { result: JSON.stringify(base) })));
+    expect(r).toMatchObject({ ownPlanetDefended: true, shipsLost: { '204': 5 } });
   });
 
   it('keeps defenses out of shipsLost', () => {
