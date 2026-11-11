@@ -32,7 +32,7 @@
 | 4 | Serveur : invitations, clé API, réglages | ✅ |
 | 5 | Serveur : API d'ingestion et de stats | ✅ |
 | 6 | Docker et déploiement homelab | ✅ |
-| 7 | Userscript : socle, file, options, consentement | ☐ |
+| 7 | Userscript : socle, file, options, consentement | ✅ |
 | 8 | Userscript : collecte des messages | ☐ |
 | 9 | Userscript : encart et détail | ☐ |
 | 10 | Validation PTS : vraies captures, reparse, audit | ☐ |
@@ -757,16 +757,16 @@ Branche : `feature/userscript-foundation`. Tous les accès `GM_*` passent par un
   - `apps/userscript/src/storage.ts` : `ClientSettings = { serverUrl: string | null; apiKey: string | null; consent: boolean; hideOglightBox: boolean; deviceId: string }`, avec `loadSettings(gm)` (génère et enregistre `deviceId` au premier appel) et `saveSettings(gm, patch)`.
 - Test : `apps/userscript/test/storage.test.ts`, `apps/userscript/test/build.test.ts`
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - Le premier `loadSettings` génère un UUID stable, identique au deuxième appel.
   - Les valeurs par défaut sont `consent:false` et `hideOglightBox:false`.
   - `isAllowedUniverse` renvoie `true` pour la meta `s808-en.ogame.gameforge.com`, et `false` pour `s1-fr.ogame.gameforge.com`, une meta absente ou vide.
   - Le `.user.js` construit contient `@match https://s808-en.ogame.gameforge.com/game/index.php*` et aucun `@match` avec `*.ogame`.
   - Après `pnpm --filter @app/userscript build`, le `.user.js` contient `// ==UserScript==` et `@grant GM_xmlhttpRequest`, mais aucun `@grant unsafeWindow` en trop. La moyenne des longueurs de ligne reste inférieure à 200, ce qui prouve qu'il n'est pas minifié.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add userscript build, GM adapter and settings storage"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add userscript build, GM adapter and settings storage"`
 
 ### Tâche 7.2 : Client API
 
@@ -779,7 +779,7 @@ Branche : `feature/userscript-foundation`. Tous les accès `GM_*` passent par un
   - `createApi(gm, settings, clientVersion)`, qui renvoie `{ ping(): Promise<ApiResult<{username:string}>>; sendBatch(b: ObservationBatch): Promise<ApiResult<BatchAck>>; getStats(q): Promise<ApiResult<StatsResponse>> }` ;
   - `ApiResult<T> = { ok: true; data: T } | { ok: false; error: 'not_configured'|'invalid_key'|'unreachable'|'client_outdated'|'server_error' }`.
 
-- [ ] **Step 1 : tests avec `memoryGm`** et des réponses simulées :
+- [x] **Step 1 : tests avec `memoryGm`** et des réponses simulées :
   - 401 → `invalid_key` ;
   - 426 → `client_outdated` ;
   - exception réseau → `unreachable` ;
@@ -787,10 +787,10 @@ Branche : `feature/userscript-foundation`. Tous les accès `GM_*` passent par un
   - URL ou clé absente → `not_configured`, sans aucune requête ;
   - l'URL appelée vaut `${serverUrl}/api/v1/ping`, sans double `/` ;
   - les en-têtes `Authorization` et `X-Client-Version` sont présents.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add userscript API client"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add userscript API client"`
 
 ### Tâche 7.3 : File persistante et vidage
 
@@ -811,17 +811,17 @@ Branche : `feature/userscript-foundation`. Tous les accès `GM_*` passent par un
   - un seul vidage à la fois (verrou en mémoire) ;
   - aucun minuteur.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - Enqueue de 3 éléments, puis flush OK : la file est vide et l'état vaut `up_to_date`.
   - Flush avec `unreachable` : la file garde 3 éléments, l'état vaut `error` et `pending` vaut 3.
   - **Le serveur enregistre le lot mais le client « perd » la réponse** (l'API lève une exception après réception côté serveur simulé) : la file garde 3 éléments ; au flush suivant, les accusés `duplicate` vident la file (Review Focus 3).
   - Avec 5000 éléments en file, un nouvel enqueue est refusé.
   - Deux `flush()` simultanés ne produisent qu'un seul appel API.
   - Le code source ne contient ni `setInterval` ni `setTimeout` (test par lecture du fichier).
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add persistent observation queue with ack-based flush"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add persistent observation queue with ack-based flush"`
 
 ### Tâche 7.4 : i18n, consentement, options et masquage de l'encart OGLight
 
@@ -844,16 +844,16 @@ Comportement :
 - **Options**, ouvertes depuis l'encart et depuis `GM_registerMenuCommand` : URL du serveur, clé API (champ masqué), bouton « Tester la connexion » (`api.ping`, résultat ou message d'erreur traduit), case « Masquer l'encart OGLight ».
 - **Masquage OGLight** : il ajoute ou retire un `<style>` contenant `.ogl_miniStats{display:none!important}`. Le code porte le commentaire `// GRAY AREA: requires ToolDev approval before publishing — see AGENTS.md §3`.
 
-- [ ] **Step 1 : tests jsdom.**
+- [x] **Step 1 : tests jsdom.**
   - Sans consentement, `main()` n'enregistre aucun écouteur `ajaxSuccess` (vérifié par un espion sur un jQuery simulé).
   - Cocher le masquage ajoute la règle, et le décocher la retire.
   - Le test de connexion affiche « Clé invalide » quand l'API renvoie `invalid_key`, avec une meta `ogame-language` à `fr`.
   - Le retrait du consentement est enregistré.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : auto-audit.** Dérouler la checklist de `AGENTS.md` §7 et noter le résultat pour la PR.
-- [ ] **Step 6 : commit.** `git commit -m "Add consent screen, options panel and OGLight box toggle"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : auto-audit.** Dérouler la checklist de `AGENTS.md` §7 et noter le résultat pour la PR.
+- [x] **Step 6 : commit.** `git commit -m "Add consent screen, options panel and OGLight box toggle"`
 
 ---
 
