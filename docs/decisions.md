@@ -92,6 +92,17 @@ Décisions prises pendant l'exécution du plan (scopes 1 à 5). Chaque entrée i
 - `deviceId` doit être un UUID (`crypto.randomUUID()`) ; aucun tag de version pré-release.
 - M5 : deux lots concurrents touchant deux comptes dans l'ordre inverse peuvent s'interbloquer (40P01), donc 500 ; le client réessaie (accepté).
 
+### Scope 6 — Docker
+
+| Sujet | Décision | Coût si faux |
+|---|---|---|
+| Port publié | `compose.yaml` publie l'app sur `127.0.0.1:3000` seulement ; un proxy sur le LAN demande une modification d'une ligne, documentée. | Une ligne à éditer. |
+| CI Docker | Aucun job de build Docker dans ce scope (la publication relève du scope 14). | Le Dockerfile peut se dégrader sans alerte jusqu'au prochain build manuel. |
+| Version de PostgreSQL | `postgres:17-alpine`, comme le plan. | Version majeure plus ancienne ; une montée de version demande un dump/restore. |
+| `pnpm deploy` | `pnpm deploy --prod --legacy` (requis par pnpm 12) ; les 97 paquets de production correspondent au lockfile. | Aucun. |
+| `@app/shared` | Déplacé en `devDependencies` du serveur : il est bundlé par tsdown, donc absent de l'image. | Aucun. |
+| Revue et correctifs | Une seule revue pour la tâche et le scope ; une vague de correctifs (restauration, notes de déploiement, cache de couches, `.dockerignore`). | Aucun. |
+
 ## Écart noté
 
 Le design §6.4 prévoit la lecture et l'écriture des réglages par l'API ; le plan ne prévoit que la lecture (dans la réponse de stats). Aucune écriture par l'API dans le MVP.

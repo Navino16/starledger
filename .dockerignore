@@ -1,0 +1,14 @@
+.git
+.github
+.env
+.env.*
+*.log
+.idea
+.vscode
+.claude
+.superpowers
+.reports
+**/node_modules
+**/dist
+**/coverage
+docs

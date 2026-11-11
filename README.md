@@ -28,6 +28,7 @@ Requires Node 26 (`nvm use`) and pnpm 12 (`npm i -g pnpm@12`; pnpm then switches
 ## Documentation
 
 - [Functional spec](docs/spec-fonctionnelles.md)
+- [Deployment guide](docs/deploy.md)
 - [MVP design](docs/superpowers/specs/2026-11-11-mvp-client-sync-design.md)
 - [Implementation plan](PLAN.md)
 

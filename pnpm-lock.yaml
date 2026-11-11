@@ -184,9 +184,6 @@ importers:
 
   apps/server:
     dependencies:
-      '@app/shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       '@fastify/csrf-protection':
         specifier: ^8.0.2
         version: 8.0.2
@@ -221,6 +218,9 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
     devDependencies:
+      '@app/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@testcontainers/postgresql':
         specifier: ^12.2.1
         version: 12.2.1(bare-buffer@3.7.1)
