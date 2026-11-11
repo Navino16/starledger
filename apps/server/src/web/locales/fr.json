@@ -1,0 +1,19 @@
+{
+  "appName": "Starledger",
+  "login": {
+    "title": "Connexion",
+    "username": "Identifiant",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "invalid": "Identifiants invalides"
+  },
+  "account": {
+    "title": "Compte",
+    "welcome": "Connecté en tant que {username}",
+    "logout": "Déconnexion"
+  },
+  "errors": {
+    "csrf": "Jeton de formulaire invalide ou absent. Rechargez la page et réessayez.",
+    "rateLimit": "Trop de tentatives. Réessayez dans une minute."
+  }
+}

@@ -1,0 +1,6 @@
+<h1><%= it.t('account.title') %></h1>
+<p><%= it.t('account.welcome', { username: it.username }) %></p>
+<form method="post" action="/logout">
+  <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+  <button type="submit"><%= it.t('account.logout') %></button>
+</form>

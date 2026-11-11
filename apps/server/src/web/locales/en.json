@@ -1,0 +1,19 @@
+{
+  "appName": "Starledger",
+  "login": {
+    "title": "Sign in",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "invalid": "Invalid credentials"
+  },
+  "account": {
+    "title": "Account",
+    "welcome": "Signed in as {username}",
+    "logout": "Sign out"
+  },
+  "errors": {
+    "csrf": "Invalid or missing form token. Reload the page and try again.",
+    "rateLimit": "Too many attempts. Try again in a minute."
+  }
+}
