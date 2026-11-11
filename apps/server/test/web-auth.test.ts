@@ -14,7 +14,7 @@ const config: Config = {
   sessionSecret: 'ab'.repeat(32),
   port: 3000,
   publicUrl: 'http://localhost:3000',
-  trustProxy: 1,
+  trustProxy: ['loopback', 'linklocal', 'uniquelocal'],
   openSignup: false,
 };
 
@@ -235,18 +235,56 @@ describe('build output', () => {
 });
 
 describe('proxy trust', () => {
-  it('ignores forged X-Forwarded-For entries when counting login attempts', async () => {
+  async function ipProbe() {
+    const probe = buildApp(config, t.db);
+    probe.get('/_ip', async (request) => request.ip);
+    await probe.ready();
+    return probe;
+  }
+
+  it('ignores X-Forwarded-For from a public remote address', async () => {
+    const probe = await ipProbe();
+    const res = await probe.inject({
+      method: 'GET',
+      url: '/_ip',
+      remoteAddress: '203.0.113.5',
+      headers: { 'x-forwarded-for': '198.51.100.7' },
+    });
+    expect(res.body).toBe('203.0.113.5');
+    await probe.close();
+  });
+
+  it('still rate-limits a public client forging X-Forwarded-For', async () => {
     const { token, cookie } = await loginPage();
     const attempt = (n: number) =>
       postLogin(
         { username: 'nobody', password: 'whatever12345', _csrf: token },
         {
           cookie,
-          headers: { ...form, 'x-forwarded-for': `203.0.113.${n}, 198.51.100.7` },
-          remoteAddress: '10.8.8.8',
+          headers: { ...form, 'x-forwarded-for': `198.51.100.${n}` },
+          remoteAddress: '203.0.113.5',
         },
       );
     for (let i = 0; i < 10; i++) expect((await attempt(i)).statusCode).toBe(200);
     expect((await attempt(99)).statusCode).toBe(429);
+  });
+
+  it('trusts X-Forwarded-For and -Proto from a private proxy address', async () => {
+    const probe = await ipProbe();
+    const res = await probe.inject({
+      method: 'GET',
+      url: '/_ip',
+      remoteAddress: '172.18.0.2',
+      headers: { 'x-forwarded-for': '198.51.100.7' },
+    });
+    expect(res.body).toBe('198.51.100.7');
+    const login = await probe.inject({
+      method: 'GET',
+      url: '/login',
+      remoteAddress: '172.18.0.2',
+      headers: { 'x-forwarded-for': '198.51.100.7', 'x-forwarded-proto': 'https' },
+    });
+    expect(String(login.headers['set-cookie'])).toMatch(/Secure/i);
+    await probe.close();
   });
 });

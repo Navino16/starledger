@@ -1,3 +1,4 @@
+import { isIP } from 'node:net';
 import { z } from 'zod';
 
 const booleanString = (fallback: boolean) =>
@@ -6,18 +7,33 @@ const booleanString = (fallback: boolean) =>
     .default(fallback ? 'true' : 'false')
     .transform((v) => v === 'true');
 
-// Fastify trustProxy forms: boolean, hop count, or list of trusted IPs/CIDRs.
+const NAMED_RANGES = new Set(['loopback', 'linklocal', 'uniquelocal']);
+
+function isTrustedEntry(entry: string): boolean {
+  if (NAMED_RANGES.has(entry)) return true;
+  const [address, prefix, ...rest] = entry.split('/');
+  const family = isIP(address ?? '');
+  if (family === 0 || rest.length > 0) return false;
+  if (prefix === undefined) return true;
+  return /^\d+$/.test(prefix) && Number(prefix) <= (family === 4 ? 32 : 128);
+}
+
+// Fastify trustProxy forms: boolean, hop count, or list of IPs/CIDRs/named ranges (PLAN scope 6).
 const trustProxyValue = z
   .string()
-  .default('1')
+  .default('loopback,linklocal,uniquelocal')
   .transform((raw, ctx): boolean | number | string[] => {
     const v = raw.trim();
     if (v === 'true') return true;
     if (v === 'false') return false;
     if (/^\d+$/.test(v)) return Number(v);
     const list = v.split(',').map((entry) => entry.trim());
-    if (v === '' || list.some((entry) => entry === '')) {
-      ctx.addIssue({ code: 'custom', message: 'true, false, a hop count or a list of IPs/CIDRs' });
+    if (!list.every(isTrustedEntry)) {
+      ctx.addIssue({
+        code: 'custom',
+        message:
+          'true, false, a hop count, or a comma-separated list of IPs, CIDRs, loopback, linklocal, uniquelocal',
+      });
       return z.NEVER;
     }
     return list;

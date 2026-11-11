@@ -13,7 +13,8 @@ import { authRoutes, registerErrorPages } from './web/routes-auth';
 // Resolves from src/ in tests and from dist/ once built (views are copied next to the bundle).
 const VIEWS_DIR = fileURLToPath(new URL('./web/views', import.meta.url));
 
-// Fastify's numeric trustProxy never trusts X-Forwarded-Proto, so a hop count becomes a function.
+// Fastify 5.12 fails closed on a numeric trustProxy (ignores all X-Forwarded-*), so a hop count becomes
+// a function; it assumes the app is only reachable through the proxy (PLAN scope 6).
 function toTrustProxy(value: Config['trustProxy']) {
   return typeof value === 'number' ? (_address: string, hop: number) => hop < value : value;
 }
@@ -32,6 +33,8 @@ export function buildApp(
   app.register(fastifySecureSession, {
     key: Buffer.from(config.sessionSecret, 'hex'),
     // secure 'auto' follows request.protocol, which honors X-Forwarded-Proto under trustProxy.
+    // expiry bounds the replay window of the stateless cookie.
+    expiry: 86400,
     cookie: { path: '/', httpOnly: true, sameSite: 'lax', secure: 'auto' },
   });
   app.register(fastifyCsrfProtection, { sessionPlugin: '@fastify/secure-session' });

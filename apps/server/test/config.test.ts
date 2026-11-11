@@ -11,7 +11,7 @@ describe('loadConfig', () => {
   it('applies defaults', () => {
     const config = loadConfig(base);
     expect(config.port).toBe(3000);
-    expect(config.trustProxy).toBe(1);
+    expect(config.trustProxy).toEqual(['loopback', 'linklocal', 'uniquelocal']);
     expect(config.openSignup).toBe(false);
     expect(config.publicUrl).toBe(base.PUBLIC_URL);
   });
@@ -27,13 +27,30 @@ describe('loadConfig', () => {
     ['true', true],
     ['false', false],
     ['2', 2],
+    ['0', 0],
+    ['loopback, uniquelocal', ['loopback', 'uniquelocal']],
+    ['::1,fd00::/8', ['::1', 'fd00::/8']],
+    ['10.0.0.0/32', ['10.0.0.0/32']],
     ['10.0.0.0/8, 192.168.1.1', ['10.0.0.0/8', '192.168.1.1']],
   ])('parses TRUST_PROXY=%s', (raw, expected) => {
     expect(loadConfig({ ...base, TRUST_PROXY: raw }).trustProxy).toEqual(expected);
   });
 
-  it('rejects an empty TRUST_PROXY list entry', () => {
-    expect(() => loadConfig({ ...base, TRUST_PROXY: '10.0.0.1,' })).toThrow();
+  it.each([
+    '10.0.0.1,',
+    '',
+    'notanip',
+    'TRUE',
+    'yes',
+    '-1',
+    '10.0.0.0/33',
+    '::1/129',
+    '10.0.0.0/',
+    '10.0.0.0/8/8',
+    '300.1.1.1',
+    'loopback,bogus',
+  ])('rejects TRUST_PROXY=%j', (raw) => {
+    expect(() => loadConfig({ ...base, TRUST_PROXY: raw })).toThrow();
   });
 
   it('rejects a SESSION_SECRET that is too short', () => {
