@@ -1,7 +1,7 @@
 import type { ApiError, StatsResponse } from '@app/shared';
 import { errorKey, type MessageKey, type T } from '../i18n';
 import type { SyncState } from '../sync/queue';
-import { el, mountBox, PANEL_ID } from './dom';
+import { configureBoxContent, el, mountBox, PANEL_ID } from './dom';
 import { formatAmount, formatTime } from './format';
 
 const STATS_VIEW = 'stats';
@@ -62,21 +62,7 @@ export function renderBox(container: HTMLElement, model: BoxModel, handlers: Box
   const { t, onConfigure, onOpenDetails } = handlers;
 
   if (!model.consent || !model.configured) {
-    const button = el(doc, 'button', {
-      type: 'button',
-      className: 'starledger-cta',
-      textContent: t('configureSync'),
-    });
-    button.addEventListener('click', onConfigure);
-    container.replaceChildren(
-      el(
-        doc,
-        'div',
-        { className: 'starledger-head' },
-        el(doc, 'strong', { textContent: t('boxTitle') }),
-      ),
-      button,
-    );
+    container.replaceChildren(...configureBoxContent(doc, t, onConfigure).children);
     return;
   }
 

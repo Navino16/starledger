@@ -22,6 +22,27 @@ export function el<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
+export function configureBoxContent(doc: Document, t: T, onConfigure: () => void): HTMLElement {
+  const button = el(doc, 'button', {
+    type: 'button',
+    className: 'starledger-cta',
+    textContent: t('configureSync'),
+  });
+  button.addEventListener('click', onConfigure);
+  return el(
+    doc,
+    'div',
+    {},
+    el(
+      doc,
+      'div',
+      { className: 'starledger-head' },
+      el(doc, 'strong', { textContent: t('boxTitle') }),
+    ),
+    button,
+  );
+}
+
 export const PANEL_ID = 'starledger-box';
 
 //! AGENTS.md §1.7: inserted under #links, monetization entries untouched

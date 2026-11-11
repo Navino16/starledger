@@ -90,6 +90,13 @@ describe('stats details dialog', () => {
     const exp = dialog()?.querySelectorAll('[data-category="expeditions"] td');
     expect(exp?.[1]?.textContent).toContain('M 1k');
     expect(exp?.[2]?.textContent).toContain('M 10');
+    const amounts = [...(exp?.[1]?.querySelectorAll('.starledger-amount') ?? [])];
+    expect(amounts.map((a) => (a as HTMLElement).dataset.res)).toEqual([
+      'metal',
+      'crystal',
+      'deuterium',
+    ]);
+    expect(dialog()?.querySelector('[data-category="net"] [data-res="msu"]')).not.toBeNull();
     expect(dialog()?.querySelector('[data-category="fuel"] td:nth-child(4)')?.textContent).toBe(
       '777',
     );
