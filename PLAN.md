@@ -10,7 +10,7 @@
 - `apps/userscript` (Vite + vite-plugin-monkey) lit passivement le DOM et les réponses AJAX, met les observations en file, les envoie et affiche l'encart.
 
 **Tech Stack :**
-- Node 24, pnpm 10, TypeScript (strict), Vitest, Biome
+- Node 26 (LTS), pnpm 12, TypeScript 7 (strict), Vitest 5, Biome 2
 - Serveur : Fastify 5, Kysely + `pg`, PostgreSQL 17, zod 4, Eta (`@fastify/view`), `@fastify/secure-session`, `@fastify/csrf-protection`, `@fastify/formbody`, `@fastify/rate-limit`, `@node-rs/argon2`
 - Userscript : vite-plugin-monkey, jsdom (tests)
 - Tests base de données : `@testcontainers/postgresql`
@@ -58,6 +58,7 @@
 - **Valeurs par défaut de valorisation** (reprises d'OGLight) : MSU `3:2:1`, `expeditionShipRatio` 100, `ignoreExpeShipsLoss` false, `ignoreConsumption` false. Pour les échanges, `includeTradesInBalance` false.
 - **Formule MSU** : `ceil(m + c·r0/r1 + d·r0/r2)`. OGLight utilise `d·r0`, ce qui revient au même quand r2 = 1.
 - **Auto-audit** : la checklist de `AGENTS.md` §7 est déroulée et ses résultats sont notés dans la PR de chaque scope qui touche `apps/userscript`.
+- **Dépendances** : avant chaque ajout, vérifier la dernière version avec `npx npm-check-updates --workspaces --root`. Exception assumée : `@types/node` suit la version majeure de Node (26). La politique `minimumReleaseAge` de pnpm 12 (versions publiées depuis moins de 24 h refusées) est respectée : on ne contourne jamais avec `minimumReleaseAgeExclude`.
 - **Tests sur le PTS uniquement** (Singularity, en_808) tant que l'outil n'est pas toléré.
 
 ## Review Focus
@@ -137,11 +138,11 @@ Branche : `feature/repo-bootstrap`. **Avant de commencer** : créer `develop` de
 ### Tâche 0.1 : Monorepo, outillage et test témoin
 
 **Files :**
-- Create : `package.json` (privé, `packageManager: pnpm@10.x`, scripts `test`, `lint`, `typecheck`, `build`), `pnpm-workspace.yaml` (`apps/*`, `packages/*`), `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`, ES2023, moduleResolution bundler), `biome.json`, `vitest.workspace.ts`, `.gitignore`, `.editorconfig`, `.nvmrc` (`24`), `LICENSE` (MIT, 2026, auteur du dépôt), `README.md` (but, structure, commandes)
+- Create : `package.json` (privé, `packageManager: pnpm@12.x`, scripts `test`, `lint`, `typecheck`, `build`), `pnpm-workspace.yaml` (`apps/*`, `packages/*`), `tsconfig.base.json` (strict, `noUncheckedIndexedAccess`, ES2023, moduleResolution bundler), `biome.json`, `vitest.workspace.ts`, `.gitignore`, `.editorconfig`, `.nvmrc` (`26`), `LICENSE` (MIT, 2026, auteur du dépôt), `README.md` (but, structure, commandes)
 - Create : `packages/shared/{package.json,tsconfig.json,src/index.ts}`, `apps/server/{package.json,tsconfig.json,src/index.ts}`, `apps/userscript/{package.json,tsconfig.json,src/main.ts}`
 - Test : `packages/shared/test/smoke.test.ts`
 
-- [x] **Step 1 : installer pnpm.** `corepack enable && corepack prepare pnpm@latest-10 --activate`. Vérifier : `pnpm -v` affiche `10.x`.
+- [x] **Step 1 : installer pnpm.** Node 26 n'embarque plus corepack : `nvm use && npm i -g pnpm@12`. pnpm bascule ensuite tout seul sur la version de `packageManager`. Vérifier : `pnpm -v` affiche `12.x`.
 - [x] **Step 2 : écrire le test témoin.** `expect(VERSION).toMatch(/^\d+\.\d+\.\d+$/)`, avec `export const VERSION = '0.1.0'` dans `packages/shared/src/index.ts`.
 - [x] **Step 3 : lancer les vérifications.** `pnpm install && pnpm test && pnpm typecheck && pnpm lint`. Attendu : tout PASS.
 - [x] **Step 4 : commit.** `git commit -m "Bootstrap pnpm monorepo with shared, server and userscript packages"`
@@ -649,7 +650,7 @@ Branche : `feature/docker`.
 
 **Files :**
 - Create :
-  - `Dockerfile` : multi-étapes, base `node:24-alpine`, build du serveur seul, exécution sous l'utilisateur `node`, `HEALTHCHECK` sur `/healthz` ;
+  - `Dockerfile` : multi-étapes, base `node:26-alpine`, pnpm installé par `npm i -g pnpm@<version de packageManager>` (pas de corepack), build du serveur seul, exécution sous l'utilisateur `node`, `HEALTHCHECK` sur `/healthz` ;
   - `compose.yaml` : services `app` et `postgres:17-alpine`, volume `pgdata`, `app` qui dépend de `postgres` en état healthy, et migrations au démarrage (`node dist/cli.js migrate && node dist/index.js`) ;
   - `.env.example` ;
   - `.dockerignore` ;
