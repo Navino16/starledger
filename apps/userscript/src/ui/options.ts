@@ -9,12 +9,12 @@ import { setOglightHidden } from './oglight';
 export function renderOptions(ctx: UiContext): void {
   const { doc, t, gm, queue } = ctx;
   const settings = loadSettings(gm);
+  setOglightHidden(gm, doc, settings.hideOglightBox);
   const url = el(doc, 'input', {
     type: 'text',
     id: 'starledger-url',
     value: settings.serverUrl ?? '',
   });
-  // The stored key is never rendered back, only a placeholder
   const key = el(doc, 'input', {
     type: 'password',
     id: 'starledger-key',
@@ -63,13 +63,13 @@ export function renderOptions(ctx: UiContext): void {
 
   hide.addEventListener('change', () => {
     saveSettings(gm, { hideOglightBox: hide.checked });
-    setOglightHidden(gm, hide.checked);
+    setOglightHidden(gm, doc, hide.checked);
   });
 
   withdraw.addEventListener('click', () => {
     saveSettings(gm, { consent: false });
     queue.clear();
-    setOglightHidden(gm, false);
+    setOglightHidden(gm, doc, false);
     renderConfigureBox(ctx, () => renderConsent(ctx, () => renderOptions(ctx)));
   });
 

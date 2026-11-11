@@ -74,10 +74,15 @@ export function createQueue(gm: Gm) {
     return batch;
   }
 
-  async function drain(api: QueueApi, deviceId: string): Promise<SyncState> {
+  async function drain(
+    api: QueueApi,
+    deviceId: string,
+    canSend: () => boolean,
+  ): Promise<SyncState> {
     error = null;
     let maxItems = BATCH_ITEMS;
     for (;;) {
+      if (!canSend()) break;
       const batch = takeBatch(maxItems);
       const [first] = batch;
       if (!first) break;
@@ -136,9 +141,13 @@ export function createQueue(gm: Gm) {
     return state();
   }
 
-  function flush(api: QueueApi, deviceId: string): Promise<SyncState> {
+  function flush(
+    api: QueueApi,
+    deviceId: string,
+    canSend: () => boolean = () => true,
+  ): Promise<SyncState> {
     // One flush at a time (spec §5.5); a concurrent caller shares the in-flight one
-    inFlight ??= drain(api, deviceId).finally(() => {
+    inFlight ??= drain(api, deviceId, canSend).finally(() => {
       inFlight = null;
     });
     return inFlight;

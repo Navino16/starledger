@@ -15,7 +15,7 @@ export function main(gm: Gm, doc: Document): void {
   if (!isAllowedUniverse(doc)) return;
 
   const lang = detectLang(doc);
-  const ctx: UiContext = { gm, doc, lang, t: createT(lang), queue: createQueue(gm) };
+  const ctx: UiContext = { gm, doc, t: createT(lang), queue: createQueue(gm) };
   gm.addStyle(UI_CSS);
 
   const openOptions = () => renderOptions(ctx);
@@ -31,11 +31,11 @@ export function main(gm: Gm, doc: Document): void {
     return;
   }
 
-  setOglightHidden(gm, settings.hideOglightBox);
+  setOglightHidden(gm, doc, settings.hideOglightBox);
 
   if (settings.serverUrl && settings.apiKey) {
     // AGENTS.md §4: our server only, on page load, no game request
     const api = createApi(gm, settings, CLIENT_VERSION);
-    void ctx.queue.flush(api, settings.deviceId);
+    void ctx.queue.flush(api, settings.deviceId, () => loadSettings(gm).consent);
   }
 }

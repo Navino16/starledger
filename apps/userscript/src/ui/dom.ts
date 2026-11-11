@@ -1,11 +1,10 @@
 import type { Gm } from '../gm';
-import type { Lang, T } from '../i18n';
+import type { T } from '../i18n';
 import type { createQueue } from '../sync/queue';
 
 export type UiContext = {
   gm: Gm;
   doc: Document;
-  lang: Lang;
   t: T;
   queue: ReturnType<typeof createQueue>;
 };

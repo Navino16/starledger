@@ -5,6 +5,18 @@ import { MESSAGES } from '../src/i18n';
 import { loadSettings, saveSettings } from '../src/storage';
 import { createQueue } from '../src/sync/queue';
 
+const obs = (id: string) => ({ kind: 'message', clientObservationId: id }) as never;
+const ackAll = (opts: { data?: string }) => ({
+  status: 200,
+  body: JSON.stringify({
+    results: (JSON.parse(opts.data ?? '{}').observations ?? []).map(
+      (o: { clientObservationId: string }) => ({
+        clientObservationId: o.clientObservationId,
+        status: 'accepted',
+      }),
+    ),
+  }),
+});
 const flush = () => new Promise((r) => setTimeout(r, 0));
 
 function page(lang: string, withLinks = true) {
@@ -43,6 +55,15 @@ describe('without consent', () => {
     expect(gm.menus).toHaveLength(1);
   });
 
+  it('does not flush a non-empty queue', async () => {
+    saveSettings(gm, { serverUrl: 'https://sl.example.org', apiKey: 'k' });
+    createQueue(gm).enqueue([obs('a')]);
+    main(gm, document);
+    await flush();
+    expect(gm.requests).toHaveLength(0);
+    expect(createQueue(gm).size()).toBe(1);
+  });
+
   it('does nothing outside the allowed universe', () => {
     document.head.innerHTML = '<meta name="ogame-universe" content="s1-fr.ogame.gameforge.com">';
     main(gm, document);
@@ -74,20 +95,82 @@ describe('with consent', () => {
     saveSettings(gm, { consent: true, serverUrl: 'https://sl.example.org', apiKey: 'secret' });
   });
 
-  it('flushes the queue once on load and registers no listener', async () => {
+  it('flushes a pending observation once on load and registers no listener', async () => {
     const on = vi.fn();
     (globalThis as { $?: unknown }).$ = () => ({ on });
-    createQueue(gm);
+    createQueue(gm).enqueue([obs('a')]);
+    gm.respondWith(ackAll);
     main(gm, document);
     await flush();
     expect(on).not.toHaveBeenCalled();
-    expect(gm.requests.every((r) => r.url.startsWith('https://sl.example.org'))).toBe(true);
+    expect(gm.requests).toHaveLength(1);
+    expect(gm.requests[0]).toMatchObject({
+      method: 'POST',
+      url: 'https://sl.example.org/api/v1/observations',
+    });
+    expect(createQueue(gm).size()).toBe(0);
   });
 
-  it('does not flush without server or key', () => {
-    saveSettings(gm, { apiKey: null });
+  it.each([{ apiKey: null }, { serverUrl: null }])('does not flush with %o', async (patch) => {
+    createQueue(gm).enqueue([obs('a')]);
+    saveSettings(gm, patch);
     main(gm, document);
+    await flush();
     expect(gm.requests).toHaveLength(0);
+    expect(createQueue(gm).size()).toBe(1);
+  });
+
+  it('withdrawing during a flush sends no further batch', async () => {
+    const q = createQueue(gm);
+    q.enqueue(Array.from({ length: 150 }, (_, i) => obs(`o${i}`)));
+    let release: () => void = () => {};
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    gm.respondWith(async (opts) => {
+      await gate;
+      return ackAll(opts);
+    });
+    main(gm, document);
+    gm.menus[0]?.fn();
+    await flush();
+    byText('Withdraw consent').click();
+    release();
+    await flush();
+    expect(gm.requests).toHaveLength(1);
+    expect(createQueue(gm).size()).toBe(0);
+  });
+
+  it('reapplies the stored hide state after withdrawing and consenting again', () => {
+    saveSettings(gm, { hideOglightBox: true });
+    main(gm, document);
+    expect(document.head.innerHTML).toContain('.ogl_miniStats');
+    gm.menus[0]?.fn();
+    byText('Withdraw consent').click();
+    expect(document.head.innerHTML).not.toContain('.ogl_miniStats');
+    click('#starledger-box button');
+    byText('I consent').click();
+    expect(document.head.innerHTML).toContain('.ogl_miniStats');
+    expect((document.querySelector('#starledger-hide') as HTMLInputElement).checked).toBe(true);
+  });
+
+  it('does not add the hide rule twice and tolerates a fresh document', () => {
+    saveSettings(gm, { hideOglightBox: true });
+    main(gm, document);
+    gm.menus[0]?.fn();
+    expect(document.querySelectorAll('#starledger-hide-oglight')).toHaveLength(1);
+  });
+
+  it('inserts server-provided names literally, without replacement patterns', async () => {
+    gm.respondWith(() => ({
+      status: 200,
+      body: JSON.stringify({ ok: true, username: "a$&b$'c", apiVersion: 1 }),
+    }));
+    main(gm, document);
+    gm.menus[0]?.fn();
+    byText('Test connection').click();
+    await flush();
+    expect(document.querySelector('.starledger-status')?.textContent).toBe("Connected as a$&b$'c");
   });
 
   it('adds then removes the OGLight rule with the checkbox', () => {
