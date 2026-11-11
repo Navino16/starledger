@@ -1,5 +1,6 @@
 <h1><%= it.t('account.title') %></h1>
 <p><%= it.t('account.welcome', { username: it.username }) %></p>
+<% if (it.isAdmin) { %><p><a href="/admin/invitations"><%= it.t('account.invitations') %></a></p><% } %>
 <form method="post" action="/logout">
   <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
   <button type="submit"><%= it.t('account.logout') %></button>

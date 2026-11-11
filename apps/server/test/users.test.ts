@@ -158,3 +158,22 @@ describe('runCli create-admin', () => {
     expect(err.text()).toMatch(/too long/i);
   });
 });
+
+describe('username validation', () => {
+  it.each(['ab', 'a'.repeat(33), 'with space', 'bad!', 'é-accent', ''])(
+    'rejects %j',
+    async (username) => {
+      await expect(
+        createUser(t.db, { username, password: PASSWORD, isAdmin: false, locale: 'en' }),
+      ).rejects.toThrow(/3 to 32/);
+    },
+  );
+
+  it('accepts 3 and 32 characters of [a-z0-9_.-] after lowercasing', async () => {
+    for (const username of ['A_b', `${'Z'.repeat(31)}.`, 'a.b-c_9']) {
+      await expect(
+        createUser(t.db, { username, password: PASSWORD, isAdmin: false, locale: 'en' }),
+      ).resolves.toMatchObject({ username: username.toLowerCase() });
+    }
+  });
+});

@@ -4,13 +4,13 @@ import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from
 import type { Kysely } from 'kysely';
 import type { Database } from '../db/schema';
 import { verifyCredentials } from '../users/users';
-import { sessionUser } from './auth';
+import { requireUser, startSession, type WebUser } from './auth';
 import { type Locale, negotiateLocale, translator } from './i18n';
 
 const LOGIN_MAX_PER_MINUTE = 10;
 
 export const localeOf = (request: FastifyRequest): Locale =>
-  sessionUser(request)?.locale ?? negotiateLocale(request.headers['accept-language']);
+  request.user?.locale ?? negotiateLocale(request.headers['accept-language']);
 
 export async function renderPage(
   request: FastifyRequest,
@@ -35,11 +35,11 @@ export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Databa
   await app.register(fastifyRateLimit, { global: false });
 
   app.get('/', async (request, reply) =>
-    reply.redirect(sessionUser(request) ? '/account' : '/login'),
+    reply.redirect(request.session.get('userId') ? '/account' : '/login'),
   );
 
   app.get('/login', async (request, reply) => {
-    if (sessionUser(request)) return reply.redirect('/account');
+    if (request.session.get('userId')) return reply.redirect('/account');
     const t = translator(localeOf(request));
     return renderPage(request, reply, 'login.eta', {
       title: t('login.title'),
@@ -67,10 +67,7 @@ export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Databa
           error: t('login.invalid'),
         });
       }
-      request.session.regenerate();
-      request.session.set('userId', user.id);
-      request.session.set('username', user.username);
-      request.session.set('locale', user.locale);
+      startSession(request, user.id);
       return reply.redirect('/account');
     },
   );
@@ -80,13 +77,13 @@ export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Databa
     return reply.redirect('/login');
   });
 
-  app.get('/account', async (request, reply) => {
-    const user = sessionUser(request);
-    if (!user) return reply.redirect('/login');
+  app.get('/account', { preHandler: requireUser(db) }, async (request, reply) => {
+    const user = request.user as WebUser;
     const t = translator(user.locale);
     return renderPage(request, reply, 'account.eta', {
       title: t('account.title'),
       username: user.username,
+      isAdmin: user.isAdmin,
     });
   });
 }
@@ -98,6 +95,7 @@ export function registerErrorPages(app: FastifyInstance) {
     let message: string | null = null;
     if (status === 429) message = t('errors.rateLimit');
     else if (error.code?.startsWith('FST_CSRF_')) message = t('errors.csrf');
+    else if (status === 403) message = t('errors.forbidden');
     if (message) {
       return reply.status(status).view('error.eta', {
         locale: localeOf(request),

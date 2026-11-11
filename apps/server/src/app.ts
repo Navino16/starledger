@@ -9,6 +9,7 @@ import { type Kysely, sql } from 'kysely';
 import type { Config } from './config';
 import type { Database } from './db/schema';
 import { authRoutes, registerErrorPages } from './web/routes-auth';
+import { inviteRoutes } from './web/routes-invite';
 
 // Resolves from src/ in tests and from dist/ once built (views are copied next to the bundle).
 const VIEWS_DIR = fileURLToPath(new URL('./web/views', import.meta.url));
@@ -29,6 +30,7 @@ export function buildApp(
     logger: options.logger ? { level: 'info' } : false,
   });
 
+  app.decorateRequest('user', null);
   app.register(fastifyFormbody);
   app.register(fastifySecureSession, {
     key: Buffer.from(config.sessionSecret, 'hex'),
@@ -55,5 +57,6 @@ export function buildApp(
 
   registerErrorPages(app);
   app.register(authRoutes, { db });
+  app.register(inviteRoutes, { db, config });
   return app;
 }

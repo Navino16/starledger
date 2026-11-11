@@ -10,11 +10,28 @@
   "account": {
     "title": "Compte",
     "welcome": "Connecté en tant que {username}",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "invitations": "Invitations"
   },
   "errors": {
     "title": "Erreur",
     "csrf": "Jeton de formulaire invalide ou absent. Rechargez la page et réessayez.",
-    "rateLimit": "Trop de tentatives. Réessayez dans une minute."
+    "rateLimit": "Trop de tentatives. Réessayez dans une minute.",
+    "forbidden": "Vous n'avez pas accès à cette page."
+  },
+  "signup": {
+    "title": "Créer un compte",
+    "submit": "Créer le compte",
+    "errors": {
+      "username_invalid": "L'identifiant doit contenir de 3 à 32 caractères parmi a-z, 0-9, « _ », « . » et « - ».",
+      "password_short": "Le mot de passe doit contenir au moins {min} caractères.",
+      "username_taken": "Cet identifiant est déjà pris."
+    }
+  },
+  "invitations": {
+    "title": "Invitations",
+    "create": "Créer une invitation",
+    "created": "Invitation créée. Copiez ce lien maintenant : il est valable 72 heures, utilisable une seule fois, et ne sera plus affiché.",
+    "invalid": "Cette invitation n'est plus valide : elle est inconnue, expirée ou déjà utilisée."
   }
 }

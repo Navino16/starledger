@@ -1,0 +1,10 @@
+<h1><%= it.t('signup.title') %></h1>
+<% if (it.error) { %><p class="error" role="alert"><%= it.error %></p><% } %>
+<form method="post" action="<%= it.action %>">
+  <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+  <label for="username"><%= it.t('login.username') %></label>
+  <input id="username" name="username" type="text" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_.\-]+" value="<%= it.username %>">
+  <label for="password"><%= it.t('login.password') %></label>
+  <input id="password" name="password" type="password" autocomplete="new-password" required minlength="<%= it.minPassword %>">
+  <button type="submit"><%= it.t('signup.submit') %></button>
+</form>
