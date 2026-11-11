@@ -6,6 +6,7 @@ import { createT, MESSAGES } from '../src/i18n';
 import { loadStatsCache, saveSettings, saveStatsCache } from '../src/storage';
 import type { SyncState } from '../src/sync/queue';
 import { type BoxModel, renderBox } from '../src/ui/box';
+import { mountBox } from '../src/ui/dom';
 import { formatAmount, formatTime } from '../src/ui/format';
 
 const ACCOUNT: AccountRef = { serverId: 808, lang: 'en', playerId: 42, playerName: 'Neo' };
@@ -243,6 +244,57 @@ describe('box in the page', () => {
     expect(document.getElementById('links')?.nextElementSibling?.id).toBe('starledger-box');
     expect([...document.querySelectorAll('#menuTable *')]).toEqual(before);
     expect(document.getElementById('menuTable')?.parentElement?.id).toBe('links');
+  });
+
+  describe('with OGLight', () => {
+    const OGL = '<div class="ogl_miniStats"></div>';
+    const linksIds = () =>
+      [...(document.getElementById('links')?.children ?? [])].map((c) => c.id || c.className);
+
+    it('is placed right after the OGLight box inside #links, menu untouched', () => {
+      document
+        .getElementById('links')
+        ?.insertAdjacentHTML('beforeend', `<div id="toolLinksWrapper"></div>${OGL}`);
+      const before = [...document.querySelectorAll('#menuTable *')];
+      saveSettings(gm, { consent: true });
+      main(gm, document, win);
+      expect(linksIds()).toEqual([
+        'menuTable',
+        'toolLinksWrapper',
+        'ogl_miniStats',
+        'starledger-box',
+      ]);
+      expect([...document.querySelectorAll('#menuTable *')]).toEqual(before);
+    });
+
+    it('moves under an OGLight box added after the mount', async () => {
+      saveSettings(gm, { consent: true });
+      main(gm, document, win);
+      document.getElementById('links')?.insertAdjacentHTML('beforeend', OGL);
+      await Promise.resolve();
+      expect(linksIds()).toEqual(['menuTable', 'ogl_miniStats', 'starledger-box']);
+    });
+
+    it('keeps the placement on re-mount without a second observer', () => {
+      const Real = MutationObserver;
+      const ctor = vi.fn();
+      class Spy extends Real {
+        constructor(cb: MutationCallback) {
+          super(cb);
+          ctor();
+        }
+      }
+      vi.stubGlobal('MutationObserver', Spy);
+      try {
+        document.getElementById('links')?.insertAdjacentHTML('beforeend', OGL);
+        mountBox(document, document.createElement('div'));
+        mountBox(document, document.createElement('div'));
+        expect(linksIds()).toEqual(['menuTable', 'ogl_miniStats', 'starledger-box']);
+        expect(ctor).toHaveBeenCalledTimes(1);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
   });
 
   it('shows the server CTA and requests nothing when the server is not configured', async () => {

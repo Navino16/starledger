@@ -45,14 +45,46 @@ export function configureBoxContent(doc: Document, t: T, onConfigure: () => void
 
 export const PANEL_ID = 'starledger-box';
 
-//! AGENTS.md §1.7: inserted under #links, monetization entries untouched
+const OGLIGHT_BOX = '.ogl_miniStats';
+const observedLinks = new WeakSet<Element>();
+
+function lastOglightBox(links: Element): Element | undefined {
+  return [...links.querySelectorAll(OGLIGHT_BOX)].pop();
+}
+
+//! AGENTS.md §1.7: stacked under OGLight's box, monetization entries untouched
+function placeBox(links: Element, box: Element): void {
+  const ogl = lastOglightBox(links);
+  if (!ogl) links.after(box);
+  else if (ogl.nextElementSibling !== box) ogl.after(box);
+}
+
+function followOglight(doc: Document, links: Element): void {
+  if (observedLinks.has(links)) return;
+  observedLinks.add(links);
+  //! AGENTS.md §1.3: reacts to DOM changes only, no timer
+  new MutationObserver((records) => {
+    try {
+      const box = doc.getElementById(PANEL_ID);
+      if (!box) return;
+      const added = records.some((r) =>
+        [...r.addedNodes].some((n) => n instanceof Element && n.matches(OGLIGHT_BOX)),
+      );
+      if (added) placeBox(links, box);
+    } catch {
+      // swallowed: our errors must never break the page
+    }
+  }).observe(links, { childList: true });
+}
+
 export function mountBox(doc: Document, box: HTMLElement): boolean {
   const links = doc.getElementById('links');
   if (!links) return false;
   doc.getElementById(PANEL_ID)?.remove();
   box.id = PANEL_ID;
   box.className = 'starledger-box';
-  links.after(box);
+  placeBox(links, box);
+  followOglight(doc, links);
   return true;
 }
 

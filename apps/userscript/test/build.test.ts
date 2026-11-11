@@ -50,6 +50,10 @@ describe('built userscript', () => {
     expect(script).toContain(
       'GRAY AREA: requires ToolDev approval before publishing — see AGENTS.md §3',
     );
+    expect(script).toContain(
+      "AGENTS.md §1.7: stacked under OGLight's box, monetization entries untouched",
+    );
+    expect(script).toContain('AGENTS.md §1.3: reacts to DOM changes only, no timer');
     expect(script).toContain('AGENTS.md §5');
     expect(script).toContain('AGENTS.md §1.9');
     expect(script).toContain('AGENTS.md §1.9: consent re-read before every enqueue');
