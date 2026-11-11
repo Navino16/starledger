@@ -1,5 +1,4 @@
-import { isAllowedUniverse } from './pts-guard';
+import { main } from './app';
+import { realGm } from './gm';
 
-if (isAllowedUniverse(document)) {
-  // Collection and sync are wired in later scopes
-}
+main(realGm, document);

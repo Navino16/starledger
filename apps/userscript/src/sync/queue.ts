@@ -144,5 +144,9 @@ export function createQueue(gm: Gm) {
     return inFlight;
   }
 
-  return { enqueue, size: () => read().length, state, flush };
+  function clear() {
+    gm.set(QUEUE_KEY, []);
+  }
+
+  return { enqueue, size: () => read().length, state, flush, clear };
 }
