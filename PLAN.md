@@ -574,7 +574,7 @@ Branche : `feature/server-account`.
 
 **Interfaces :**
 - Produit :
-  - `generateApiKey(db, userId): Promise<string>` : la clé vaut `ogd_` suivi de 32 octets aléatoires en base64url. Elle révoque la clé active précédente dans la même transaction, stocke le sha256 en hexadécimal et les 8 premiers caractères comme `key_prefix` ;
+  - `generateApiKey(db, userId): Promise<string>` : la clé vaut `slk_` suivi de 32 octets aléatoires en base64url. Elle révoque la clé active précédente dans la même transaction, stocke le sha256 en hexadécimal et les 8 premiers caractères comme `key_prefix` ;
   - `revokeApiKey(db, userId)` ;
   - `authenticateApiKey(db, key): Promise<{ userId: string } | null>` : comparaison du hash, refus d'une clé révoquée.
 - Routes :
