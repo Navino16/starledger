@@ -4,9 +4,27 @@ import { el, isHttpUrl, isInsecureUrl, mountBox, type UiContext } from './dom';
 
 export function renderConfigureBox(ctx: UiContext, onConfigure: () => void): void {
   const { doc, t } = ctx;
-  const button = el(doc, 'button', { type: 'button', textContent: t('configure') });
+  const button = el(doc, 'button', {
+    type: 'button',
+    className: 'starledger-cta',
+    textContent: t('configureSync'),
+  });
   button.addEventListener('click', onConfigure);
-  mountBox(doc, el(doc, 'div', {}, el(doc, 'strong', { textContent: t('boxTitle') }), ' ', button));
+  mountBox(
+    doc,
+    el(
+      doc,
+      'div',
+      {},
+      el(
+        doc,
+        'div',
+        { className: 'starledger-head' },
+        el(doc, 'strong', { textContent: t('boxTitle') }),
+      ),
+      button,
+    ),
+  );
 }
 
 export function renderConsent(ctx: UiContext, onAccepted: () => void): void {
