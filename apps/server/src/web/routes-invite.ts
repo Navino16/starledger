@@ -12,7 +12,7 @@ import {
 import { createUser, MIN_PASSWORD_LENGTH, UserInputError } from '../users/users';
 import { requireAdmin, requireUser, startSession } from './auth';
 import { negotiateLocale, translator } from './i18n';
-import { localeOf, renderPage } from './routes-auth';
+import { localeOf, renderError, renderPage } from './routes-auth';
 
 const SIGNUP_MAX_PER_MINUTE = 10;
 
@@ -33,7 +33,7 @@ export async function inviteRoutes(
 
   await app.register(fastifyRateLimit, { global: false });
 
-  const adminOnly = [requireUser(db), requireAdmin];
+  const adminOnly = [requireUser, requireAdmin];
 
   app.get('/admin/invitations', { preHandler: adminOnly }, async (request, reply) => {
     const t = translator(localeOf(request));
@@ -45,10 +45,11 @@ export async function inviteRoutes(
 
   app.post(
     '/admin/invitations',
-    { preHandler: [app.csrfProtection, ...adminOnly] },
+    { preHandler: [...adminOnly, app.csrfProtection] },
     async (request, reply) => {
       const { url } = await createInvitation(db, request.user?.id as string, config.publicUrl);
       const t = translator(localeOf(request));
+      reply.header('Cache-Control', 'no-store');
       return renderPage(request, reply, 'admin-invitations.eta', {
         title: t('invitations.title'),
         url,
@@ -56,15 +57,8 @@ export async function inviteRoutes(
     },
   );
 
-  const invalidInvitation = (request: FastifyRequest, reply: FastifyReply) => {
-    const t = translator(localeOf(request));
-    return reply.status(410).view('error.eta', {
-      locale: localeOf(request),
-      t,
-      title: t('errors.title'),
-      message: t('invitations.invalid'),
-    });
-  };
+  const invalidInvitation = (request: FastifyRequest, reply: FastifyReply) =>
+    renderError(request, reply, 410, 'invitations.invalid');
 
   const signupPage = (
     request: FastifyRequest,

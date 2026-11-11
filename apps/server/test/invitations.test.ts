@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { Writable } from 'node:stream';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app';
@@ -203,6 +204,19 @@ describe('invitation web flow', () => {
     expect(expired.statusCode).toBe(410);
   });
 
+  it('returns 410 when posting to an expired token', async () => {
+    const { url } = await createInvitation(t.db, adminId, config.publicUrl, -1);
+    const path = url.replace(config.publicUrl, '');
+    const login = await app.inject({ method: 'GET', url: '/login' });
+    const res = await post(
+      app,
+      path,
+      { username: 'toolate', password: PASSWORD, _csrf: csrfOf(login.body) },
+      cookieOf(login),
+    );
+    expect(res.statusCode).toBe(410);
+  });
+
   it('shows validation errors without consuming the invitation', async () => {
     const { url } = await createInvitation(t.db, adminId, config.publicUrl);
     const path = url.replace(config.publicUrl, '');
@@ -249,6 +263,14 @@ describe('admin access', () => {
       cookieOf(account) || cookie,
     );
     expect(res.statusCode).toBe(403);
+    expect(res.body).toContain('You do not have access');
+    expect(get.body).toContain('You do not have access');
+  });
+
+  it('redirects anonymous POSTs to /login before checking CSRF', async () => {
+    const res = await post(app, '/admin/invitations', {}, '');
+    expect(res.statusCode).toBe(302);
+    expect(res.headers.location).toBe('/login');
   });
 
   it('redirects anonymous visitors to /login', async () => {
@@ -300,6 +322,41 @@ describe('requireUser', () => {
       headers: { cookie },
     });
     expect(admin.statusCode).toBe(200);
+  });
+});
+
+describe('locale and logging', () => {
+  it('uses the logged-in user locale on pages outside requireUser', async () => {
+    await createUser(t.db, {
+      username: 'frenchy',
+      password: PASSWORD,
+      isAdmin: false,
+      locale: 'fr',
+    });
+    const cookie = await login('frenchy');
+    const loginPage = await app.inject({ method: 'GET', url: '/invite/nope', headers: { cookie } });
+    expect(loginPage.statusCode).toBe(410);
+    expect(loginPage.body).toContain('plus valide');
+    const csrf = await post(app, '/logout', {}, cookie);
+    expect(csrf.body).toContain('Jeton de formulaire invalide');
+  });
+
+  it('does not log invitation tokens', async () => {
+    let logs = '';
+    const logStream = new Writable({
+      write(chunk, _enc, cb) {
+        logs += chunk.toString();
+        cb();
+      },
+    });
+    const logged = buildApp(config, t.db, { logStream });
+    const { url } = await createInvitation(t.db, adminId, config.publicUrl);
+    const token = url.split('/invite/')[1] as string;
+    const res = await logged.inject({ method: 'GET', url: `/invite/${token}?x=1` });
+    expect(res.statusCode).toBe(200);
+    await logged.close();
+    expect(logs).toContain('/invite/[redacted]');
+    expect(logs).not.toContain(token);
   });
 });
 
