@@ -45,32 +45,29 @@ export function configureBoxContent(doc: Document, t: T, onConfigure: () => void
 
 export const PANEL_ID = 'starledger-box';
 
-const OGLIGHT_BOX = '.ogl_miniStats';
-const observedLinks = new WeakSet<Element>();
+const MAX_MOVES = 5;
+const moves = new WeakMap<Element, number>();
 
-function lastOglightBox(links: Element): Element | undefined {
-  return [...links.querySelectorAll(OGLIGHT_BOX)].pop();
-}
-
-//! AGENTS.md §1.7: stacked under OGLight's box, monetization entries untouched
+//! AGENTS.md §1.7: appended after other tools' panels at the end of #links, monetization entries untouched
 function placeBox(links: Element, box: Element): void {
-  const ogl = lastOglightBox(links);
-  if (!ogl) links.after(box);
-  else if (ogl.nextElementSibling !== box) ogl.after(box);
+  if (links.lastElementChild !== box) links.append(box);
 }
 
-function followOglight(doc: Document, links: Element): void {
-  if (observedLinks.has(links)) return;
-  observedLinks.add(links);
+function followOtherPanels(doc: Document, links: Element): void {
+  if (moves.has(links)) return;
+  moves.set(links, 0);
   //! AGENTS.md §1.3: reacts to DOM changes only, no timer
   new MutationObserver((records) => {
     try {
       const box = doc.getElementById(PANEL_ID);
-      if (!box) return;
-      const added = records.some((r) =>
-        [...r.addedNodes].some((n) => n instanceof Element && n.matches(OGLIGHT_BOX)),
+      if (!box || links.lastElementChild === box) return;
+      const foreign = records.some((r) =>
+        [...r.addedNodes].some((n) => n instanceof Element && n !== box),
       );
-      if (added) placeBox(links, box);
+      const done = moves.get(links) ?? 0;
+      if (!foreign || done >= MAX_MOVES) return;
+      moves.set(links, done + 1);
+      placeBox(links, box);
     } catch {
       // swallowed: our errors must never break the page
     }
@@ -84,7 +81,7 @@ export function mountBox(doc: Document, box: HTMLElement): boolean {
   box.id = PANEL_ID;
   box.className = 'starledger-box';
   placeBox(links, box);
-  followOglight(doc, links);
+  followOtherPanels(doc, links);
   return true;
 }
 

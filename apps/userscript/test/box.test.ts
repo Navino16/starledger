@@ -237,45 +237,67 @@ describe('box in the page', () => {
   const statsRequests = () => gm.requests.filter((r) => r.url.includes('/api/v1/stats'));
   const tick = () => new Promise((r) => setTimeout(r, 0));
 
-  it('is inserted after #links without touching #menuTable', () => {
+  it('is inserted inside #links without touching #menuTable', () => {
     const before = [...document.querySelectorAll('#menuTable *')];
     saveSettings(gm, { consent: true });
     main(gm, document, win);
-    expect(document.getElementById('links')?.nextElementSibling?.id).toBe('starledger-box');
+    expect(document.getElementById('links')?.lastElementChild?.id).toBe('starledger-box');
     expect([...document.querySelectorAll('#menuTable *')]).toEqual(before);
     expect(document.getElementById('menuTable')?.parentElement?.id).toBe('links');
   });
 
-  describe('with OGLight', () => {
+  describe('after third-party panels', () => {
     const OGL = '<div class="ogl_miniStats"></div>';
-    const linksIds = () =>
+    const ids = () =>
       [...(document.getElementById('links')?.children ?? [])].map((c) => c.id || c.className);
+    const links = () => document.getElementById('links') as HTMLElement;
 
-    it('is placed right after the OGLight box inside #links, menu untouched', () => {
-      document
-        .getElementById('links')
-        ?.insertAdjacentHTML('beforeend', `<div id="toolLinksWrapper"></div>${OGL}`);
+    it('is the last child of #links with the menu untouched', () => {
+      links().insertAdjacentHTML('beforeend', '<div id="toolLinksWrapper"></div>');
       const before = [...document.querySelectorAll('#menuTable *')];
       saveSettings(gm, { consent: true });
       main(gm, document, win);
-      expect(linksIds()).toEqual([
-        'menuTable',
-        'toolLinksWrapper',
-        'ogl_miniStats',
-        'starledger-box',
-      ]);
+      expect(ids()).toEqual(['menuTable', 'toolLinksWrapper', 'starledger-box']);
       expect([...document.querySelectorAll('#menuTable *')]).toEqual(before);
     });
 
-    it('moves under an OGLight box added after the mount', async () => {
+    it('goes after every panel present at mount', () => {
+      links().insertAdjacentHTML('beforeend', `${OGL}<div class="other"></div>`);
       saveSettings(gm, { consent: true });
       main(gm, document, win);
-      document.getElementById('links')?.insertAdjacentHTML('beforeend', OGL);
-      await Promise.resolve();
-      expect(linksIds()).toEqual(['menuTable', 'ogl_miniStats', 'starledger-box']);
+      expect(ids()).toEqual(['menuTable', 'ogl_miniStats', 'other', 'starledger-box']);
     });
 
-    it('keeps the placement on re-mount without a second observer', () => {
+    it('moves back to last when a panel is added after the mount', async () => {
+      saveSettings(gm, { consent: true });
+      main(gm, document, win);
+      links().insertAdjacentHTML('beforeend', OGL);
+      await Promise.resolve();
+      expect(ids()).toEqual(['menuTable', 'ogl_miniStats', 'starledger-box']);
+    });
+
+    it('stops after 5 moves against a tool that insists on being last', async () => {
+      saveSettings(gm, { consent: true });
+      main(gm, document, win);
+      const hostile = document.createElement('div');
+      hostile.className = 'hostile';
+      let boxMoves = 0;
+      const obs = new MutationObserver((records) => {
+        for (const r of records) {
+          for (const n of r.addedNodes) if ((n as Element).id === 'starledger-box') boxMoves++;
+        }
+        if (links().lastElementChild !== hostile) links().append(hostile);
+      });
+      obs.observe(links(), { childList: true });
+      links().append(hostile);
+      for (let i = 0; i < 40; i++) await Promise.resolve();
+      obs.disconnect();
+      expect(boxMoves).toBeLessThanOrEqual(5);
+      expect(boxMoves).toBeGreaterThan(0);
+      expect(ids().at(-1)).toBe('hostile');
+    });
+
+    it('keeps the placement on re-mount with a single observer', () => {
       const Real = MutationObserver;
       const ctor = vi.fn();
       class Spy extends Real {
@@ -286,10 +308,10 @@ describe('box in the page', () => {
       }
       vi.stubGlobal('MutationObserver', Spy);
       try {
-        document.getElementById('links')?.insertAdjacentHTML('beforeend', OGL);
+        links().insertAdjacentHTML('beforeend', OGL);
         mountBox(document, document.createElement('div'));
         mountBox(document, document.createElement('div'));
-        expect(linksIds()).toEqual(['menuTable', 'ogl_miniStats', 'starledger-box']);
+        expect(ids()).toEqual(['menuTable', 'ogl_miniStats', 'starledger-box']);
         expect(ctor).toHaveBeenCalledTimes(1);
       } finally {
         vi.unstubAllGlobals();

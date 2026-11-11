@@ -51,7 +51,7 @@ describe('built userscript', () => {
       'GRAY AREA: requires ToolDev approval before publishing — see AGENTS.md §3',
     );
     expect(script).toContain(
-      "AGENTS.md §1.7: stacked under OGLight's box, monetization entries untouched",
+      "AGENTS.md §1.7: appended after other tools' panels at the end of #links, monetization entries untouched",
     );
     expect(script).toContain('AGENTS.md §1.3: reacts to DOM changes only, no timer');
     expect(script).toContain('AGENTS.md §5');
