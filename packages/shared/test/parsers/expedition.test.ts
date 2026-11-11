@@ -62,6 +62,7 @@ describe('parseExpedition', () => {
   it.each([
     [0.5, 0, 'early'],
     [1, 2, 'late'],
+    [1, 0, 'late'],
     [1.5, 0, 'late'],
   ])('navigation multiplier %s / +%sh is %s', (m, h, expected) => {
     const r = parseExpedition(nav(m, h));
@@ -69,7 +70,7 @@ describe('parseExpedition', () => {
   });
 
   it('rejects navigation that is neither early nor late', () => {
-    expect(parseExpedition(nav(1, 0)).status).toBe('unrecognized');
+    expect(parseExpedition(nav(1, -1)).status).toBe('unrecognized');
   });
 
   it('treats a resource absent from resourcesgained as a known 0', () => {

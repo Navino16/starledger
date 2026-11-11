@@ -10,7 +10,7 @@ import { parseWreckfield } from './wreckfield';
 export const PARSER_VERSION = 1;
 
 // Types 33/34 are tracked but have no parser yet; they are kept raw for reparsing (scope 12).
-export const TRACKED_MESSAGE_TYPES = [25, 32, 33, 34, 41, 48, 54, 61];
+export const TRACKED_MESSAGE_TYPES = [25, 32, 33, 34, 41, 48, 54, 61] as const;
 
 const PARSERS = new Map<number, (obs: MessageObservation) => ParseResult>([
   [25, parseCombat],

@@ -38,7 +38,7 @@ function classifyNavigation(raw: Raw): ExpeditionResult {
   if (nav === null) throw new Invalid('missing navigation');
   // OGLight rule, docs/ogame-data-formats.md §3.1
   if (nav.returnTimeMultiplier < 1) return 'early';
-  if (nav.returnTimeMultiplier > 1 || nav.returnTimeAbsoluteIncreaseHours > 0) return 'late';
+  if (nav.returnTimeMultiplier > 1 || nav.returnTimeAbsoluteIncreaseHours >= 0) return 'late';
   throw new Invalid('navigation neither early nor late');
 }
 

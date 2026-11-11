@@ -107,7 +107,7 @@ function build(obs: MessageObservation): CombatEvent {
     const repaired = required(result.repairedTechnologies ?? null, 'repairedTechnologies');
     for (const t of repaired) {
       const destroyed = lost[t.technologyId];
-      if (isShip(t.technologyId) && destroyed !== undefined) {
+      if (destroyed !== undefined) {
         lost[t.technologyId] = Math.max(0, destroyed - t.amount);
       }
     }
