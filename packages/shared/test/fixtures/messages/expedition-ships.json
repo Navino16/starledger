@@ -27,7 +27,7 @@
       "kind": "expedition",
       "coords": { "galaxy": 4, "system": 100, "position": 16 },
       "result": "ships",
-      "size": "large",
+      "size": 0,
       "depletion": 1,
       "resources": null,
       "darkMatter": null,

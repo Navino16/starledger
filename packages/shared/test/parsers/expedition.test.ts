@@ -87,8 +87,15 @@ describe('parseExpedition', () => {
     expect(r.status === 'ok' && r.event.kind === 'expedition' && r.event.resources).toBeNull();
   });
 
-  it('rejects out-of-range size and depletion', () => {
-    expect(parseExpedition(withRaw(base, { size: '3' })).status).toBe('unrecognized');
-    expect(parseExpedition(withRaw(base, { depletion: '9' })).status).toBe('unrecognized');
+  it('keeps unknown size and depletion values as raw integers', () => {
+    const r = parseExpedition(withRaw(base, { size: '7', depletion: '9' }));
+    expect(r.status === 'ok' && r.event.kind === 'expedition' && r.event).toMatchObject({
+      size: 7,
+      depletion: 9,
+    });
+  });
+
+  it('rejects a non-integer size', () => {
+    expect(parseExpedition(withRaw(base, { size: 'big' })).status).toBe('unrecognized');
   });
 });

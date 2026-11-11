@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { shipCountsSchema } from '../domain';
-import type { ExpeditionEvent, ExpeditionResult, ExpeditionSize, ParseResult } from '../events';
+import type { ExpeditionEvent, ExpeditionResult, ParseResult } from '../events';
 import type { MessageObservation } from '../observation';
 import { coordsOf, Invalid, need, type Raw, rawInt, rawJson, tryBuild } from './raw';
 
@@ -31,8 +31,6 @@ const SIMPLE_RESULTS: Record<string, ExpeditionResult> = {
   combatAliens: 'aliens',
 };
 
-const SIZES: Record<number, ExpeditionSize> = { 2: 'small', 1: 'medium', 0: 'large' };
-
 function classifyNavigation(raw: Raw): ExpeditionResult {
   const nav = need(rawJson(raw, 'navigation', navigationSchema), 'navigation');
   if (nav === null) throw new Invalid('missing navigation');
@@ -57,12 +55,8 @@ function build(obs: MessageObservation): ExpeditionEvent {
         : undefined;
   if (result === undefined) throw new Invalid(`unknown expeditionresult ${rawResult}`);
 
-  const sizeRaw = need(rawInt(raw, 'size'), 'size');
-  if (sizeRaw !== null && !Object.hasOwn(SIZES, sizeRaw)) throw new Invalid('invalid size');
+  const size = need(rawInt(raw, 'size'), 'size');
   const depletion = need(rawInt(raw, 'depletion'), 'depletion');
-  if (depletion !== null && (depletion < 1 || depletion > 4)) {
-    throw new Invalid('invalid depletion');
-  }
 
   // Inside a present resourcesgained, an absent key is a known 0
   const gained = need(rawJson(raw, 'resourcesgained', resourcesGainedSchema), 'resourcesgained');
@@ -76,7 +70,7 @@ function build(obs: MessageObservation): ExpeditionEvent {
     kind: 'expedition',
     coords,
     result,
-    size: sizeRaw === null ? null : (SIZES[sizeRaw] ?? null),
+    size,
     depletion,
     resources: gained && {
       metal: gained.metal ?? 0,

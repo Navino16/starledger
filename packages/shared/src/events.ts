@@ -13,13 +13,14 @@ export type ExpeditionResult =
   | 'pirates'
   | 'aliens';
 
-export type ExpeditionSize = 'small' | 'medium' | 'large';
+// Known raw values only; the game may send others (docs/ogame-data-formats.md §3.1)
+export const EXPEDITION_SIZES = { 0: 'large', 1: 'medium', 2: 'small' } as const;
 
 export type ExpeditionEvent = {
   kind: 'expedition';
   coords: Coords;
   result: ExpeditionResult;
-  size: ExpeditionSize | null;
+  size: number | null;
   depletion: number | null;
   resources: Resources | null;
   darkMatter: number | null;
@@ -38,7 +39,8 @@ export type LifeformDiscoveryResult =
   | 'ship_lost'
   | 'lifeform_found';
 
-export type ArtifactsSize = 'normal' | 'big' | 'huge' | 'full';
+// Known raw values only (docs/ogame-data-formats.md §3.2)
+export const ARTIFACT_SIZES = ['normal', 'big', 'huge', 'full'] as const;
 
 export type LifeformDiscoveryEvent = {
   kind: 'lifeform_discovery';
@@ -47,7 +49,7 @@ export type LifeformDiscoveryEvent = {
   lifeform: number | null;
   xp: number | null;
   artifacts: number | null;
-  artifactsSize: ArtifactsSize | null;
+  artifactsSize: string | null;
   shipsLost: ShipCounts | null;
 };
 

@@ -34,13 +34,19 @@ describe('parseLifeformDiscovery', () => {
     expect(result({ discoverytype: 'none' })).toBe('none');
   });
 
-  it('rejects an unknown discoverytype or artifactssize', () => {
+  it('rejects an unknown discoverytype', () => {
     expect(parseLifeformDiscovery(withRaw(base, { discoverytype: 'foo' })).status).toBe(
       'unrecognized',
     );
-    expect(parseLifeformDiscovery(withRaw(base, { artifactssize: 'tiny' })).status).toBe(
-      'unrecognized',
-    );
+  });
+
+  it('keeps an unknown artifactssize and maps an empty one to null', () => {
+    const size = (v: string) => {
+      const r = parseLifeformDiscovery(withRaw(base, { artifactssize: v }));
+      return r.status === 'ok' && r.event.kind === 'lifeform_discovery' && r.event.artifactsSize;
+    };
+    expect(size('mega')).toBe('mega');
+    expect(size('')).toBeNull();
   });
 
   it('rejects invalid shipslost JSON naming the attribute', () => {

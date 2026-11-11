@@ -27,7 +27,7 @@
       "kind": "expedition",
       "coords": { "galaxy": 4, "system": 100, "position": 16 },
       "result": "resources",
-      "size": "small",
+      "size": 2,
       "depletion": 1,
       "resources": { "metal": 1200, "crystal": 600, "deuterium": 0 },
       "darkMatter": 0,
