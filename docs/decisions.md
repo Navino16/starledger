@@ -148,6 +148,20 @@ Décisions prises pendant l'exécution du plan (scopes 1 à 7). Chaque entrée i
 
 À vérifier sur le PTS au scope 10 (Chrome et Firefox avec Tampermonkey) : `ogame.messages.content` est rempli avant l'`ajaxSuccess` global ; `getMessagesList` déclenche bien des événements globaux ; le jQuery de la page peut appeler notre fonction du bac à sable (Firefox peut exiger `exportFunction`) ; les vrais `data-raw-*` restent dans les limites du schéma.
 
+### Scope 9 — Userscript : encart et détail
+
+| Sujet | Décision | Coût si faux |
+|---|---|---|
+| Scope 9: Ruling K | Un seul encart sous `#links` dont le contenu dépend de l'état : sans consentement, le bouton « Configurer » (comportement du scope 7) ; consentement sans serveur, « Configurer le serveur et la clé » ; sinon les tuiles de stats. Il remplace l'encart de configuration du scope 7, sans seconde insertion. | Aucun. |
+| Scope 9: Ruling L | Stats de l'encart demandées à NOTRE serveur (`getStats`, `period=day`, `today=todayKey(décalage du démarrage)`) une fois au chargement après le vidage de la file, puis après chaque vidage consécutif à une collecte ; jamais sur minuteur. En cas d'erreur, les stats en cache du compte sont affichées marquées « ancien » avec leur heure (design §5.5/§5.6, AGENTS.md §1.3/§4). | Aucun. |
+| Scope 9: Ruling M (remplacée par M2) | Le détail était une fenêtre modale ouverte par l'utilisateur (Échap, clic sur le fond, bouton), avec un fond plein écran. | Remplacée : le fond assombrissait la barre de pub, la Boutique, le Marchand et le footer, ce que AGENTS.md §1.7 interdit à la lettre. |
+| Scope 9: Ruling M2 (remplace M) | Aucun calque ni fond plein écran : le détail est un panneau dans le flux, inséré en tête de la zone de contenu du jeu (`#contentWrapper`, ou `#middle`, ou à défaut juste après l'encart), jamais au-dessus de la barre du haut, du menu de gauche, des bannières ni du footer, sans changement d'opacité. Il se ferme par son bouton, Échap ou un clic à l'extérieur, et est entièrement retiré (nœud et écouteurs). AGENTS.md §0 « dans le doute, interdit » et §1.7 lu à la lettre ; évite une décision d'un ToolDev. | Moins l'effet « fenêtre » ; le contenu du jeu descend tant que le panneau est ouvert. Les identifiants `#contentWrapper` et `#middle` ne sont pas documentés dans `docs/ogame-data-formats.md` : à vérifier sur le PTS au scope 10. |
+| Scope 9: Ruling N | Cache des stats par compte (`serverId-lang-playerId`) dans le stockage `GM_*`, dernière réponse et heure seulement. | Aucun. |
+| Task 9.1: Ruling (réglages) | Les stats ne sont pas redemandées après l'enregistrement des réglages avant le prochain chargement de page ; un panneau d'options ou de consentement ouvert n'est jamais remplacé par un rendu de stats (affiché à la fermeture). | Une page à recharger avant les premières stats. |
+| Task 9.1: Ruling (vidages concurrents, mobile) | Les vidages concurrents partagent une seule promesse en cours (`inFlight`, tâche 7.3) ; sur mobile, 6 tuiles en grille 3 × 2 et le carburant sur sa propre ligne, accepté (vérification visuelle au scope 10). | Aucun. |
+| Scope 9: Ruling (revue) | La revue de 9.2 vaut revue de tâche ET revue finale de branche (9.1 déjà revue). | Aucun. |
+| Task 9.2: Ruling (revue, corrections) | Ouverture du détail : la file est vidée avant la première requête de stats (design §4.1) ; ligne FdV et ligne Net ajoutées, phrase de périmètre corrigée ; un seul détail ouvert à la fois, focus géré ; consentement revérifié après chaque réponse avant tout cache ou rendu. | Aucun. |
+
 ## Écart noté
 
 Le design §6.4 prévoit la lecture et l'écriture des réglages par l'API ; le plan ne prévoit que la lecture (dans la réponse de stats). Aucune écriture par l'API dans le MVP.

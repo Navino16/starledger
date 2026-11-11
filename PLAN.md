@@ -34,7 +34,7 @@
 | 6 | Docker et déploiement homelab | ✅ |
 | 7 | Userscript : socle, file, options, consentement | ✅ |
 | 8 | Userscript : collecte des messages | ✅ |
-| 9 | Userscript : encart et détail | ☐ |
+| 9 | Userscript : encart et détail | ✅ |
 | 10 | Validation PTS : vraies captures, reparse, audit | ☐ |
 | 11 | Carburant | ☐ (vérifications PTS en tâche 1) |
 | 12 | Transports entre joueurs | ⛔ attend les captures (design §9.2) |
@@ -931,16 +931,16 @@ Branche : `feature/userscript-box`.
   - un clic ouvre le détail.
 - Insertion sous `#links`. Le style est responsive : en dessous de 768 px, on passe en grille 3 × 2 compacte. Rien n'est positionné en `fixed` ou `absolute` par-dessus le menu.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - `formatAmount(null)` vaut `'?'` et `formatAmount(1500000)` vaut `'1.5M'`.
   - Avec `stale: true`, la mention « ancien » apparaît.
   - Avec `state.pending` à 4, « 4 en attente » apparaît.
   - Un `fuel.unknownCount` de 2 affiche « ? » dans la tuile carburant, et non 0.
   - L'encart est inséré après `#links`, sans toucher aux éléments `#menuTable` existants (comparaison du nombre et de l'ordre des enfants).
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add in-game stats box"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add in-game stats box"`
 
 ### Tâche 9.2 : Fenêtre de détail
 
@@ -955,16 +955,16 @@ Contenu (design §5.6) :
 - récapitulatif par catégorie (expéditions, combats, recyclages, FdV, champs d'épaves, carburant), avec les gains, les pertes et le carburant dans des colonnes séparées, et une phrase qui explique le périmètre du bilan net ;
 - compteurs « non reconnus » et « conflits » quand ils sont supérieurs à 0.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - Un clic sur « Semaine » déclenche `getStats` avec `period=week` et le bon `today`.
   - Avec 3 non reconnus, la fenêtre affiche « 3 rapports non reconnus ».
   - Les colonnes gains, pertes et carburant sont distinctes.
   - La fenêtre se ferme avec Échap et au clic sur le fond.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : auto-audit** (`AGENTS.md` §7), noté pour la PR.
-- [ ] **Step 6 : commit.** `git commit -m "Add stats detail dialog"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : auto-audit** (`AGENTS.md` §7), noté pour la PR.
+- [x] **Step 6 : commit.** `git commit -m "Add stats detail dialog"`
 
 ---
 

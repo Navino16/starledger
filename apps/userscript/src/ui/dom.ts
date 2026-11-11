@@ -7,6 +7,7 @@ export type UiContext = {
   doc: Document;
   t: T;
   queue: ReturnType<typeof createQueue>;
+  refreshBox?: () => void;
 };
 
 export function el<K extends keyof HTMLElementTagNameMap>(
