@@ -20,13 +20,15 @@ Set in `.env`, read by `compose.yaml`.
 
 | Variable | Required | Description |
 |---|---|---|
-| `POSTGRES_PASSWORD` | yes | Password of the `starledger` database user. Use only URL-safe characters (e.g. `openssl rand -hex 16`), as it is embedded in `DATABASE_URL`. |
+| `POSTGRES_PASSWORD` | yes | Password of the `starledger` database user. Use only URL-safe characters (e.g. `openssl rand -hex 16`), as it is embedded in `DATABASE_URL`. It only applies when the `pgdata` volume is first created; changing it later requires `ALTER USER starledger PASSWORD '...'` in `psql`, then updating `.env`. |
 | `SESSION_SECRET` | yes | 64 hexadecimal characters, generated with `openssl rand -hex 32`. Changing it logs everyone out. |
 | `PUBLIC_URL` | yes | Public HTTPS URL users reach the server at, without trailing path (e.g. `https://starledger.example.com`). |
 | `OPEN_SIGNUP` | no | `true` lets anyone sign up; default `false` (invitations only). |
 | `TRUST_PROXY` | no | Which proxies may set `X-Forwarded-For`. See below. |
 
-`DATABASE_URL` and `PORT` are set by the compose file (the app listens on 3000 inside the container).
+`DATABASE_URL` is set by the compose file. `PORT` is not passed through: the app always listens on its default, 3000, inside the container, and it cannot be changed through `.env` (change the published port in `compose.yaml` instead).
+
+Secrets: `chmod 600 .env`. The values are also visible to anyone with Docker access on the host (`docker inspect`).
 
 ## First admin
 
@@ -42,7 +44,7 @@ Then sign in at `PUBLIC_URL/login` and generate an API key from the account page
 
 Put a reverse proxy (Caddy, nginx, Traefik) in front of the app and terminate HTTPS there. `PUBLIC_URL` must be the HTTPS address users see. The proxy must forward `X-Forwarded-For` and `X-Forwarded-Proto`.
 
-By default `compose.yaml` publishes the app on `127.0.0.1:3000` only, so a proxy on the same host reaches it and the Internet does not. For a proxy on another host or Docker network, change the `ports` entry (for example `192.168.1.10:3000:3000`, or drop it and attach the proxy to the compose network). Never publish it on `0.0.0.0` without a proxy in front.
+By default `compose.yaml` publishes the app on `127.0.0.1:3000` only, so a proxy on the same host reaches it and the Internet does not. For a proxy on another host or Docker network, change the `ports` entry (for example `192.168.1.10:3000:3000`, or drop it and attach the proxy to the compose network). Never publish it on a public interface; bind to loopback or to the proxy's network. Connections through Docker's userland proxy arrive from the bridge gateway, a private address trusted by default, so a direct public client could forge `X-Forwarded-For` and bypass the login rate limit.
 
 ## TRUST_PROXY
 
@@ -52,7 +54,7 @@ Controls which connections are trusted to report the real client IP through `X-F
 |---|---|
 | `loopback,linklocal,uniquelocal` | Default. Trust private and local addresses. |
 | `true` | Trust every hop. Only safe if the app is reachable through the proxy alone. |
-| `false` | Trust no proxy; the client IP is the socket address. |
+| `false` | Trust no proxy; the client IP is the socket address. Behind an HTTPS proxy, `X-Forwarded-Proto` is then ignored too, so the session cookie loses its `Secure` flag. |
 | a number, e.g. `1` | Trust that many hops. Assumes the app is exposed only through the proxy. |
 | `10.0.0.5,192.168.1.0/24` | Comma-separated IPs, CIDRs or the named ranges above. |
 
@@ -61,20 +63,27 @@ A client with a private address (LAN, another container) counts as a trusted hop
 ## Backup and restore
 
 ```sh
+set -o pipefail
 docker compose exec -T postgres pg_dump -U starledger starledger | gzip > starledger-$(date +%F).sql.gz
 ```
 
-Restore into an empty database:
+`pipefail` makes a failing `pg_dump` fail the command; also check that the file is not empty.
+
+Restore into an empty database (the dump includes the migration history, so the app's `migrate` step does nothing):
 
 ```sh
-gunzip -c starledger-YYYY-MM-DD.sql.gz | docker compose exec -T postgres psql -U starledger starledger
+docker compose down -v          # deletes the pgdata volume
+docker compose up -d postgres   # wait until it is healthy (docker compose ps)
+gunzip -c starledger-YYYY-MM-DD.sql.gz | docker compose exec -T postgres psql -v ON_ERROR_STOP=1 -U starledger starledger
+docker compose up -d
 ```
-
-The data lives in the `pgdata` volume; `docker compose down -v` deletes it.
 
 ## Updating
 
 ```sh
 git pull
-docker compose up -d --build
+docker compose build --pull
+docker compose up -d
 ```
+
+The base images (`node:26-alpine`, `postgres:17-alpine`) are not pinned to a digest; `--pull` fetches their latest security updates. Run `docker compose pull postgres` as well to refresh the database image.

@@ -31,7 +31,7 @@
 | 3 | Serveur : socle, utilisateurs, connexion web | ✅ |
 | 4 | Serveur : invitations, clé API, réglages | ✅ |
 | 5 | Serveur : API d'ingestion et de stats | ✅ |
-| 6 | Docker et déploiement homelab | ☐ |
+| 6 | Docker et déploiement homelab | ✅ |
 | 7 | Userscript : socle, file, options, consentement | ☐ |
 | 8 | Userscript : collecte des messages | ☐ |
 | 9 | Userscript : encart et détail | ☐ |
@@ -731,10 +731,10 @@ Branche : `feature/docker`.
   - `.dockerignore` ;
   - `docs/deploy.md` : variables, création du `SESSION_SECRET` (`openssl rand -hex 32`), commande `create-admin` dans le conteneur, rappel sur le reverse proxy HTTPS et `PUBLIC_URL`, sauvegarde `pg_dump`. `TRUST_PROXY` vaut par défaut `loopback,linklocal,uniquelocal` : un proxy sur le réseau Docker, l'hôte ou le LAN est reconnu sans configuration, et un client public direct ne peut pas forger `X-Forwarded-For`. Publier quand même le port de l'app sur `127.0.0.1` ou sur le seul réseau du proxy. Documenter les autres formes (`true`, `false`, nombre de sauts — qui suppose une exposition par le proxy uniquement —, liste d'IP/CIDR), et le fait qu'un client à adresse privée (LAN, autre conteneur) est un saut de confiance : restreindre la liste à l'IP du proxy si le LAN n'est pas sûr.
 
-- [ ] **Step 1 : construire et démarrer.** `cp .env.example .env` (avec des valeurs de test), puis `docker compose up -d --build`.
-- [ ] **Step 2 : vérifier.** `curl -fsS localhost:3000/healthz` affiche `{"ok":true}`. `docker compose exec app node dist/cli.js create-admin --username admin` suivi de `/login` dans un navigateur permet de se connecter et de générer une clé.
-- [ ] **Step 3 : nettoyer.** `docker compose down -v`. Vérifier que `.env` est bien ignoré par git (`git status`).
-- [ ] **Step 4 : commit.** `git commit -m "Add Docker image, compose stack and deployment guide"`
+- [x] **Step 1 : construire et démarrer.** `cp .env.example .env` (avec des valeurs de test), puis `docker compose up -d --build`.
+- [x] **Step 2 : vérifier.** `curl -fsS localhost:3000/healthz` affiche `{"ok":true}`. `docker compose exec app node dist/cli.js create-admin --username admin` suivi de `/login` dans un navigateur permet de se connecter et de générer une clé.
+- [x] **Step 3 : nettoyer.** `docker compose down -v`. Vérifier que `.env` est bien ignoré par git (`git status`).
+- [x] **Step 4 : commit.** `git commit -m "Add Docker image, compose stack and deployment guide"`
 
 ---
 
