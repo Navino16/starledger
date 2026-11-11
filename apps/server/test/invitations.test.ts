@@ -359,6 +359,31 @@ describe('locale and logging', () => {
     expect(logs).toContain('/invite/[redacted]');
     expect(logs).not.toContain(token);
   });
+
+  it('does not log invitation tokens on unmatched routes', async () => {
+    let logs = '';
+    const logStream = new Writable({
+      write(chunk, _enc, cb) {
+        logs += chunk.toString();
+        cb();
+      },
+    });
+    const logged = buildApp(config, t.db, { logStream });
+    const { url } = await createInvitation(t.db, adminId, config.publicUrl);
+    const token = url.split('/invite/')[1] as string;
+    const res = await logged.inject({ method: 'GET', url: `/invite/${token}/` });
+    expect(res.statusCode).toBe(404);
+    expect(res.headers['content-type']).toMatch(/text\/html/);
+    await logged.close();
+    expect(logs).toContain('not found');
+    expect(logs).not.toContain(token);
+  });
+
+  it('rejects POST /admin/invitations without a CSRF token', async () => {
+    const cookie = await login('admin');
+    const res = await post(app, '/admin/invitations', {}, cookie);
+    expect(res.statusCode).toBe(403);
+  });
 });
 
 describe('open signup', () => {
@@ -366,6 +391,17 @@ describe('open signup', () => {
     expect((await app.inject({ method: 'GET', url: '/signup' })).statusCode).toBe(404);
     const res = await post(app, '/signup', { username: 'abc', password: PASSWORD }, '');
     expect(res.statusCode).toBe(404);
+  });
+
+  it('rejects POST /signup without a CSRF token', async () => {
+    const page = await openApp.inject({ method: 'GET', url: '/signup' });
+    const res = await post(
+      openApp,
+      '/signup',
+      { username: 'nocsrf', password: PASSWORD },
+      cookieOf(page),
+    );
+    expect(res.statusCode).toBe(403);
   });
 
   it('creates a non-admin user and logs them in when OPEN_SIGNUP is true', async () => {

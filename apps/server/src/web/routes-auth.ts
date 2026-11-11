@@ -8,6 +8,10 @@ import { startSession } from './auth';
 import { type Locale, negotiateLocale, translator } from './i18n';
 
 const LOGIN_MAX_PER_MINUTE = 10;
+const INVITE_TOKEN_PATH = /^\/invite\/[^/?#]+/;
+
+// Invitation tokens are bearer secrets: keep them out of logs.
+export const redactUrl = (url: string) => url.replace(INVITE_TOKEN_PATH, '/invite/[redacted]');
 
 export const localeOf = (request: FastifyRequest): Locale =>
   request.user?.locale ?? negotiateLocale(request.headers['accept-language']);
@@ -93,6 +97,12 @@ export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Databa
 }
 
 export function registerErrorPages(app: FastifyInstance) {
+  // Fastify's default 404 handler logs the raw URL, bypassing the req serializer.
+  app.setNotFoundHandler(async (request, reply) => {
+    request.log.info(`Route ${request.method}:${redactUrl(request.url)} not found`);
+    return renderError(request, reply, 404, 'errors.notFound');
+  });
+
   app.setErrorHandler(async (error: FastifyError, request, reply) => {
     const status = error.statusCode ?? 500;
     let messageKey: string | null = null;

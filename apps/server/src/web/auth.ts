@@ -30,7 +30,6 @@ export function startSession(request: FastifyRequest, userId: string): void {
 // Reloads the session user on every request so deletions, role and locale changes apply immediately.
 export function loadUser(db: Kysely<Database>) {
   return async (request: FastifyRequest) => {
-    if (request.routeOptions.url === '/healthz') return;
     const id = request.session.get('userId');
     if (!id) return;
     const row = await db

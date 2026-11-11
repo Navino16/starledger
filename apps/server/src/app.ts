@@ -10,7 +10,7 @@ import type { Config } from './config';
 import type { Database } from './db/schema';
 import { loadUser } from './web/auth';
 import { accountRoutes } from './web/routes-account';
-import { authRoutes, registerErrorPages } from './web/routes-auth';
+import { authRoutes, redactUrl, registerErrorPages } from './web/routes-auth';
 import { inviteRoutes } from './web/routes-invite';
 
 // Resolves from src/ in tests and from dist/ once built (views are copied next to the bundle).
@@ -22,24 +22,23 @@ function toTrustProxy(value: Config['trustProxy']) {
   return typeof value === 'number' ? (_address: string, hop: number) => hop < value : value;
 }
 
-const INVITE_TOKEN_PATH = /^\/invite\/[^/?#]+/;
-
-// Invitation tokens are bearer secrets: keep them out of request logs.
 const logSerializers = {
   req: (request: FastifyRequest) => ({
     method: request.method,
-    url: request.url.replace(INVITE_TOKEN_PATH, '/invite/[redacted]'),
+    url: redactUrl(request.url),
     host: request.host,
     remoteAddress: request.ip,
     remotePort: request.socket?.remotePort,
   }),
 };
 
-async function userHook(app: FastifyInstance, opts: { db: Kysely<Database> }) {
+async function webRoutes(app: FastifyInstance, opts: { db: Kysely<Database>; config: Config }) {
   app.addHook('onRequest', loadUser(opts.db));
+  registerErrorPages(app);
+  await app.register(authRoutes, { db: opts.db });
+  await app.register(accountRoutes, { db: opts.db });
+  await app.register(inviteRoutes, opts);
 }
-// Not encapsulated, so the hook also covers the routes registered afterwards.
-(userHook as unknown as Record<symbol, boolean>)[Symbol.for('skip-override')] = true;
 
 export function buildApp(
   config: Config,
@@ -64,7 +63,6 @@ export function buildApp(
     cookie: { path: '/', httpOnly: true, sameSite: 'lax', secure: 'auto' },
   });
   app.register(fastifyCsrfProtection, { sessionPlugin: '@fastify/secure-session' });
-  app.register(userHook, { db });
   app.register(fastifyView, {
     engine: { eta: new Eta({ views: VIEWS_DIR }) },
     root: VIEWS_DIR,
@@ -80,9 +78,6 @@ export function buildApp(
     }
   });
 
-  registerErrorPages(app);
-  app.register(authRoutes, { db });
-  app.register(accountRoutes, { db });
-  app.register(inviteRoutes, { db, config });
+  app.register(webRoutes, { db, config });
   return app;
 }
