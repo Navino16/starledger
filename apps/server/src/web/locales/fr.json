@@ -11,7 +11,14 @@
     "title": "Compte",
     "welcome": "Connecté en tant que {username}",
     "logout": "Déconnexion",
-    "invitations": "Invitations"
+    "invitations": "Invitations",
+    "noKey": "Aucune clé API active.",
+    "keyPrefix": "Clé active : {prefix}… (créée le {date})",
+    "generate": "Générer une clé API",
+    "regenerate": "Régénérer la clé API (révoque l'actuelle)",
+    "revoke": "Révoquer la clé API",
+    "apiKeyTitle": "Clé API",
+    "keyCreated": "Clé API créée. Copiez-la maintenant : elle ne sera plus affichée."
   },
   "errors": {
     "title": "Erreur",

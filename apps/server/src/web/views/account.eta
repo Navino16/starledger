@@ -1,6 +1,25 @@
 <h1><%= it.t('account.title') %></h1>
 <p><%= it.t('account.welcome', { username: it.username }) %></p>
 <% if (it.isAdmin) { %><p><a href="/admin/invitations"><%= it.t('account.invitations') %></a></p><% } %>
+<h2><%= it.t('account.apiKeyTitle') %></h2>
+<% if (it.newKey) { %>
+<p><%= it.t('account.keyCreated') %></p>
+<p><code><%= it.newKey %></code></p>
+<% } else if (it.apiKey) { %>
+<p><%= it.t('account.keyPrefix', { prefix: it.apiKey.prefix, date: it.apiKey.createdAt }) %></p>
+<% } else { %>
+<p><%= it.t('account.noKey') %></p>
+<% } %>
+<form method="post" action="/account/api-key">
+  <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+  <button type="submit"><%= it.apiKey ? it.t('account.regenerate') : it.t('account.generate') %></button>
+</form>
+<% if (it.apiKey) { %>
+<form method="post" action="/account/api-key/revoke">
+  <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+  <button type="submit"><%= it.t('account.revoke') %></button>
+</form>
+<% } %>
 <form method="post" action="/logout">
   <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
   <button type="submit"><%= it.t('account.logout') %></button>

@@ -15,7 +15,7 @@ export interface UsersTable {
   password_hash: string;
   is_admin: Generated<boolean>;
   locale: Generated<'fr' | 'en'>;
-  created_at: Generated<Timestamp>;
+  created_at: Timestamp;
 }
 
 export interface InvitationsTable {
@@ -25,7 +25,7 @@ export interface InvitationsTable {
   expires_at: Timestamp;
   used_at: NullableTimestamp;
   used_by: string | null;
-  created_at: Generated<Timestamp>;
+  created_at: Timestamp;
 }
 
 export interface ApiKeysTable {
@@ -34,7 +34,7 @@ export interface ApiKeysTable {
   key_hash: string;
   key_prefix: string;
   revoked_at: NullableTimestamp;
-  created_at: Generated<Timestamp>;
+  created_at: Timestamp;
 }
 
 export interface AccountsTable {
@@ -44,7 +44,7 @@ export interface AccountsTable {
   lang: string;
   player_id: Int8;
   player_name: string | null;
-  created_at: Generated<Timestamp>;
+  created_at: Timestamp;
 }
 
 export interface DevicesTable {
@@ -53,7 +53,7 @@ export interface DevicesTable {
   client_version: string;
   first_seen: Timestamp;
   last_seen: Timestamp;
-  created_at: Generated<Timestamp>;
+  created_at: Timestamp;
 }
 
 export interface ObservationsTable {
@@ -66,8 +66,8 @@ export interface ObservationsTable {
   external_key: string;
   payload: ColumnType<unknown, string, string>;
   observed_at: Timestamp;
-  received_at: Generated<Timestamp>;
-  created_at: Generated<Timestamp>;
+  received_at: Timestamp;
+  created_at: Timestamp;
 }
 
 export interface EventsTable {
@@ -81,7 +81,7 @@ export interface EventsTable {
   data: ColumnType<unknown, string | null | undefined, string | null>;
   parser_version: number;
   first_observation_id: Int8;
-  created_at: Generated<Timestamp>;
+  created_at: Timestamp;
 }
 
 export interface UniverseSettingsTable {
@@ -95,7 +95,7 @@ export interface UniverseSettingsTable {
   ignore_expe_ships_loss: Generated<boolean>;
   ignore_consumption: Generated<boolean>;
   include_trades_in_balance: Generated<boolean>;
-  created_at: Generated<Timestamp>;
+  created_at: Timestamp;
 }
 
 export interface Database {

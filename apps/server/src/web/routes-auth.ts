@@ -4,7 +4,7 @@ import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from
 import type { Kysely } from 'kysely';
 import type { Database } from '../db/schema';
 import { verifyCredentials } from '../users/users';
-import { requireUser, startSession, type WebUser } from './auth';
+import { startSession } from './auth';
 import { type Locale, negotiateLocale, translator } from './i18n';
 
 const LOGIN_MAX_PER_MINUTE = 10;
@@ -89,16 +89,6 @@ export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Databa
   app.post('/logout', { preHandler: app.csrfProtection }, async (request, reply) => {
     request.session.delete();
     return reply.redirect('/login');
-  });
-
-  app.get('/account', { preHandler: requireUser }, async (request, reply) => {
-    const user = request.user as WebUser;
-    const t = translator(user.locale);
-    return renderPage(request, reply, 'account.eta', {
-      title: t('account.title'),
-      username: user.username,
-      isAdmin: user.isAdmin,
-    });
   });
 }
 

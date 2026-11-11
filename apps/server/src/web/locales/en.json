@@ -11,7 +11,14 @@
     "title": "Account",
     "welcome": "Signed in as {username}",
     "logout": "Sign out",
-    "invitations": "Invitations"
+    "invitations": "Invitations",
+    "noKey": "No active API key.",
+    "keyPrefix": "Active key: {prefix}… (created {date})",
+    "generate": "Generate a new API key",
+    "regenerate": "Regenerate the API key (revokes the current one)",
+    "revoke": "Revoke the API key",
+    "apiKeyTitle": "API key",
+    "keyCreated": "API key created. Copy it now: it will not be shown again."
   },
   "errors": {
     "title": "Error",

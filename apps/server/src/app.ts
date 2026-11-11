@@ -9,6 +9,7 @@ import { type Kysely, sql } from 'kysely';
 import type { Config } from './config';
 import type { Database } from './db/schema';
 import { loadUser } from './web/auth';
+import { accountRoutes } from './web/routes-account';
 import { authRoutes, registerErrorPages } from './web/routes-auth';
 import { inviteRoutes } from './web/routes-invite';
 
@@ -81,6 +82,7 @@ export function buildApp(
 
   registerErrorPages(app);
   app.register(authRoutes, { db });
+  app.register(accountRoutes, { db });
   app.register(inviteRoutes, { db, config });
   return app;
 }
