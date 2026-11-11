@@ -225,7 +225,8 @@ On reproduit le calcul d'OGLight, puisque c'est la référence à laquelle l'uti
 **Réglages de valorisation, par univers et côté serveur :**
 - comme dans OGLight : ratio MSU, % de valeur des vaisseaux trouvés (`expeditionShipRatio`), ignorer les pertes de vaisseaux en expédition, ignorer le carburant ;
 - valeurs par défaut identiques à OGLight ;
-- ces réglages n'apparaissent pas dans les options du client.
+- ces réglages n'apparaissent pas dans les options du client ;
+- ils ne s'appliquent qu'aux valeurs **calculées à la lecture** : les événements sont stockés bruts et ne sont jamais modifiés par un réglage, qui peut donc changer à tout moment (précisé par l'utilisateur le 2026-11-11).
 
 **Transports entre joueurs** — *décision de conception* :
 - Une catégorie **« Échanges »** à part dans le détail, avec trois montants : reçu, envoyé et net, par ressource.

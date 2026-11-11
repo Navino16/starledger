@@ -50,7 +50,6 @@ export type LifeformDiscoveryEvent = {
   xp: number | null;
   artifacts: number | null;
   artifactsSize: string | null;
-  shipsLost: ShipCounts | null;
 };
 
 export type CombatOutcome = 'won' | 'lost' | 'draw';

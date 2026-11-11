@@ -1,0 +1,10 @@
+<h1><%= it.t('login.title') %></h1>
+<% if (it.error) { %><p class="error" role="alert"><%= it.error %></p><% } %>
+<form method="post" action="/login">
+  <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+  <label for="username"><%= it.t('login.username') %></label>
+  <input id="username" name="username" type="text" autocomplete="username" required value="<%= it.username %>">
+  <label for="password"><%= it.t('login.password') %></label>
+  <input id="password" name="password" type="password" autocomplete="current-password" required>
+  <button type="submit"><%= it.t('login.submit') %></button>
+</form>

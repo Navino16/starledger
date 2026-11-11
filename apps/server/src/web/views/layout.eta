@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="<%= it.locale %>">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= it.title %> - <%= it.t('appName') %></title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 28rem; margin: 3rem auto; padding: 0 1rem; }
+    label, input { display: block; width: 100%; box-sizing: border-box; }
+    input { margin: 0.25rem 0 1rem; padding: 0.5rem; }
+    button { padding: 0.5rem 1rem; }
+    .error { color: #b00020; }
+  </style>
+</head>
+<body>
+<%~ it.body %>
+</body>
+</html>

@@ -59,6 +59,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - shell: bash
+        run: diff <(ls apps/server/src/web/views) <(ls apps/server/dist/web/views)
 
   test:
     name: Test (unit + coverage)

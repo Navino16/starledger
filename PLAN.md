@@ -28,7 +28,7 @@
 | 0 | Socle du dépôt et CI | ✅ |
 | 1 | Shared : observations et parseurs de messages | ✅ |
 | 2 | Shared : jours et calcul des stats | ✅ |
-| 3 | Serveur : socle, utilisateurs, connexion web | ☐ |
+| 3 | Serveur : socle, utilisateurs, connexion web | ✅ |
 | 4 | Serveur : invitations, clé API, réglages | ☐ |
 | 5 | Serveur : API d'ingestion et de stats | ☐ |
 | 6 | Docker et déploiement homelab | ☐ |
@@ -274,7 +274,7 @@ Branche : `feature/shared-parsers`. Référence des formats : `docs/ogame-data-f
   - `ExpeditionEvent` : `{kind:'expedition', coords, result, size, depletion, resources, darkMatter, shipsFound, shipsLost, itemId, lifeform, lifeformXp, artifacts}` ;
   - `ExpeditionResult` : `'resources'|'darkmatter'|'nothing'|'ships'|'trader'|'item'|'blackhole'|'early'|'late'|'pirates'|'aliens'` ;
   - `size` et `depletion` : l'entier brut du jeu ou `null`. Une valeur inconnue est gardée telle quelle ; les libellés sont exportés à part (`EXPEDITION_SIZES` : 2 = small, 1 = medium et 0 = large) et appliqués à l'affichage ;
-  - `LifeformDiscoveryEvent` : `{kind:'lifeform_discovery', coords, result:'none'|'artifacts'|'lifeform_xp'|'ship_lost'|'lifeform_found', lifeform, xp, artifacts, artifactsSize: string|null, shipsLost}`. `artifactsSize` garde la chaîne brute du jeu (`ARTIFACT_SIZES` liste les valeurs connues).
+  - `LifeformDiscoveryEvent` : `{kind:'lifeform_discovery', coords, result:'none'|'artifacts'|'lifeform_xp'|'ship_lost'|'lifeform_found', lifeform, xp, artifacts, artifactsSize: string|null}`. Aucun vaisseau de flotte n'est engagé dans une découverte : pas de `shipsLost` (`ship_lost` est seulement une issue). `artifactsSize` garde la chaîne brute du jeu (`ARTIFACT_SIZES` liste les valeurs connues).
 
 - [x] **Step 1 : tests, pilotés par les fixtures.** Chaque fixture vérifie `toEqual(expected)`. Cas supplémentaires :
   - `resourcesgained` en JSON invalide : `unrecognized`, avec une `reason` qui contient `resourcesgained`.
@@ -408,9 +408,9 @@ type StatsSummary = {
   wreckfields: { count: number; shipsRecovered: ShipCounts };
   conflictCount: number;
   // added in scope 2 review: valued gains/losses per category (all ≥ 0), tiles = Σ(gains − losses)
-  balance: Record<'expeditions'|'combats'|'recycling'|'discoveries'|'wreckfields'|'fuel', { gains: Resources; losses: Resources }>;
+  balance: Record<'expeditions'|'combats'|'recycling'|'wreckfields'|'fuel', { gains: Resources; losses: Resources }>;
 };
-// also added: discoveries.shipsLost; combats.shipsLost = non-expedition fights, combats.expeditionShipsLost = isExpedition fights
+// also added: combats.shipsLost = non-expedition fights, combats.expeditionShipsLost = isExpedition fights
 ```
 
 Règles des tuiles (design §5.6), à implémenter exactement :
@@ -419,7 +419,7 @@ Règles des tuiles (design §5.6), à implémenter exactement :
   - plus `loot × lootSign` des combats (25) ;
   - plus les vaisseaux trouvés en expédition × coût × `expeditionShipRatio`/100 ;
   - plus les vaisseaux des champs d'épaves × coût ;
-  - moins les pertes de vaisseaux × coût, pour les combats 25 et 48, sondes seules comprises, et les `shipsLost` des expéditions et découvertes. Les pertes « expédition » (expéditions, découvertes, combats avec `isExpedition`) sont ignorées si `ignoreExpeShipsLoss` ;
+  - moins les pertes de vaisseaux × coût, pour les combats 25 et 48, sondes seules comprises, et les `shipsLost` des expéditions. Les pertes « expédition » (expéditions, combats avec `isExpedition`) sont ignorées si `ignoreExpeShipsLoss` ;
   - moins le carburant enregistré sur le deut, sauf si `ignoreConsumption`.
 - **AM** : AM des expéditions.
 - **artefacts** : `artifacts` des expéditions et des découvertes.
@@ -458,7 +458,7 @@ Branche : `feature/server-foundation`.
     - `SESSION_SECRET`, 64 caractères hexadécimaux ;
     - `PORT`, 3000 par défaut ;
     - `PUBLIC_URL` ;
-    - `TRUST_PROXY`, `true` par défaut ;
+    - `TRUST_PROXY`, `loopback,linklocal,uniquelocal` par défaut (revue du scope 3 ; accepte aussi `true`, `false`, un nombre de sauts ou une liste d'IP/CIDR) ;
     - `OPEN_SIGNUP`, `false` par défaut.
   - `apps/server/src/db/{db.ts,schema.ts,migrate.ts}` et `apps/server/src/db/migrations/0001_init.ts`.
 - Test : `apps/server/test/helpers/db.ts` (un conteneur PostgreSQL 17 par fichier de test via testcontainers, puis les migrations), `apps/server/test/config.test.ts`, `apps/server/test/migrations.test.ts`
@@ -473,12 +473,12 @@ Tables de la migration 0001 (design §6.3), toutes avec `created_at timestamptz 
 - `events(id bigserial pk, account_id bigint fk, external_key text, kind text null, status text check in ('ok','unrecognized','conflict'), occurred_at timestamptz null, day date null, data jsonb null, parser_version int, first_observation_id bigint fk observations, unique(account_id, external_key))`, avec un index `(account_id, day)`
 - `universe_settings(user_id uuid fk, server_id int, lang text, msu_metal numeric default 3, msu_crystal numeric default 2, msu_deuterium numeric default 1, expedition_ship_ratio int default 100, ignore_expe_ships_loss bool default false, ignore_consumption bool default false, include_trades_in_balance bool default false, pk(user_id, server_id, lang))`
 
-- [ ] **Step 0 : outillage serveur.** Ajouter le build tsdown du serveur (`pnpm --filter @app/server build` produit `dist/index.js` et `dist/cli.js`), `"types": ["node"]` dans `apps/server/tsconfig.json`, le champ `exports` de `@app/shared`, et `timeout-minutes: 15` sur le job CI (téléchargement des images testcontainers).
-- [ ] **Step 1 : tests.** `loadConfig` rejette un `SESSION_SECRET` trop court et applique les valeurs par défaut. Après migration, les 8 tables existent, et une deuxième clé API active pour le même utilisateur viole l'index partiel.
-- [ ] **Step 2 : lancer.** `pnpm --filter @app/server test`. Attendu : FAIL. Docker doit tourner.
-- [ ] **Step 3 : implémenter** avec le `Migrator` de Kysely et un `FileMigrationProvider`.
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add server config, database schema and migrations"`
+- [x] **Step 0 : outillage serveur.** Ajouter le build tsdown du serveur (`pnpm --filter @app/server build` produit `dist/index.js` et `dist/cli.js`), `"types": ["node"]` dans `apps/server/tsconfig.json`, le champ `exports` de `@app/shared`, et `timeout-minutes: 15` sur le job CI (téléchargement des images testcontainers).
+- [x] **Step 1 : tests.** `loadConfig` rejette un `SESSION_SECRET` trop court et applique les valeurs par défaut. Après migration, les 8 tables existent, et une deuxième clé API active pour le même utilisateur viole l'index partiel.
+- [x] **Step 2 : lancer.** `pnpm --filter @app/server test`. Attendu : FAIL. Docker doit tourner.
+- [x] **Step 3 : implémenter** avec le `Migrator` de Kysely et un `FileMigrationProvider`.
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add server config, database schema and migrations"`
 
 ### Tâche 3.2 : Utilisateurs et CLI admin
 
@@ -493,11 +493,11 @@ Tables de la migration 0001 (design §6.3), toutes avec `created_at timestamptz 
   - CLI `node dist/cli.js create-admin --username <name>` : le mot de passe est lu sur stdin et n'est jamais passé en argument ;
   - CLI `node dist/cli.js migrate`.
 
-- [ ] **Step 1 : tests.** Création puis vérification correcte ; mauvais mot de passe → `null` ; doublon `Alice`/`alice` refusé ; le hash commence par `$argon2id$`.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter** avec `@node-rs/argon2` (paramètres par défaut).
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add user accounts and admin CLI"`
+- [x] **Step 1 : tests.** Création puis vérification correcte ; mauvais mot de passe → `null` ; doublon `Alice`/`alice` refusé ; le hash commence par `$argon2id$`.
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter** avec `@node-rs/argon2` (paramètres par défaut).
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add user accounts and admin CLI"`
 
 ### Tâche 3.3 : Application Fastify, i18n et connexion web
 
@@ -519,17 +519,17 @@ Routes :
 
 Session `@fastify/secure-session` : cookie `HttpOnly`, `SameSite=Lax`, `Secure` quand la requête arrive en HTTPS. Protection CSRF sur tous les POST du web. Langue : `user.locale`, sinon `Accept-Language`, sinon l'anglais.
 
-- [ ] **Step 1 : tests avec `app.inject`.**
+- [x] **Step 1 : tests avec `app.inject`.**
   - Une connexion réussie renvoie un 302 vers `/account` avec un cookie posé.
   - Une connexion échouée renvoie un 200, la page affiche « Invalid credentials » ou « Identifiants invalides » selon la langue, et le nom d'utilisateur saisi est conservé.
   - `GET /account` sans session renvoie un 302 vers `/login`.
   - Un POST sans jeton CSRF renvoie un 403.
   - La 11e tentative de connexion dans la minute renvoie un 429.
   - `GET /healthz` renvoie un 200.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add Fastify app with web login, sessions and i18n"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add Fastify app with web login, sessions and i18n"`
 
 ---
 
@@ -547,6 +547,9 @@ Branche : `feature/server-account`.
 - Produit :
   - `createInvitation(db, adminId, ttlHours = 72): Promise<{ url: string }>` : jeton aléatoire de 32 octets en base64url, stocké haché en sha256 ; l'URL vaut `${PUBLIC_URL}/invite/<token>` ;
   - `consumeInvitation(db, token, {username, password}): Promise<User>`.
+- Prérequis issus de la revue du scope 3 :
+  - un preHandler `requireUser(db)` recharge l'utilisateur de la session depuis la base à chaque requête web authentifiée (supprime la session si l'utilisateur n'existe plus) et expose `is_admin` et `locale` depuis la base ; `/account` et `/admin/*` l'utilisent ;
+  - `createUser` valide le nom d'utilisateur avant d'ouvrir l'inscription : 3 à 32 caractères, `[a-z0-9_.-]` après mise en minuscules.
 - Routes :
   - `GET /admin/invitations` et `POST /admin/invitations` : réservées à l'admin, sinon 403 ;
   - `GET /invite/:token` et `POST /invite/:token` ;
@@ -565,7 +568,8 @@ Branche : `feature/server-account`.
 ### Tâche 4.2 : Clé API (génération, révocation, vérification)
 
 **Files :**
-- Create : `apps/server/src/auth/api-keys.ts`, `apps/server/src/web/routes-account.ts`, la vue `account.eta`
+- Create : `apps/server/src/auth/api-keys.ts`, `apps/server/src/web/routes-account.ts`
+- Modify : la vue `account.eta` (placeholder créé au scope 3)
 - Test : `apps/server/test/api-keys.test.ts`
 
 **Interfaces :**
@@ -725,7 +729,7 @@ Branche : `feature/docker`.
   - `compose.yaml` : services `app` et `postgres:17-alpine`, volume `pgdata`, `app` qui dépend de `postgres` en état healthy, et migrations au démarrage (`node dist/cli.js migrate && node dist/index.js`) ;
   - `.env.example` ;
   - `.dockerignore` ;
-  - `docs/deploy.md` : variables, création du `SESSION_SECRET` (`openssl rand -hex 32`), commande `create-admin` dans le conteneur, rappel sur le reverse proxy HTTPS et `PUBLIC_URL`, sauvegarde `pg_dump`.
+  - `docs/deploy.md` : variables, création du `SESSION_SECRET` (`openssl rand -hex 32`), commande `create-admin` dans le conteneur, rappel sur le reverse proxy HTTPS et `PUBLIC_URL`, sauvegarde `pg_dump`. `TRUST_PROXY` vaut par défaut `loopback,linklocal,uniquelocal` : un proxy sur le réseau Docker, l'hôte ou le LAN est reconnu sans configuration, et un client public direct ne peut pas forger `X-Forwarded-For`. Publier quand même le port de l'app sur `127.0.0.1` ou sur le seul réseau du proxy. Documenter les autres formes (`true`, `false`, nombre de sauts — qui suppose une exposition par le proxy uniquement —, liste d'IP/CIDR), et le fait qu'un client à adresse privée (LAN, autre conteneur) est un saut de confiance : restreindre la liste à l'IP du proxy si le LAN n'est pas sûr.
 
 - [ ] **Step 1 : construire et démarrer.** `cp .env.example .env` (avec des valeurs de test), puis `docker compose up -d --build`.
 - [ ] **Step 2 : vérifier.** `curl -fsS localhost:3000/healthz` affiche `{"ok":true}`. `docker compose exec app node dist/cli.js create-admin --username admin` suivi de `/login` dans un navigateur permet de se connecter et de générer une clé.
