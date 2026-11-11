@@ -419,7 +419,7 @@ Règles des tuiles (design §5.6), à implémenter exactement :
   - plus `loot × lootSign` des combats (25) ;
   - plus les vaisseaux trouvés en expédition × coût × `expeditionShipRatio`/100 ;
   - plus les vaisseaux des champs d'épaves × coût ;
-  - moins les pertes de vaisseaux × coût, pour les combats 25 et 48, sondes seules comprises, et les `shipsLost` des expéditions et découvertes. Les pertes « expédition » (expéditions, découvertes, combats avec `isExpedition`) sont ignorées si `ignoreExpeShipsLoss` ;
+  - moins les pertes de vaisseaux × coût, pour les combats 25 et 48, sondes seules comprises, et les `shipsLost` des expéditions. Les pertes « expédition » (expéditions, combats avec `isExpedition`) sont ignorées si `ignoreExpeShipsLoss` ;
   - moins le carburant enregistré sur le deut, sauf si `ignoreConsumption`.
 - **AM** : AM des expéditions.
 - **artefacts** : `artifacts` des expéditions et des découvertes.
@@ -547,6 +547,9 @@ Branche : `feature/server-account`.
 - Produit :
   - `createInvitation(db, adminId, ttlHours = 72): Promise<{ url: string }>` : jeton aléatoire de 32 octets en base64url, stocké haché en sha256 ; l'URL vaut `${PUBLIC_URL}/invite/<token>` ;
   - `consumeInvitation(db, token, {username, password}): Promise<User>`.
+- Prérequis issus de la revue du scope 3 :
+  - un preHandler `requireUser(db)` recharge l'utilisateur de la session depuis la base à chaque requête web authentifiée (supprime la session si l'utilisateur n'existe plus) et expose `is_admin` et `locale` depuis la base ; `/account` et `/admin/*` l'utilisent ;
+  - `createUser` valide le nom d'utilisateur avant d'ouvrir l'inscription : 3 à 32 caractères, `[a-z0-9_.-]` après mise en minuscules.
 - Routes :
   - `GET /admin/invitations` et `POST /admin/invitations` : réservées à l'admin, sinon 403 ;
   - `GET /invite/:token` et `POST /invite/:token` ;
@@ -565,7 +568,8 @@ Branche : `feature/server-account`.
 ### Tâche 4.2 : Clé API (génération, révocation, vérification)
 
 **Files :**
-- Create : `apps/server/src/auth/api-keys.ts`, `apps/server/src/web/routes-account.ts`, la vue `account.eta`
+- Create : `apps/server/src/auth/api-keys.ts`, `apps/server/src/web/routes-account.ts`
+- Modify : la vue `account.eta` (placeholder créé au scope 3)
 - Test : `apps/server/test/api-keys.test.ts`
 
 **Interfaces :**
@@ -725,7 +729,7 @@ Branche : `feature/docker`.
   - `compose.yaml` : services `app` et `postgres:17-alpine`, volume `pgdata`, `app` qui dépend de `postgres` en état healthy, et migrations au démarrage (`node dist/cli.js migrate && node dist/index.js`) ;
   - `.env.example` ;
   - `.dockerignore` ;
-  - `docs/deploy.md` : variables, création du `SESSION_SECRET` (`openssl rand -hex 32`), commande `create-admin` dans le conteneur, rappel sur le reverse proxy HTTPS et `PUBLIC_URL`, sauvegarde `pg_dump`. `TRUST_PROXY` vaut 1 saut par défaut : le port de l'app ne doit être joignable **que par le reverse proxy** (publié sur `127.0.0.1` ou seulement sur le réseau du proxy), sinon un client direct peut forger `X-Forwarded-For` et contourner la limite de connexion. Documenter aussi la forme liste d'IP/CIDR.
+  - `docs/deploy.md` : variables, création du `SESSION_SECRET` (`openssl rand -hex 32`), commande `create-admin` dans le conteneur, rappel sur le reverse proxy HTTPS et `PUBLIC_URL`, sauvegarde `pg_dump`. `TRUST_PROXY` vaut par défaut `loopback,linklocal,uniquelocal` : un proxy sur le réseau Docker, l'hôte ou le LAN est reconnu sans configuration, et un client public direct ne peut pas forger `X-Forwarded-For`. Publier quand même le port de l'app sur `127.0.0.1` ou sur le seul réseau du proxy. Documenter les autres formes (`true`, `false`, nombre de sauts — qui suppose une exposition par le proxy uniquement —, liste d'IP/CIDR).
 
 - [ ] **Step 1 : construire et démarrer.** `cp .env.example .env` (avec des valeurs de test), puis `docker compose up -d --build`.
 - [ ] **Step 2 : vérifier.** `curl -fsS localhost:3000/healthz` affiche `{"ok":true}`. `docker compose exec app node dist/cli.js create-admin --username admin` suivi de `/login` dans un navigateur permet de se connecter et de générer une clé.
