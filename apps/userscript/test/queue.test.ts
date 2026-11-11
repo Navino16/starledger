@@ -168,21 +168,84 @@ describe('queue', () => {
   it('does not lose an item enqueued while a flush awaits the API', async () => {
     const q = createQueue(memoryGm());
     q.enqueue(many(2));
-    let enqueued = false;
+    const sent: string[][] = [];
     await q.flush(
       {
         sendBatch: async (b) => {
-          if (!enqueued) {
-            enqueued = true;
-            q.enqueue([obs(99)]);
-          }
+          sent.push(b.observations.map((o) => o.clientObservationId));
+          if (sent.length === 1) q.enqueue([obs(99)]);
           return ack(b);
         },
       },
       'dev',
     );
+    expect(sent).toEqual([['id-0', 'id-1'], ['id-99']]);
     expect(q.size()).toBe(0);
-    expect(enqueued).toBe(true);
+  });
+
+  it('recovers from a full queue after a successful flush', async () => {
+    const q = createQueue(memoryGm());
+    q.enqueue(many(5000));
+    expect(q.state().status).toBe('error');
+    const state = await q.flush({ sendBatch: async (b) => ack(b) }, 'dev');
+    expect(state.status).toBe('up_to_date');
+    expect(q.enqueue(many(1, 9000))).toEqual({ accepted: 1, refused: 0 });
+  });
+
+  it('restores full batch size after a halved batch succeeds', async () => {
+    const q = createQueue(memoryGm());
+    q.enqueue(many(250));
+    const sizes: number[] = [];
+    await q.flush(
+      {
+        sendBatch: async (b) => {
+          sizes.push(b.observations.length);
+          return sizes.length === 1 ? { ok: false, error: 'payload_too_large' } : ack(b);
+        },
+      },
+      'dev',
+    );
+    expect(sizes).toEqual([100, 50, 100, 100]);
+  });
+
+  it('keeps items acked with an unknown status', async () => {
+    const q = createQueue(memoryGm());
+    q.enqueue(many(2));
+    const state = await q.flush(
+      {
+        sendBatch: async (b) => ({
+          ok: true,
+          data: {
+            results: b.observations.map((o) => ({
+              clientObservationId: o.clientObservationId,
+              status: 'weird' as unknown as AckStatus,
+            })),
+          },
+        }),
+      },
+      'dev',
+    );
+    expect(q.size()).toBe(2);
+    expect(state).toMatchObject({ status: 'error', error: 'server_error' });
+  });
+
+  it('keeps items on an empty results array', async () => {
+    const q = createQueue(memoryGm());
+    q.enqueue(many(2));
+    const state = await q.flush(
+      { sendBatch: async () => ({ ok: true, data: { results: [] } }) },
+      'dev',
+    );
+    expect(q.size()).toBe(2);
+    expect(state).toMatchObject({ status: 'error', error: 'server_error' });
+  });
+
+  it('persists the rejected count across queue instances', async () => {
+    const gm = memoryGm();
+    const q1 = createQueue(gm);
+    q1.enqueue(many(2));
+    await q1.flush({ sendBatch: async (b) => ack(b, 'rejected') }, 'dev');
+    expect(createQueue(gm).state().rejected).toBe(2);
   });
 
   it('keeps items missing from the ack and flags a server error', async () => {

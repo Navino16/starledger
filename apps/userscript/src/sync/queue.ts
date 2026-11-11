@@ -20,12 +20,12 @@ const META_KEY = 'queueMeta';
 const CAPACITY = 5000;
 const BATCH_ITEMS = 100;
 const BATCH_BYTES = 1_500_000;
+const ACK_STATUSES = new Set(['accepted', 'duplicate', 'conflict', 'unrecognized', 'rejected']);
 
 type Meta = { rejected: number; lastSyncAt: number | null };
 
 export function createQueue(gm: Gm) {
   let error: ApiError | null = null;
-  let full = false;
   let inFlight: Promise<SyncState> | null = null;
 
   const read = () => gm.get<Observation[]>(QUEUE_KEY, []);
@@ -34,7 +34,7 @@ export function createQueue(gm: Gm) {
   function state(): SyncState {
     const { rejected, lastSyncAt } = meta();
     const pending = read().length;
-    const status = error || full ? 'error' : pending > 0 ? 'pending' : 'up_to_date';
+    const status = error || pending >= CAPACITY ? 'error' : pending > 0 ? 'pending' : 'up_to_date';
     return { status, pending, lastSyncAt, error, rejected };
   }
 
@@ -44,7 +44,6 @@ export function createQueue(gm: Gm) {
     const accepted = Math.min(room, observations.length);
     const refused = observations.length - accepted;
     if (accepted > 0) gm.set(QUEUE_KEY, [...items, ...observations.slice(0, accepted)]);
-    if (refused > 0) full = true;
     return { accepted, refused };
   }
 
@@ -117,11 +116,18 @@ export function createQueue(gm: Gm) {
       const done = new Set<string>();
       let rejected = 0;
       for (const r of results) {
-        if (!r || !sent.has(r.clientObservationId) || done.has(r.clientObservationId)) continue;
+        if (
+          !r ||
+          !ACK_STATUSES.has(r.status) ||
+          !sent.has(r.clientObservationId) ||
+          done.has(r.clientObservationId)
+        )
+          continue;
         done.add(r.clientObservationId);
         if (r.status === 'rejected') rejected++;
       }
       remove(done, rejected, true);
+      maxItems = BATCH_ITEMS;
       if (done.size === 0) {
         error = 'server_error';
         break;
