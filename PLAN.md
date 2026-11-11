@@ -725,7 +725,7 @@ Branche : `feature/docker`.
   - `compose.yaml` : services `app` et `postgres:17-alpine`, volume `pgdata`, `app` qui dépend de `postgres` en état healthy, et migrations au démarrage (`node dist/cli.js migrate && node dist/index.js`) ;
   - `.env.example` ;
   - `.dockerignore` ;
-  - `docs/deploy.md` : variables, création du `SESSION_SECRET` (`openssl rand -hex 32`), commande `create-admin` dans le conteneur, rappel sur le reverse proxy HTTPS et `PUBLIC_URL`, sauvegarde `pg_dump`.
+  - `docs/deploy.md` : variables, création du `SESSION_SECRET` (`openssl rand -hex 32`), commande `create-admin` dans le conteneur, rappel sur le reverse proxy HTTPS et `PUBLIC_URL`, sauvegarde `pg_dump`. `TRUST_PROXY` vaut 1 saut par défaut : le port de l'app ne doit être joignable **que par le reverse proxy** (publié sur `127.0.0.1` ou seulement sur le réseau du proxy), sinon un client direct peut forger `X-Forwarded-For` et contourner la limite de connexion. Documenter aussi la forme liste d'IP/CIDR.
 
 - [ ] **Step 1 : construire et démarrer.** `cp .env.example .env` (avec des valeurs de test), puis `docker compose up -d --build`.
 - [ ] **Step 2 : vérifier.** `curl -fsS localhost:3000/healthz` affiche `{"ok":true}`. `docker compose exec app node dist/cli.js create-admin --username admin` suivi de `/login` dans un navigateur permet de se connecter et de générer une clé.
