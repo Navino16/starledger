@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { accountRefSchema } from '../src/domain';
-import { MAX_BATCH, observationBatchSchema, observationSchema } from '../src/observation';
+import {
+  MAX_BATCH,
+  MAX_TIMESTAMP_MS,
+  observationBatchEnvelopeSchema,
+  observationBatchSchema,
+  observationSchema,
+} from '../src/observation';
 
 const account = { serverId: 808, lang: 'en', playerId: 1, playerName: null };
 const uuid = '123e4567-e89b-42d3-a456-426614174000';
@@ -36,7 +42,7 @@ const dispatch = (over: Record<string, unknown> = {}) => ({
 
 const batch = (observations: unknown[]) => ({
   clientVersion: '0.1.0',
-  deviceId: 'device-1',
+  deviceId: '5b1f0c3e-7a4d-4e21-9d6a-0c8f3b2a1e11',
   observations,
 });
 
@@ -82,6 +88,33 @@ describe('observationSchema', () => {
   });
 });
 
+describe('timestamp bounds', () => {
+  it('accepts the largest valid Date and rejects beyond it', () => {
+    expect(observationSchema.safeParse(message({ observedAt: MAX_TIMESTAMP_MS })).success).toBe(
+      true,
+    );
+    expect(observationSchema.safeParse(message({ observedAt: MAX_TIMESTAMP_MS + 2 })).success).toBe(
+      false,
+    );
+    expect(observationSchema.safeParse(dispatch({ sentAt: MAX_TIMESTAMP_MS })).success).toBe(true);
+    expect(observationSchema.safeParse(dispatch({ sentAt: MAX_TIMESTAMP_MS + 2 })).success).toBe(
+      false,
+    );
+  });
+});
+
+describe('envelope clientVersion', () => {
+  const env = (clientVersion: string) =>
+    observationBatchEnvelopeSchema.safeParse({ ...batch([]), clientVersion }).success;
+
+  it('accepts strict MAJOR.MINOR.PATCH only', () => {
+    expect(env('1.22.3')).toBe(true);
+    for (const bad of ['', '1.2', '0.1.0\0', '1.0.0-beta', 'v1.0.0', '1.0.0 ']) {
+      expect(env(bad), JSON.stringify(bad)).toBe(false);
+    }
+  });
+});
+
 describe('observationBatchSchema', () => {
   it('accepts up to MAX_BATCH observations', () => {
     const obs = Array.from({ length: MAX_BATCH }, () => message());
@@ -106,12 +139,14 @@ describe('accountRefSchema bounds', () => {
 
   it('accepts a normal reference', () => {
     expect(ref({})).toBe(true);
+    expect(ref({ playerId: 0 })).toBe(true);
     expect(ref({ serverId: 2_147_483_647, lang: 'fra' })).toBe(true);
   });
 
   it.each([
     ['int4 overflow', { serverId: 2_147_483_648 }],
     ['zero server id', { serverId: 0 }],
+    ['negative player id', { playerId: -1 }],
     ['NUL in lang', { lang: '\0' }],
     ['uppercase lang', { lang: 'EN' }],
     ['regional lang', { lang: 'pt-br' }],

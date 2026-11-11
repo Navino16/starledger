@@ -1,7 +1,10 @@
 import { z } from 'zod';
+import { parseSemver } from './api';
 import { accountRefSchema, coordsSchema, shipCountsSchema } from './domain';
 
 export const MAX_BATCH = 200;
+// Largest epoch-ms a JS Date can represent; beyond it Date is invalid and pg cannot serialise it.
+export const MAX_TIMESTAMP_MS = 8.64e15;
 const MAX_RAW_KEYS = 64;
 const MAX_RAW_VALUE_LENGTH = 64_000;
 
@@ -14,7 +17,7 @@ const rawSchema = z
 const baseFields = {
   clientObservationId: z.uuid(),
   account: accountRefSchema,
-  observedAt: z.number().int().nonnegative(),
+  observedAt: z.number().int().nonnegative().max(MAX_TIMESTAMP_MS),
   serverUtcOffsetMinutes: z.number().int().min(-720).max(840),
 };
 
@@ -37,7 +40,7 @@ export const fleetDispatchObservationSchema = z.object({
   target: coordsSchema.extend({ type: z.union([z.literal(1), z.literal(2), z.literal(3)]) }),
   ships: shipCountsSchema,
   consumption: z.number().nonnegative().nullable(),
-  sentAt: z.number().int().nonnegative(),
+  sentAt: z.number().int().nonnegative().max(MAX_TIMESTAMP_MS),
 });
 export type FleetDispatchObservation = z.infer<typeof fleetDispatchObservationSchema>;
 
@@ -47,9 +50,16 @@ export const observationSchema = z.discriminatedUnion('kind', [
 ]);
 export type Observation = z.infer<typeof observationSchema>;
 
-export const observationBatchSchema = z.object({
-  clientVersion: z.string(),
-  deviceId: z.string(),
+// Lax envelope: observations are validated one by one so a bad item is rejected without failing the batch.
+export const observationBatchEnvelopeSchema = z.object({
+  clientVersion: z
+    .string()
+    .max(32)
+    .refine((v) => parseSemver(v) !== null, 'clientVersion must be MAJOR.MINOR.PATCH'),
+  deviceId: z.uuid(),
+  observations: z.array(z.unknown()).max(MAX_BATCH),
+});
+export const observationBatchSchema = observationBatchEnvelopeSchema.extend({
   observations: z.array(observationSchema).max(MAX_BATCH),
 });
 export type ObservationBatch = z.infer<typeof observationBatchSchema>;
