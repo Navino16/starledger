@@ -29,7 +29,7 @@
 | 1 | Shared : observations et parseurs de messages | ✅ |
 | 2 | Shared : jours et calcul des stats | ✅ |
 | 3 | Serveur : socle, utilisateurs, connexion web | ✅ |
-| 4 | Serveur : invitations, clé API, réglages | ☐ |
+| 4 | Serveur : invitations, clé API, réglages | ✅ |
 | 5 | Serveur : API d'ingestion et de stats | ☐ |
 | 6 | Docker et déploiement homelab | ☐ |
 | 7 | Userscript : socle, file, options, consentement | ☐ |
@@ -545,7 +545,7 @@ Branche : `feature/server-account`.
 
 **Interfaces :**
 - Produit :
-  - `createInvitation(db, adminId, ttlHours = 72): Promise<{ url: string }>` : jeton aléatoire de 32 octets en base64url, stocké haché en sha256 ; l'URL vaut `${PUBLIC_URL}/invite/<token>` ;
+  - `createInvitation(db, adminId, publicUrl, ttlHours = 72): Promise<{ url: string }>` : jeton aléatoire de 32 octets en base64url, stocké haché en sha256 ; l'URL vaut `${PUBLIC_URL}/invite/<token>` ;
   - `consumeInvitation(db, token, {username, password}): Promise<User>`.
 - Prérequis issus de la revue du scope 3 :
   - un preHandler `requireUser(db)` recharge l'utilisateur de la session depuis la base à chaque requête web authentifiée (supprime la session si l'utilisateur n'existe plus) et expose `is_admin` et `locale` depuis la base ; `/account` et `/admin/*` l'utilisent ;
@@ -555,15 +555,15 @@ Branche : `feature/server-account`.
   - `GET /invite/:token` et `POST /invite/:token` ;
   - `GET /signup` et `POST /signup` : uniquement si `OPEN_SIGNUP`, sinon 404.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - Un admin crée une invitation, un invité l'utilise et peut se connecter.
   - Une invitation réutilisée, expirée ou inconnue renvoie un 410 avec un message clair.
   - Un utilisateur non admin reçoit un 403 sur `/admin/invitations`.
   - `/signup` renvoie un 404 avec `OPEN_SIGNUP=false`.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.** Le marquage `used_at` et la création de l'utilisateur se font dans une même transaction.
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add single-use invitations and optional open signup"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.** Le marquage `used_at` et la création de l'utilisateur se font dans une même transaction.
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add single-use invitations and optional open signup"`
 
 ### Tâche 4.2 : Clé API (génération, révocation, vérification)
 
@@ -574,7 +574,7 @@ Branche : `feature/server-account`.
 
 **Interfaces :**
 - Produit :
-  - `generateApiKey(db, userId): Promise<string>` : la clé vaut `ogd_` suivi de 32 octets aléatoires en base64url. Elle révoque la clé active précédente dans la même transaction, stocke le sha256 en hexadécimal et les 8 premiers caractères comme `key_prefix` ;
+  - `generateApiKey(db, userId): Promise<string>` : la clé vaut `slk_` suivi de 32 octets aléatoires en base64url. Elle révoque la clé active précédente dans la même transaction, stocke le sha256 en hexadécimal et les 8 premiers caractères comme `key_prefix` ;
   - `revokeApiKey(db, userId)` ;
   - `authenticateApiKey(db, key): Promise<{ userId: string } | null>` : comparaison du hash, refus d'une clé révoquée.
 - Routes :
@@ -582,16 +582,16 @@ Branche : `feature/server-account`.
   - `POST /account/api-key` : affiche la clé **une seule fois** dans la réponse ;
   - `POST /account/api-key/revoke`.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - La clé générée s'authentifie.
   - Après régénération, l'ancienne clé renvoie `null` et la nouvelle reste valide.
   - Après révocation, la clé renvoie `null`.
   - La clé en clair n'apparaît nulle part en base : `select * from api_keys` ne la contient pas.
   - `GET /account` n'affiche jamais la clé en clair.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add personal API key management"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add personal API key management"`
 
 ### Tâche 4.3 : Réglages de valorisation par univers
 
@@ -605,15 +605,15 @@ Branche : `feature/server-account`.
   - `saveValuationSettings(db, userId, serverId, lang, s: ValuationSettings)` ;
   - Route `POST /account/settings/:serverId/:lang`.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - Sans ligne en base, on obtient les valeurs par défaut.
   - Enregistrer puis relire `msuRatio [2.5,1.5,1]` rend la même valeur.
   - Un ratio ≤ 0 ou un `expeditionShipRatio` hors de [0, 100] est refusé.
   - Un utilisateur ne peut pas modifier les réglages d'un autre. Les réglages sont indexés par `user_id` de session, jamais par un paramètre.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add per-universe valuation settings"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add per-universe valuation settings"`
 
 ---
 

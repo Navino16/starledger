@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { accountRefSchema } from '../src/domain';
 import { MAX_BATCH, observationBatchSchema, observationSchema } from '../src/observation';
 
 const account = { serverId: 808, lang: 'en', playerId: 1, playerName: null };
@@ -96,5 +97,25 @@ describe('observationBatchSchema', () => {
     expect(
       observationBatchSchema.safeParse(batch([message({ clientObservationId: 'x' })])).success,
     ).toBe(false);
+  });
+});
+
+describe('accountRefSchema bounds', () => {
+  const ref = (over: Record<string, unknown>) =>
+    accountRefSchema.safeParse({ ...account, ...over }).success;
+
+  it('accepts a normal reference', () => {
+    expect(ref({})).toBe(true);
+    expect(ref({ serverId: 2_147_483_647, lang: 'fra' })).toBe(true);
+  });
+
+  it.each([
+    ['int4 overflow', { serverId: 2_147_483_648 }],
+    ['zero server id', { serverId: 0 }],
+    ['NUL in lang', { lang: '\0' }],
+    ['uppercase lang', { lang: 'EN' }],
+    ['regional lang', { lang: 'pt-br' }],
+  ])('rejects %s', (_name, over) => {
+    expect(ref(over)).toBe(false);
   });
 });

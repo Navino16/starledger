@@ -4,11 +4,14 @@ import fastifyFormbody from '@fastify/formbody';
 import fastifySecureSession from '@fastify/secure-session';
 import fastifyView from '@fastify/view';
 import { Eta } from 'eta';
-import Fastify, { type FastifyInstance } from 'fastify';
+import Fastify, { type FastifyInstance, type FastifyRequest } from 'fastify';
 import { type Kysely, sql } from 'kysely';
 import type { Config } from './config';
 import type { Database } from './db/schema';
-import { authRoutes, registerErrorPages } from './web/routes-auth';
+import { loadUser } from './web/auth';
+import { accountRoutes } from './web/routes-account';
+import { authRoutes, redactUrl, registerErrorPages } from './web/routes-auth';
+import { inviteRoutes } from './web/routes-invite';
 
 // Resolves from src/ in tests and from dist/ once built (views are copied next to the bundle).
 const VIEWS_DIR = fileURLToPath(new URL('./web/views', import.meta.url));
@@ -19,16 +22,38 @@ function toTrustProxy(value: Config['trustProxy']) {
   return typeof value === 'number' ? (_address: string, hop: number) => hop < value : value;
 }
 
+const logSerializers = {
+  req: (request: FastifyRequest) => ({
+    method: request.method,
+    url: redactUrl(request.url),
+    host: request.host,
+    remoteAddress: request.ip,
+    remotePort: request.socket?.remotePort,
+  }),
+};
+
+async function webRoutes(app: FastifyInstance, opts: { db: Kysely<Database>; config: Config }) {
+  app.addHook('onRequest', loadUser(opts.db));
+  registerErrorPages(app);
+  await app.register(authRoutes, { db: opts.db });
+  await app.register(accountRoutes, { db: opts.db });
+  await app.register(inviteRoutes, opts);
+}
+
 export function buildApp(
   config: Config,
   db: Kysely<Database>,
-  options: { logger?: boolean } = {},
+  options: { logger?: boolean; logStream?: NodeJS.WritableStream } = {},
 ): FastifyInstance {
   const app = Fastify({
     trustProxy: toTrustProxy(config.trustProxy),
-    logger: options.logger ? { level: 'info' } : false,
+    logger:
+      options.logger || options.logStream
+        ? { level: 'info', serializers: logSerializers, stream: options.logStream }
+        : false,
   });
 
+  app.decorateRequest('user', null);
   app.register(fastifyFormbody);
   app.register(fastifySecureSession, {
     key: Buffer.from(config.sessionSecret, 'hex'),
@@ -53,7 +78,6 @@ export function buildApp(
     }
   });
 
-  registerErrorPages(app);
-  app.register(authRoutes, { db });
+  app.register(webRoutes, { db, config });
   return app;
 }

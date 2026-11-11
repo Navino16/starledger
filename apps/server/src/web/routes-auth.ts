@@ -4,13 +4,17 @@ import type { FastifyError, FastifyInstance, FastifyReply, FastifyRequest } from
 import type { Kysely } from 'kysely';
 import type { Database } from '../db/schema';
 import { verifyCredentials } from '../users/users';
-import { sessionUser } from './auth';
+import { startSession } from './auth';
 import { type Locale, negotiateLocale, translator } from './i18n';
 
 const LOGIN_MAX_PER_MINUTE = 10;
+const INVITE_TOKEN_PATH = /^\/invite\/[^/?#]+/;
+
+// Invitation tokens are bearer secrets: keep them out of logs.
+export const redactUrl = (url: string) => url.replace(INVITE_TOKEN_PATH, '/invite/[redacted]');
 
 export const localeOf = (request: FastifyRequest): Locale =>
-  sessionUser(request)?.locale ?? negotiateLocale(request.headers['accept-language']);
+  request.user?.locale ?? negotiateLocale(request.headers['accept-language']);
 
 export async function renderPage(
   request: FastifyRequest,
@@ -29,17 +33,31 @@ export async function renderPage(
   });
 }
 
+export async function renderError(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  status: number,
+  messageKey: string,
+) {
+  const locale = localeOf(request);
+  const t = translator(locale);
+  return reply.status(status).view('error.eta', {
+    locale,
+    t,
+    title: t('errors.title'),
+    message: t(messageKey),
+  });
+}
+
 export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Database> }) {
   const { db } = opts;
 
   await app.register(fastifyRateLimit, { global: false });
 
-  app.get('/', async (request, reply) =>
-    reply.redirect(sessionUser(request) ? '/account' : '/login'),
-  );
+  app.get('/', async (request, reply) => reply.redirect(request.user ? '/account' : '/login'));
 
   app.get('/login', async (request, reply) => {
-    if (sessionUser(request)) return reply.redirect('/account');
+    if (request.user) return reply.redirect('/account');
     const t = translator(localeOf(request));
     return renderPage(request, reply, 'login.eta', {
       title: t('login.title'),
@@ -67,10 +85,7 @@ export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Databa
           error: t('login.invalid'),
         });
       }
-      request.session.regenerate();
-      request.session.set('userId', user.id);
-      request.session.set('username', user.username);
-      request.session.set('locale', user.locale);
+      startSession(request, user.id);
       return reply.redirect('/account');
     },
   );
@@ -79,33 +94,22 @@ export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Databa
     request.session.delete();
     return reply.redirect('/login');
   });
-
-  app.get('/account', async (request, reply) => {
-    const user = sessionUser(request);
-    if (!user) return reply.redirect('/login');
-    const t = translator(user.locale);
-    return renderPage(request, reply, 'account.eta', {
-      title: t('account.title'),
-      username: user.username,
-    });
-  });
 }
 
 export function registerErrorPages(app: FastifyInstance) {
+  // Fastify's default 404 handler logs the raw URL, bypassing the req serializer.
+  app.setNotFoundHandler(async (request, reply) => {
+    request.log.info(`Route ${request.method}:${redactUrl(request.url)} not found`);
+    return renderError(request, reply, 404, 'errors.notFound');
+  });
+
   app.setErrorHandler(async (error: FastifyError, request, reply) => {
     const status = error.statusCode ?? 500;
-    const t = translator(localeOf(request));
-    let message: string | null = null;
-    if (status === 429) message = t('errors.rateLimit');
-    else if (error.code?.startsWith('FST_CSRF_')) message = t('errors.csrf');
-    if (message) {
-      return reply.status(status).view('error.eta', {
-        locale: localeOf(request),
-        t,
-        title: t('errors.title'),
-        message,
-      });
-    }
+    let messageKey: string | null = null;
+    if (status === 429) messageKey = 'errors.rateLimit';
+    else if (error.code?.startsWith('FST_CSRF_')) messageKey = 'errors.csrf';
+    else if (status === 403) messageKey = 'errors.forbidden';
+    if (messageKey) return renderError(request, reply, status, messageKey);
     if (status >= 500) {
       request.log.error(error);
       return reply.status(500).send({ statusCode: 500, error: 'Internal Server Error' });

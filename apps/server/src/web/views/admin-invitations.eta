@@ -1,0 +1,10 @@
+<h1><%= it.t('invitations.title') %></h1>
+<% if (it.url) { %>
+<p><%= it.t('invitations.created') %></p>
+<p><code><%= it.url %></code></p>
+<% } %>
+<form method="post" action="/admin/invitations">
+  <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+  <button type="submit"><%= it.t('invitations.create') %></button>
+</form>
+<p><a href="/account"><%= it.t('account.title') %></a></p>

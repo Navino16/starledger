@@ -1,5 +1,44 @@
 <h1><%= it.t('account.title') %></h1>
 <p><%= it.t('account.welcome', { username: it.username }) %></p>
+<% if (it.isAdmin) { %><p><a href="/admin/invitations"><%= it.t('account.invitations') %></a></p><% } %>
+<h2><%= it.t('account.apiKeyTitle') %></h2>
+<% if (it.newKey) { %>
+<p><%= it.t('account.keyCreated') %></p>
+<p><code><%= it.newKey %></code></p>
+<% } else if (it.apiKey) { %>
+<p><%= it.t('account.keyPrefix', { prefix: it.apiKey.prefix, date: it.apiKey.createdAt }) %></p>
+<% } else { %>
+<p><%= it.t('account.noKey') %></p>
+<% } %>
+<form method="post" action="/account/api-key">
+  <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+  <button type="submit"><%= it.apiKey ? it.t('account.regenerate') : it.t('account.generate') %></button>
+</form>
+<% if (it.apiKey) { %>
+<form method="post" action="/account/api-key/revoke">
+  <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+  <button type="submit"><%= it.t('account.revoke') %></button>
+</form>
+<% } %>
+<h2><%= it.t('account.settingsTitle') %></h2>
+<% if (it.settings.length === 0) { %>
+<p><%= it.t('settings.none') %></p>
+<% } %>
+<% for (const u of it.settings) { %>
+<form method="post" action="/account/settings/<%= encodeURIComponent(u.serverId) %>/<%= encodeURIComponent(u.lang) %>">
+  <% if (u.error) { %><p class="error" role="alert"><%= u.error %></p><% } %>
+  <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+  <h3><%= it.t('settings.universe', { serverId: String(u.serverId), lang: u.lang }) %></h3>
+  <p><label><%= it.t('settings.msuMetal') %> <input type="number" name="msuMetal" step="any" min="0.01" max="100" required value="<%= u.msuMetal %>"></label></p>
+  <p><label><%= it.t('settings.msuCrystal') %> <input type="number" name="msuCrystal" step="any" min="0.01" max="100" required value="<%= u.msuCrystal %>"></label></p>
+  <p><label><%= it.t('settings.msuDeuterium') %> <input type="number" name="msuDeuterium" step="any" min="0.01" max="100" required value="<%= u.msuDeuterium %>"></label></p>
+  <p><label><%= it.t('settings.expeditionShipRatio') %> <input type="number" name="expeditionShipRatio" step="1" min="0" max="100" required value="<%= u.expeditionShipRatio %>"></label></p>
+  <p><label><input type="checkbox" name="ignoreExpeShipsLoss"<%= u.ignoreExpeShipsLoss ? ' checked' : '' %>> <%= it.t('settings.ignoreExpeShipsLoss') %></label></p>
+  <p><label><input type="checkbox" name="ignoreConsumption"<%= u.ignoreConsumption ? ' checked' : '' %>> <%= it.t('settings.ignoreConsumption') %></label></p>
+  <p><label><input type="checkbox" name="includeTradesInBalance"<%= u.includeTradesInBalance ? ' checked' : '' %>> <%= it.t('settings.includeTradesInBalance') %></label></p>
+  <button type="submit"><%= it.t('settings.save') %></button>
+</form>
+<% } %>
 <form method="post" action="/logout">
   <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
   <button type="submit"><%= it.t('account.logout') %></button>
