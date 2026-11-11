@@ -5,6 +5,12 @@
   "type": "module",
   "scripts": {
     "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json && tsc -p test/tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^4.6.7"
+  },
+  "exports": {
+    ".": "./src/index.ts"
   }
 }

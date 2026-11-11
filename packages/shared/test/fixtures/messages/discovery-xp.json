@@ -1,0 +1,35 @@
+{
+  "synthetic": true,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000011",
+    "account": { "serverId": 808, "lang": "en", "playerId": 100001, "playerName": "Tester" },
+    "observedAt": 1790001160000,
+    "serverUtcOffsetMinutes": 60,
+    "msgId": 5011,
+    "messageType": 61,
+    "subtabId": 22,
+    "raw": {
+      "messagetype": "61",
+      "timestamp": "1790001100",
+      "coords": "4:100:16",
+      "lifeformgainedexperience": "5000",
+      "lifeform": "2"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:5011",
+    "occurredAt": 1790001100000,
+    "event": {
+      "kind": "lifeform_discovery",
+      "coords": { "galaxy": 4, "system": 100, "position": 16 },
+      "result": "lifeform_xp",
+      "lifeform": 2,
+      "xp": 5000,
+      "artifacts": null,
+      "artifactsSize": null,
+      "shipsLost": null
+    }
+  }
+}

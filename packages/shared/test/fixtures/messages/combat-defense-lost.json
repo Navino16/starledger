@@ -1,0 +1,41 @@
+{
+  "synthetic": true,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000013",
+    "account": { "serverId": 808, "lang": "en", "playerId": 100001, "playerName": "Tester" },
+    "observedAt": 1790001360000,
+    "serverUtcOffsetMinutes": 60,
+    "msgId": 5013,
+    "messageType": 25,
+    "subtabId": 21,
+    "raw": {
+      "messagetype": "25",
+      "timestamp": "1790001300",
+      "coords": "4:100:9",
+      "hashcode": "cr-en-808-combat-defense-lost",
+      "defenderspaceobject": "{\"owner\":{\"id\":100001},\"coordinates\":{\"galaxy\":4,\"system\":100,\"position\":9},\"type\":\"planet\"}",
+      "fleets": "[{\"fleetId\":1,\"side\":\"attacker\",\"player\":{\"id\":200002},\"combatTechnologies\":[{\"technologyId\":207}]},{\"fleetId\":2,\"side\":\"defender\",\"player\":{\"id\":100001},\"combatTechnologies\":[{\"technologyId\":204},{\"technologyId\":401},{\"technologyId\":402}]}]",
+      "combatrounds": "[{\"fleets\":[{\"fleetId\":1,\"technologies\":[{\"technologyId\":207,\"destroyedTotal\":0}]},{\"fleetId\":2,\"technologies\":[{\"technologyId\":204,\"destroyedTotal\":2},{\"technologyId\":401,\"destroyedTotal\":8},{\"technologyId\":402,\"destroyedTotal\":2}]}]},{\"fleets\":[{\"fleetId\":1,\"technologies\":[{\"technologyId\":207,\"destroyedTotal\":1}]},{\"fleetId\":2,\"technologies\":[{\"technologyId\":204,\"destroyedTotal\":5},{\"technologyId\":401,\"destroyedTotal\":20},{\"technologyId\":402,\"destroyedTotal\":6}]}]}]",
+      "result": "{\"winner\":\"attacker\",\"loot\":{\"resources\":[{\"resource\":\"metal\",\"amount\":8000},{\"resource\":\"crystal\",\"amount\":4000},{\"resource\":\"deuterium\",\"amount\":500}]},\"debris\":{\"resources\":[{\"resource\":\"metal\",\"total\":6000,\"remaining\":6000},{\"resource\":\"crystal\",\"total\":3000,\"remaining\":3000}]},\"repairedTechnologies\":[{\"technologyId\":401,\"amount\":15},{\"technologyId\":204,\"amount\":2}]}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:5013",
+    "occurredAt": 1790001300000,
+    "event": {
+      "kind": "combat",
+      "coords": { "galaxy": 4, "system": 100, "position": 9 },
+      "isExpedition": false,
+      "isProbeOnly": false,
+      "ownSide": "defender",
+      "ownPlanetDefended": true,
+      "outcome": "lost",
+      "loot": { "metal": 8000, "crystal": 4000, "deuterium": 500 },
+      "lootSign": -1,
+      "debrisCreated": { "metal": 6000, "crystal": 3000, "deuterium": 0 },
+      "shipsLost": { "204": 3 }
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "synthetic": true,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000018",
+    "account": { "serverId": 808, "lang": "en", "playerId": 100001, "playerName": "Tester" },
+    "observedAt": 1790001860000,
+    "serverUtcOffsetMinutes": 60,
+    "msgId": 5018,
+    "messageType": 32,
+    "subtabId": 24,
+    "raw": {
+      "messagetype": "32",
+      "timestamp": "1790001800",
+      "coords": "4:100:7",
+      "targetcoordinates": "4:100:12",
+      "recycledresources": "{\"metal\":1200,\"crystal\":800}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:5018",
+    "occurredAt": 1790001800000,
+    "event": {
+      "kind": "recycling",
+      "coords": { "galaxy": 4, "system": 100, "position": 12 },
+      "isExpedition": false,
+      "resources": { "metal": 1200, "crystal": 800, "deuterium": 0 }
+    }
+  }
+}

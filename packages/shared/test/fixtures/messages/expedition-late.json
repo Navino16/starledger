@@ -1,0 +1,41 @@
+{
+  "synthetic": true,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000007",
+    "account": { "serverId": 808, "lang": "en", "playerId": 100001, "playerName": "Tester" },
+    "observedAt": 1790000760000,
+    "serverUtcOffsetMinutes": 60,
+    "msgId": 5007,
+    "messageType": 41,
+    "subtabId": 22,
+    "raw": {
+      "messagetype": "41",
+      "timestamp": "1790000700",
+      "coords": "4:100:16",
+      "expeditionresult": "navigation",
+      "size": "2",
+      "navigation": "{\"returnTimeAbsoluteIncreaseHours\":2,\"returnTimeMultiplier\":1}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:5007",
+    "occurredAt": 1790000700000,
+    "event": {
+      "kind": "expedition",
+      "coords": { "galaxy": 4, "system": 100, "position": 16 },
+      "result": "late",
+      "size": 2,
+      "depletion": null,
+      "resources": null,
+      "darkMatter": null,
+      "shipsFound": null,
+      "shipsLost": null,
+      "itemId": null,
+      "lifeform": null,
+      "lifeformXp": null,
+      "artifacts": null
+    }
+  }
+}

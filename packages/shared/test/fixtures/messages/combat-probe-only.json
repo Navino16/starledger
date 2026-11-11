@@ -1,0 +1,41 @@
+{
+  "synthetic": true,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000015",
+    "account": { "serverId": 808, "lang": "en", "playerId": 100001, "playerName": "Tester" },
+    "observedAt": 1790001560000,
+    "serverUtcOffsetMinutes": 60,
+    "msgId": 5015,
+    "messageType": 25,
+    "subtabId": 21,
+    "raw": {
+      "messagetype": "25",
+      "timestamp": "1790001500",
+      "coords": "4:100:10",
+      "hashcode": "cr-en-808-combat-probe-only",
+      "defenderspaceobject": "{\"owner\":{\"id\":200002},\"coordinates\":{\"galaxy\":4,\"system\":100,\"position\":10},\"type\":\"planet\"}",
+      "fleets": "[{\"fleetId\":1,\"side\":\"attacker\",\"player\":{\"id\":100001},\"combatTechnologies\":[{\"technologyId\":210}]},{\"fleetId\":2,\"side\":\"defender\",\"player\":{\"id\":200002},\"combatTechnologies\":[{\"technologyId\":401}]}]",
+      "combatrounds": "[{\"fleets\":[{\"fleetId\":1,\"technologies\":[{\"technologyId\":210,\"destroyedTotal\":2}]},{\"fleetId\":2,\"technologies\":[{\"technologyId\":401,\"destroyedTotal\":0}]}]}]",
+      "result": "{\"winner\":\"defender\",\"loot\":{\"resources\":[]},\"debris\":{\"resources\":[{\"resource\":\"crystal\",\"total\":600,\"remaining\":600}]},\"repairedTechnologies\":[]}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:5015",
+    "occurredAt": 1790001500000,
+    "event": {
+      "kind": "combat",
+      "coords": { "galaxy": 4, "system": 100, "position": 10 },
+      "isExpedition": false,
+      "isProbeOnly": true,
+      "ownSide": "attacker",
+      "ownPlanetDefended": false,
+      "outcome": "lost",
+      "loot": { "metal": 0, "crystal": 0, "deuterium": 0 },
+      "lootSign": 0,
+      "debrisCreated": { "metal": 0, "crystal": 600, "deuterium": 0 },
+      "shipsLost": { "210": 2 }
+    }
+  }
+}

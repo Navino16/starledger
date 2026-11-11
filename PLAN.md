@@ -25,8 +25,8 @@
 
 | Scope | Sujet | Statut |
 |---|---|---|
-| 0 | Socle du dépôt et CI | ◐ |
-| 1 | Shared : observations et parseurs de messages | ☐ |
+| 0 | Socle du dépôt et CI | ✅ |
+| 1 | Shared : observations et parseurs de messages | ✅ |
 | 2 | Shared : jours et calcul des stats | ☐ |
 | 3 | Serveur : socle, utilisateurs, connexion web | ☐ |
 | 4 | Serveur : invitations, clé API, réglages | ☐ |
@@ -228,7 +228,7 @@ Branche : `feature/shared-parsers`. Référence des formats : `docs/ogame-data-f
 **Interfaces :**
 - Produit : les types de la section « Interfaces partagées », plus `observationBatchSchema` et `observationSchema` (zod), `parseCoords(s: string): Coords | null`, `isExpeditionPosition(c: Coords): boolean` (position 16).
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - `parseCoords('4:120:8')` vaut `{galaxy:4,system:120,position:8}` ; `parseCoords('[4:120:8]')` donne le même résultat ; `parseCoords('x')` et `parseCoords('1:2')` valent `null`.
   - Le schéma de lot rejette :
     - plus de `MAX_BATCH` observations ;
@@ -237,10 +237,10 @@ Branche : `feature/shared-parsers`. Référence des formats : `docs/ogame-data-f
     - un `raw` de plus de 64 clés ou une valeur de plus de 64 000 caractères ;
     - une `consumption` négative.
   - Le schéma accepte une observation `message` minimale, et une `fleet_dispatch` avec `consumption: null`.
-- [ ] **Step 2 : lancer.** `pnpm --filter @app/shared test`. Attendu : FAIL (modules absents).
-- [ ] **Step 3 : implémenter** les schémas zod (types inférés exportés) et `parseCoords`.
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add domain types and observation schemas"`
+- [x] **Step 2 : lancer.** `pnpm --filter @app/shared test`. Attendu : FAIL (modules absents).
+- [x] **Step 3 : implémenter** les schémas zod (types inférés exportés) et `parseCoords`.
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add domain types and observation schemas"`
 
 ### Tâche 1.2 : Fixtures synthétiques et données des vaisseaux
 
@@ -257,9 +257,9 @@ Branche : `feature/shared-parsers`. Référence des formats : `docs/ogame-data-f
   Les valeurs brutes suivent exactement les formes du §3 du doc de formats, y compris les champs `name` localisés dans `technologiesgained` et `itemsgained`.
 - Test : `packages/shared/test/fixtures.test.ts`
 
-- [ ] **Step 1 : test.** Chaque fixture passe `observationSchema.parse`, et `synthetic === true`.
-- [ ] **Step 2 : écrire les fixtures et `ships.ts`**, puis lancer le test. Attendu : PASS.
-- [ ] **Step 3 : commit.** `git commit -m "Add ship costs and synthetic message fixtures"`
+- [x] **Step 1 : test.** Chaque fixture passe `observationSchema.parse`, et `synthetic === true`.
+- [x] **Step 2 : écrire les fixtures et `ships.ts`**, puis lancer le test. Attendu : PASS.
+- [x] **Step 3 : commit.** `git commit -m "Add ship costs and synthetic message fixtures"`
 
 ### Tâche 1.3 : Parseurs expédition et découverte FdV
 
@@ -273,10 +273,10 @@ Branche : `feature/shared-parsers`. Référence des formats : `docs/ogame-data-f
   - `parseExpedition(obs): ParseResult`, `parseLifeformDiscovery(obs): ParseResult` ;
   - `ExpeditionEvent` : `{kind:'expedition', coords, result, size, depletion, resources, darkMatter, shipsFound, shipsLost, itemId, lifeform, lifeformXp, artifacts}` ;
   - `ExpeditionResult` : `'resources'|'darkmatter'|'nothing'|'ships'|'trader'|'item'|'blackhole'|'early'|'late'|'pirates'|'aliens'` ;
-  - `size` : `'small'|'medium'|'large'|null`, avec 2 = small, 1 = medium et 0 = large ;
-  - `LifeformDiscoveryEvent` : `{kind:'lifeform_discovery', coords, result:'none'|'artifacts'|'lifeform_xp'|'ship_lost'|'lifeform_found', lifeform, xp, artifacts, artifactsSize:'normal'|'big'|'huge'|'full'|null, shipsLost}`.
+  - `size` et `depletion` : l'entier brut du jeu ou `null`. Une valeur inconnue est gardée telle quelle ; les libellés sont exportés à part (`EXPEDITION_SIZES` : 2 = small, 1 = medium et 0 = large) et appliqués à l'affichage ;
+  - `LifeformDiscoveryEvent` : `{kind:'lifeform_discovery', coords, result:'none'|'artifacts'|'lifeform_xp'|'ship_lost'|'lifeform_found', lifeform, xp, artifacts, artifactsSize: string|null, shipsLost}`. `artifactsSize` garde la chaîne brute du jeu (`ARTIFACT_SIZES` liste les valeurs connues).
 
-- [ ] **Step 1 : tests, pilotés par les fixtures.** Chaque fixture vérifie `toEqual(expected)`. Cas supplémentaires :
+- [x] **Step 1 : tests, pilotés par les fixtures.** Chaque fixture vérifie `toEqual(expected)`. Cas supplémentaires :
   - `resourcesgained` en JSON invalide : `unrecognized`, avec une `reason` qui contient `resourcesgained`.
   - `timestamp` absent : `unrecognized`, avec `occurredAt: null`.
   - `expeditionresult` vaut `'foo'` : `unrecognized`.
@@ -285,10 +285,10 @@ Branche : `feature/shared-parsers`. Référence des formats : `docs/ogame-data-f
   - Navigation : multiplicateur < 1 → `early` ; multiplicateur > 1 ou `returnTimeAbsoluteIncreaseHours` > 0 → `late` (règle d'OGLight).
   - Découverte FdV sans `discoverytype` : le type est déduit (`artifactsfound` > 0 → artifacts, xp > 0 → lifeform_xp, sinon none).
   - Une ressource absente de `resourcesgained` vaut 0 dans `resources`. Elle est connue : l'expédition n'a rien rapporté de ce type.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.** Valider le JSON brut avec des schémas zod ; un échec rend `unrecognized` avec le nom de l'attribut.
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add expedition and lifeform discovery parsers"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.** Valider le JSON brut avec des schémas zod ; un échec rend `unrecognized` avec le nom de l'attribut.
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add expedition and lifeform discovery parsers"`
 
 ### Tâche 1.4 : Parseurs combat (25) et combat en un round (48)
 
@@ -302,18 +302,18 @@ Branche : `feature/shared-parsers`. Référence des formats : `docs/ogame-data-f
   - `CombatEvent` : `{kind:'combat', coords, isExpedition, isProbeOnly, ownSide:'attacker'|'defender', ownPlanetDefended, outcome:'won'|'lost'|'draw', loot: Resources, lootSign: 1|-1|0, debrisCreated: Resources, shipsLost: ShipCounts}` ;
   - `ShortCombatEvent` : `{kind:'combat_short', coords, isExpedition, isProbeOnly, shipsLost}`.
 
-- [ ] **Step 1 : tests sur les fixtures**, plus les règles suivantes :
+- [x] **Step 1 : tests sur les fixtures**, plus les règles suivantes :
   - **Notre camp** : les entrées de `fleets` dont `player.id === obs.account.playerId`.
   - **`lootSign`** : +1 si on attaque et qu'on gagne ; −1 si `defenderspaceobject.owner.id` est le nôtre et que l'attaquant gagne ; 0 sinon, et toujours 0 en position 16.
-  - **`shipsLost`** : somme des `destroyedTotal` du dernier round sur nos `fleetId`, moins `repairedTechnologies` quand on défend notre planète. Seuls les ids ≥ 200 et < 300 sont gardés (les défenses ne sont pas des vaisseaux).
+  - **`shipsLost`** : somme des `destroyedTotal` du dernier round sur nos `fleetId`, moins `repairedTechnologies` quand on défend notre planète. Dans un `result` présent, `loot`, `debris` ou `repairedTechnologies` absents valent une liste vide (à vérifier sur le PTS au scope 10). Seuls les ids ≥ 200 et < 300 sont gardés (les défenses ne sont pas des vaisseaux).
   - **`debrisCreated`** : à partir de `result.debris.resources[].total`.
   - **`isProbeOnly`** : toutes les flottes attaquantes n'ont que la technologie 210.
   - **Combat en un round (48)** : `isProbeOnly` si `shipslost` n'a que la clé 210.
   - **Aucun de nos camps trouvé** (joueur absent de `fleets` et pas propriétaire du défenseur) : `unrecognized`, avec `reason: 'own side not found'`.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add combat report parsers"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add combat report parsers"`
 
 ### Tâche 1.5 : Recyclage, champ d'épaves et routeur de messages
 
@@ -329,15 +329,15 @@ Branche : `feature/shared-parsers`. Référence des formats : `docs/ogame-data-f
   - `RecyclingEvent` : `{kind:'recycling', coords, isExpedition, resources}` ;
   - `WreckfieldEvent` : `{kind:'wreckfield', coords, shipsRecovered}`.
 
-- [ ] **Step 1 : tests.**
+- [x] **Step 1 : tests.**
   - Le routeur dirige 41, 61, 25, 48, 32 et 54 vers le bon parseur (fixtures).
   - Les types 33, 34, 99 et `null` donnent `unrecognized`, avec une `reason` qui contient `unsupported message type`.
   - Recyclage : les coordonnées viennent de `targetcoordinates`, sinon de `coords`. `deuterium` absent de `recycledresources` vaut 0. `isExpedition` est vrai en position 16.
   - L'`externalKey` vaut toujours `msg:<msgId>`.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add recycling and wreckfield parsers and message router"`
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add recycling and wreckfield parsers and message router"`
 
 ### Tâche 1.6 : Événement carburant
 
@@ -351,11 +351,11 @@ Branche : `feature/shared-parsers`. Référence des formats : `docs/ogame-data-f
   - `FuelEvent` : `{kind:'fuel', source, mission, origin, target, ships, consumption: number | null}` ;
   - `externalKey` vaut `fuel:<clientObservationId>` et `occurredAt` vaut `sentAt`.
 
-- [ ] **Step 1 : tests.** `consumption` 1234.7 devient 1234 (troncature, comme OGLight). `consumption: null` reste `null`. `externalKey` et `occurredAt` ont les valeurs attendues.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add fleet dispatch fuel event parser"`
+- [x] **Step 1 : tests.** `consumption` 1234.7 devient 1234 (troncature, comme OGLight). `consumption: null` reste `null`. `externalKey` et `occurredAt` ont les valeurs attendues.
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add fleet dispatch fuel event parser"`
 
 ---
 
