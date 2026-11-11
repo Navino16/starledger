@@ -1,5 +1,5 @@
-import { Readable, Writable } from 'node:stream';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { PassThrough, Readable, Writable } from 'node:stream';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { runCli } from '../src/cli';
 import { createUser, verifyCredentials } from '../src/users/users';
 import { startTestDb, type TestDb } from './helpers/db';
@@ -175,5 +175,68 @@ describe('username validation', () => {
         createUser(t.db, { username, password: PASSWORD, isAdmin: false, locale: 'en' }),
       ).resolves.toMatchObject({ username: username.toLowerCase() });
     }
+  });
+});
+
+describe('runCli create-admin with a TTY', () => {
+  function fakeTty(input: string) {
+    const stdin = Object.assign(new PassThrough(), { isTTY: true, setRawMode: vi.fn() });
+    stdin.end(input);
+    return stdin;
+  }
+
+  async function run(username: string, input: string) {
+    const stdin = fakeTty(input);
+    const out = sink();
+    const err = sink();
+    const code = await runCli(['create-admin', '--username', username], {
+      stdin,
+      stdout: out.stream,
+      stderr: err.stream,
+      db: t.db,
+    });
+    return { code, stdin, out: out.text(), err: err.text() };
+  }
+
+  const rawModes = (stdin: { setRawMode: ReturnType<typeof vi.fn> }) =>
+    stdin.setRawMode.mock.calls.map(([mode]) => mode);
+
+  it.each([
+    ['Enter', '\r'],
+    ['newline', '\n'],
+    ['Ctrl-D', '\u0004'],
+  ])('reads the typed password, applying backspace, ended by %s', async (_name, end) => {
+    const user = `tty-${_name.toLowerCase()}`;
+    const { code, stdin, out, err } = await run(user, `${PASSWORD}abc\u007fd${end}ignored`);
+    expect(code).toBe(0);
+    expect(rawModes(stdin)).toEqual([true, false]);
+    expect(stdin.destroyed).toBe(true);
+    expect(`${out}${err}`).not.toContain(PASSWORD);
+    expect(err).toBe('Password: \n');
+    expect((await verifyCredentials(t.db, user, `${PASSWORD}abd`))?.isAdmin).toBe(true);
+  });
+
+  it('aborts on Ctrl-C and restores the terminal', async () => {
+    const { code, stdin, out, err } = await run('tty-abort', `${PASSWORD}\u0003`);
+    expect(code).toBe(1);
+    expect(err).toMatch(/aborted/i);
+    expect(rawModes(stdin)).toEqual([true, false]);
+    expect(stdin.destroyed).toBe(true);
+    expect(`${out}${err}`).not.toContain(PASSWORD);
+    expect(await verifyCredentials(t.db, 'tty-abort', PASSWORD)).toBeNull();
+  });
+
+  it('rejects oversized typed input and restores the terminal', async () => {
+    const { code, stdin, err } = await run('tty-big', 'x'.repeat(2048));
+    expect(code).toBe(1);
+    expect(err).toMatch(/too long/i);
+    expect(rawModes(stdin)).toEqual([true, false]);
+  });
+
+  it('uses the typed password when the input ends without Enter', async () => {
+    const { code, stdin } = await run('tty-eof', PASSWORD);
+    expect(code).toBe(0);
+    expect(rawModes(stdin)).toEqual([true, false]);
+    expect((await verifyCredentials(t.db, 'tty-eof', PASSWORD))?.isAdmin).toBe(true);
   });
 });
