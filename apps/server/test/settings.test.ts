@@ -160,6 +160,7 @@ describe('POST /account/settings/:serverId/:lang', () => {
 
   it.each([
     ['zero ratio', { msuMetal: '0' }],
+    ['denormal ratio', { msuMetal: '5e-324' }],
     ['negative ratio', { msuCrystal: '-1' }],
     ['huge ratio', { msuDeuterium: '101' }],
     ['non numeric ratio', { msuMetal: 'abc' }],
@@ -178,6 +179,27 @@ describe('POST /account/settings/:serverId/:lang', () => {
     expect(res.statusCode).toBe(400);
     expect(res.body).toContain('role="alert"');
     expect(await getValuationSettings(t.db, aliceId, 808, 'en')).toEqual(DEFAULT_VALUATION);
+  });
+
+  it('re-renders the submitted values and the error on the failing universe form', async () => {
+    await addAccount(aliceId);
+    await addAccount(aliceId, 900, 'fr');
+    const { token, cookie } = await accountPage(await login('alice'));
+    const res = await post(
+      '/account/settings/808/en',
+      { ...valid, msuMetal: 'abc', msuCrystal: '7.5', _csrf: token },
+      cookie,
+    );
+    expect(res.statusCode).toBe(400);
+    const [other, failing] = res.body.split('action="/account/settings/808/en"') as [
+      string,
+      string,
+    ];
+    expect(other).not.toContain('role="alert"');
+    expect(failing.split('action="/account/settings/900/fr"')[0]).toContain('role="alert"');
+    expect(failing).toContain('value="abc"');
+    expect(failing).toContain('value="7.5"');
+    expect(res.body.split('action="/account/settings/900/fr"')[1]).not.toContain('role="alert"');
   });
 
   it('accepts the ship ratio bounds 0 and 100', async () => {
@@ -200,6 +222,11 @@ describe('POST /account/settings/:serverId/:lang', () => {
       '/account/settings/999/en',
       '/account/settings/808/xx',
       '/account/settings/abc/en',
+      '/account/settings/2147483648/en',
+      '/account/settings/808/%00',
+      '/account/settings/808/EN',
+      '/account/settings/0x328/en',
+      '/account/settings/808.0/en',
     ]) {
       const res = await post(url, { ...valid, _csrf: token }, cookie);
       expect(res.statusCode).toBe(404);

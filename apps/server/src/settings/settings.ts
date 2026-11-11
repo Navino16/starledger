@@ -3,7 +3,8 @@ import type { Kysely } from 'kysely';
 import { z } from 'zod';
 import type { Database } from '../db/schema';
 
-export const MAX_MSU_RATIO = 100;
+const MIN_MSU_RATIO = 0.01;
+const MAX_MSU_RATIO = 100;
 
 export async function getValuationSettings(
   db: Kysely<Database>,
@@ -52,7 +53,7 @@ export async function saveValuationSettings(
 }
 
 const numberField = z.string().trim().min(1).transform(Number).pipe(z.number().finite());
-const ratio = numberField.pipe(z.number().gt(0).lte(MAX_MSU_RATIO));
+const ratio = numberField.pipe(z.number().min(MIN_MSU_RATIO).lte(MAX_MSU_RATIO));
 const checkbox = z
   .string()
   .optional()
