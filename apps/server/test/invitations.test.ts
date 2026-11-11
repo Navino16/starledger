@@ -98,6 +98,7 @@ async function createViaWeb(cookie: string): Promise<string> {
     cookieOf(page) || cookie,
   );
   expect(res.statusCode).toBe(200);
+  expect(res.headers['cache-control']).toBe('no-store');
   const url = /http:\/\/localhost:3000\/invite\/[\w-]+/.exec(res.body)?.[0];
   expect(url).toBeDefined();
   return (url as string).replace('http://localhost:3000', '');

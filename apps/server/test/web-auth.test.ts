@@ -162,6 +162,24 @@ describe('web auth', () => {
     await dead.destroy();
   });
 
+  it('keeps /healthz at 503 when the session user cannot load', async () => {
+    const { token, cookie } = await loginPage();
+    const login = await postLogin(
+      { username: 'carol', password: PASSWORD, _csrf: token },
+      { cookie, headers: form },
+    );
+    const dead = createDb('postgres://u:p@127.0.0.1:1/db');
+    const deadApp = buildApp(config, dead);
+    const res = await deadApp.inject({
+      method: 'GET',
+      url: '/healthz',
+      headers: { cookie: cookieOf(login) },
+    });
+    expect(res.statusCode).toBe(503);
+    await deadApp.close();
+    await dead.destroy();
+  });
+
   it('marks the cookie Secure behind an HTTPS proxy', async () => {
     const { res } = await loginPage({ 'x-forwarded-proto': 'https' });
     expect(String(res.headers['set-cookie'])).toMatch(/Secure/i);
