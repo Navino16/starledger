@@ -34,7 +34,6 @@ export function readServerUtcOffset(win: { serverTime?: unknown }): number | nul
   return computeServerUtcOffsetMinutes(serverMs, Date.now(), -new Date().getTimezoneOffset());
 }
 
-export function todayKey(win: { serverTime?: unknown }): string | null {
-  const offset = readServerUtcOffset(win);
-  return offset === null ? null : dayKey(Date.now(), offset);
+export function todayKey(serverUtcOffsetMinutes: number): string {
+  return dayKey(Date.now(), serverUtcOffsetMinutes);
 }

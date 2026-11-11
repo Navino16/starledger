@@ -13,6 +13,7 @@ const FIXTURE = readFileSync(
 );
 const account = { serverId: 808, lang: 'en', playerId: 42, playerName: 'Zed' };
 const ctx = { account, serverUtcOffsetMinutes: 60 };
+const consented = () => saveSettings(gm, { consent: true });
 const flushTick = () => new Promise((r) => setTimeout(r, 0));
 
 type Handler = (e: unknown, xhr: unknown, settings: { url?: string; data?: string }) => void;
@@ -39,10 +40,9 @@ function setup(opts: { consent?: boolean; serverTime?: unknown; contentHtml?: st
     },
   );
   const win = {
-    document,
     serverTime: 'serverTime' in opts ? opts.serverTime : new Date(),
     ogame,
-    $: () => ({ on: (_e: string, h: Handler) => handlers.push(h) }),
+    $: (_t: unknown) => ({ on: (_e: string, h: Handler) => handlers.push(h) }),
   };
   return { win, handlers, reads };
 }
@@ -74,9 +74,17 @@ describe('extractMessageObservations', () => {
   });
 });
 
-describe('collector wiring', () => {
-  const consented = () => saveSettings(gm, { consent: true });
+describe('extraction details', () => {
+  it('keeps duplicate msgIds of one extraction once', async () => {
+    consented();
+    const { win } = setup();
+    document.body.innerHTML = `<div id="x">${FIXTURE}${FIXTURE}</div>`;
+    main(gm, document, win);
+    expect(createQueue(gm).size()).toBe(2);
+  });
+});
 
+describe('collector wiring', () => {
   it('enqueues the initial page content once, even if re-delivered', () => {
     consented();
     const { win, handlers } = setup({ contentHtml: [FIXTURE] });
@@ -195,5 +203,53 @@ describe('collector wiring', () => {
     saveSettings(gm, { consent: false });
     handlers[0]?.({}, {}, { url: '/x?action=getMessagesList' });
     expect(createQueue(gm).size()).toBe(0);
+  });
+});
+
+describe('robustness', () => {
+  const ajax = { url: '/x?action=getMessagesList' };
+
+  it('falls back to the live active tab when the body has no activeSubTab', () => {
+    consented();
+    const { win, handlers } = setup({ contentHtml: [FIXTURE.replaceAll('100', '600')] });
+    document.body.innerHTML = '<div class="innerTabItem active" data-subtab-id="23"></div>';
+    main(gm, document, win);
+    handlers[0]?.({}, {}, ajax);
+    const queued = gm.get<{ subtabId: number }[]>('queue', []);
+    expect(queued).toHaveLength(2);
+    expect(queued.every((o) => o.subtabId === 23)).toBe(true);
+  });
+
+  it('installs nothing and does not throw when the page has no $', () => {
+    consented();
+    const { win } = setup();
+    const { $: _omit, ...noJquery } = win;
+    document.body.innerHTML = '';
+    expect(() => main(gm, document, noJquery)).not.toThrow();
+  });
+
+  it('never throws out of the ajax handler when our code fails', () => {
+    consented();
+    const { win, handlers } = setup({ contentHtml: [FIXTURE.replaceAll('100', '700')] });
+    document.body.innerHTML = '';
+    main(gm, document, win);
+    vi.spyOn(gm, 'set').mockImplementation(() => {
+      throw new Error('storage down');
+    });
+    expect(() => handlers[0]?.({}, {}, ajax)).not.toThrow();
+  });
+
+  it('never throws when onCollected throws, and still flushes at page load', async () => {
+    consented();
+    saveSettings(gm, { serverUrl: 'https://sl.example.org', apiKey: 'k' });
+    const { win, handlers } = setup({ contentHtml: [FIXTURE.replaceAll('100', '800')] });
+    const onCollected = () => {
+      throw new Error('hook');
+    };
+    expect(() => main(gm, document, win, onCollected)).not.toThrow();
+    await flushTick();
+    expect(gm.requests.some((r) => r.url.startsWith('https://sl.example.org'))).toBe(true);
+    document.body.innerHTML = '';
+    expect(() => handlers[0]?.({}, {}, ajax)).not.toThrow();
   });
 });

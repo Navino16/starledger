@@ -62,7 +62,6 @@ type AjaxSettings = { url?: unknown; data?: unknown };
 type AjaxHandler = (event: unknown, xhr: unknown, settings: AjaxSettings) => void;
 
 export type PageWindow = {
-  document: Document;
   $?: (target: unknown) => { on(event: string, handler: AjaxHandler): unknown };
   ogame?: { messages?: { content?: unknown } };
 };
@@ -81,35 +80,45 @@ function isMessagesListRequest(settings: AjaxSettings): boolean {
 }
 
 export type CollectorDeps = {
+  doc: Document;
   ctx: ExtractContext;
   onObservations: (observations: MessageObservation[]) => void;
 };
 
 export function installMessageCollector(win: PageWindow, deps: CollectorDeps): void {
+  const { doc } = deps;
   const seen = new Set<number>();
 
   const deliver = (observations: MessageObservation[]) => {
-    const fresh = observations.filter((o) => !seen.has(o.msgId));
-    if (fresh.length === 0) return;
-    for (const o of fresh) seen.add(o.msgId);
-    deps.onObservations(fresh);
+    const fresh: MessageObservation[] = [];
+    for (const o of observations) {
+      if (seen.has(o.msgId)) continue;
+      seen.add(o.msgId);
+      fresh.push(o);
+    }
+    if (fresh.length > 0) deps.onObservations(fresh);
   };
 
-  deliver(extractMessageObservations(win.document, deps.ctx));
+  //! AGENTS.md §4: our errors must never break the game's ajax chain
+  try {
+    deliver(extractMessageObservations(doc, deps.ctx));
+  } catch {}
 
   //! AGENTS.md §4: passive read of a player-triggered response, no game request
-  win.$?.(win.document).on('ajaxSuccess', (_event, _xhr, settings) => {
-    if (!isMessagesListRequest(settings)) return;
-    const content = win.ogame?.messages?.content;
-    if (!Array.isArray(content)) return;
-    const root = new DOMParser().parseFromString(content.join(''), 'text/html');
-    const body = typeof settings.data === 'string' ? new URLSearchParams(settings.data) : null;
-    const subtabId =
-      toInt(body?.get('activeSubTab')) ??
-      toInt(
-        win.document.querySelector<HTMLElement>('.innerTabItem.active[data-subtab-id]')?.dataset
-          .subtabId,
-      );
-    deliver(extractMessageObservations(root, { ...deps.ctx, subtabId }));
+  win.$?.(doc).on('ajaxSuccess', (_event, _xhr, settings) => {
+    //! AGENTS.md §4: our errors must never break the game's ajax chain
+    try {
+      if (!isMessagesListRequest(settings)) return;
+      const content = win.ogame?.messages?.content;
+      if (!Array.isArray(content)) return;
+      const root = new DOMParser().parseFromString(content.join(''), 'text/html');
+      const body = typeof settings.data === 'string' ? new URLSearchParams(settings.data) : null;
+      const subtabId =
+        toInt(body?.get('activeSubTab')) ??
+        toInt(
+          doc.querySelector<HTMLElement>('.innerTabItem.active[data-subtab-id]')?.dataset.subtabId,
+        );
+      deliver(extractMessageObservations(root, { ...deps.ctx, subtabId }));
+    } catch {}
   });
 }

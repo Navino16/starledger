@@ -52,6 +52,11 @@ describe('built userscript', () => {
     );
     expect(script).toContain('AGENTS.md §5');
     expect(script).toContain('AGENTS.md §1.9');
+    expect(script).toContain('AGENTS.md §1.9: consent re-read before every enqueue');
+    expect(script).toContain(
+      'AGENTS.md §4: our server only, after a player-triggered response, no game request',
+    );
+    expect(script).toContain("AGENTS.md §4: our errors must never break the game's ajax chain");
     expect(script).toContain('AGENTS.md §4: passive read of page globals, no game function called');
     expect(script).toContain(
       'AGENTS.md §4: passive read of a player-triggered response, no game request',

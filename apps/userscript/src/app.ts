@@ -19,6 +19,18 @@ export function main(
   win?: PageWindow & { serverTime?: unknown },
   onCollected: () => void = () => {},
 ): void {
+  //! AGENTS.md §4: our errors must never break the game's page or its ajax chain
+  try {
+    bootstrap(gm, doc, win, onCollected);
+  } catch {}
+}
+
+function bootstrap(
+  gm: Gm,
+  doc: Document,
+  win?: PageWindow & { serverTime?: unknown },
+  onCollected: () => void = () => {},
+): void {
   if (!isAllowedUniverse(doc)) return;
 
   const lang = detectLang(doc);
@@ -46,14 +58,16 @@ export function main(
     // Unknown is not 0: without both, nothing is collected
     if (account && serverUtcOffsetMinutes !== null) {
       installMessageCollector(win, {
+        doc,
         ctx: { account, serverUtcOffsetMinutes },
         onObservations: (observations) => {
           const current = loadSettings(gm);
-          // Another tab may have withdrawn consent since this page loaded
+          //! AGENTS.md §1.9: consent re-read before every enqueue
           if (!current.consent) return;
           const { accepted } = ctx.queue.enqueue(observations);
           if (accepted === 0) return;
           if (current.serverUrl && current.apiKey) {
+            //! AGENTS.md §4: our server only, after a player-triggered response, no game request
             const api = createApi(gm, current, CLIENT_VERSION);
             void ctx.queue.flush(api, current.deviceId, () => loadSettings(gm).consent);
           }

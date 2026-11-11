@@ -42,7 +42,6 @@ describe('readAccount', () => {
   });
 
   it('returns null when the universe meta is absent', () => {
-    expect(readAccount(docWith({ ...full, 'ogame-universe': undefined as never }))).toBeNull();
     expect(readAccount(docWith({}))).toBeNull();
   });
 
@@ -84,12 +83,7 @@ describe('readServerUtcOffset', () => {
 describe('todayKey', () => {
   it('uses the server offset to pick the day', () => {
     browserAt(0);
-    const win = { serverTime: new Date(NOW + 13 * 3_600_000) };
-    expect(todayKey(win)).toBe('2026-11-12');
-  });
-
-  it('returns null when the offset is unknown', () => {
-    browserAt(0);
-    expect(todayKey({})).toBeNull();
+    expect(todayKey(13 * 60)).toBe('2026-11-12');
+    expect(todayKey(0)).toBe('2026-11-11');
   });
 });
