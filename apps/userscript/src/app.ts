@@ -91,6 +91,8 @@ function bootstrap(
       period: 'day',
       today: todayKey(offset),
     });
+    //! AGENTS.md §1.9: consent re-read after the await, nothing cached or shown if withdrawn
+    if (!loadSettings(gm).consent) return;
     if (result.ok) {
       saveStatsCache(gm, known, result.data, Date.now());
       box = { stats: result.data, statsAt: Date.now(), stale: false, statsError: null };

@@ -14,6 +14,7 @@ import { el, type UiContext } from './dom';
 import { formatAmount } from './format';
 
 export const DETAILS_ID = 'starledger-details';
+const BOX_ID = 'starledger-box';
 
 export type DetailsEnv = { account: AccountRef; serverUtcOffsetMinutes: number };
 
@@ -72,13 +73,19 @@ function outcomesList(doc: Document, t: T, outcomes: Record<string, number> | un
   return list;
 }
 
+function sumShips(...maps: (Record<string, number> | undefined)[]): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const m of maps) for (const [id, n] of Object.entries(m ?? {})) out[id] = (out[id] ?? 0) + n;
+  return out;
+}
+
 function shipsTable(
   doc: Document,
   t: T,
-  found: Record<string, number> | undefined,
-  lost: Record<string, number> | undefined,
+  found: Record<string, number>,
+  lost: Record<string, number>,
 ) {
-  const ids = [...new Set([...Object.keys(found ?? {}), ...Object.keys(lost ?? {})])].sort(
+  const ids = [...new Set([...Object.keys(found), ...Object.keys(lost)])].sort(
     (a, b) => Number(a) - Number(b),
   );
   const table = el(doc, 'table', { className: 'starledger-ships' });
@@ -101,7 +108,7 @@ function shipsTable(
         doc,
         'tr',
         {},
-        ...[id, num(found?.[id] ?? 0), num(lost?.[id] ?? 0)].map((c) =>
+        ...[id, num(found[id] ?? 0), num(lost[id] ?? 0)].map((c) =>
           el(doc, 'td', { textContent: c }),
         ),
       ),
@@ -110,8 +117,17 @@ function shipsTable(
   return table;
 }
 
+function discoveriesText(t: T, stats: StatsResponse): string {
+  const d = stats.summary.discoveries;
+  const xp = d?.xpByLifeform
+    ? Object.values(d.xpByLifeform).reduce((sum, v) => sum + v, 0)
+    : undefined;
+  return `${t('discoveriesCount', { n: num(d?.count) })} · ${t('xp')} ${num(xp)} · ${t('tileArtefacts')} ${num(d?.artefacts)}`;
+}
+
 function balanceTable(doc: Document, t: T, stats: StatsResponse) {
-  const { balance, fuel } = stats.summary;
+  const { balance, fuel, tiles } = stats.summary;
+  const ignoreFuel = stats.settings?.ignoreConsumption === true;
   const table = el(doc, 'table', { className: 'starledger-balance' });
   table.append(
     el(
@@ -123,18 +139,46 @@ function balanceTable(doc: Document, t: T, stats: StatsResponse) {
       ),
     ),
   );
+  const fuelCell = fuel?.unknownCount > 0 ? `? (${fuel.unknownCount})` : num(fuel?.recorded);
   for (const [key, label] of CATEGORIES) {
-    const isFuel = key === 'fuel';
-    const cells = [
-      t(label),
-      isFuel ? '-' : resourcesText(t, balance?.[key]?.gains),
-      isFuel ? '-' : resourcesText(t, balance?.[key]?.losses),
-      isFuel ? (fuel?.unknownCount > 0 ? `? (${fuel.unknownCount})` : num(fuel?.recorded)) : '-',
-    ];
+    const cells =
+      key === 'fuel'
+        ? [t(label), '-', '-', ignoreFuel ? `${fuelCell} (${t('fuelIgnored')})` : fuelCell]
+        : [
+            t(label),
+            resourcesText(t, balance?.[key]?.gains),
+            resourcesText(t, balance?.[key]?.losses),
+            '-',
+          ];
     const row = el(doc, 'tr', {}, ...cells.map((c) => el(doc, 'td', { textContent: c })));
     row.dataset.category = key;
     table.append(row);
+    if (key === 'wreckfields') {
+      // Lifeform discoveries: own units (XP, artefacts), never summed with resources
+      const disc = el(
+        doc,
+        'tr',
+        {},
+        ...[t('catDiscoveries'), discoveriesText(t, stats), '-', '-'].map((c) =>
+          el(doc, 'td', { textContent: c }),
+        ),
+      );
+      disc.dataset.category = 'discoveries';
+      table.append(disc);
+    }
   }
+  const net = el(
+    doc,
+    'tr',
+    {},
+    el(doc, 'td', { textContent: t('catNet') }),
+    el(doc, 'td', {
+      colSpan: 3,
+      textContent: `${resourcesText(t, tiles)} · ${t('tileMsu')} ${num(tiles?.msu)}`,
+    }),
+  );
+  net.dataset.category = 'net';
+  table.append(net);
   return table;
 }
 
@@ -144,17 +188,27 @@ function renderContent(doc: Document, t: T, stats: StatsResponse): HTMLElement[]
     el(doc, 'h4', { textContent: t('sectionOutcomes') }),
     outcomesList(doc, t, summary.expeditions?.outcomes),
     el(doc, 'h4', { textContent: t('sectionShips') }),
-    shipsTable(doc, t, summary.expeditions?.shipsFound, summary.expeditions?.shipsLost),
+    shipsTable(
+      doc,
+      t,
+      sumShips(summary.expeditions?.shipsFound),
+      sumShips(summary.expeditions?.shipsLost, summary.combats?.shipsLost),
+    ),
     el(doc, 'h4', { textContent: t('sectionBalance') }),
     balanceTable(doc, t, stats),
-    el(doc, 'p', { className: 'starledger-note', textContent: t('balanceScope') }),
+    el(doc, 'p', {
+      className: 'starledger-note',
+      textContent: t(stats.settings?.ignoreConsumption ? 'balanceScopeNoFuel' : 'balanceScope'),
+    }),
   ];
   const unrecognized = stats.counts?.unrecognized ?? 0;
   if (unrecognized > 0) {
     nodes.push(
       el(doc, 'p', {
         className: 'starledger-unrecognized',
-        textContent: t('unrecognized', { n: String(unrecognized) }),
+        textContent: t(unrecognized === 1 ? 'unrecognizedOne' : 'unrecognized', {
+          n: String(unrecognized),
+        }),
       }),
     );
   }
@@ -163,38 +217,58 @@ function renderContent(doc: Document, t: T, stats: StatsResponse): HTMLElement[]
     nodes.push(
       el(doc, 'p', {
         className: 'starledger-conflicts',
-        textContent: t('conflicts', { n: String(conflicts) }),
+        textContent: t(conflicts === 1 ? 'conflictsOne' : 'conflicts', { n: String(conflicts) }),
       }),
     );
   }
   return nodes;
 }
 
+function mountPanel(doc: Document, panel: HTMLElement): void {
+  const parent = doc.getElementById('contentWrapper') ?? doc.getElementById('middle');
+  if (parent) parent.prepend(panel);
+  else if (doc.getElementById(BOX_ID)) doc.getElementById(BOX_ID)?.after(panel);
+  else doc.body.prepend(panel);
+}
+
+let closeCurrent: (() => void) | null = null;
+
 export function openDetails(ctx: UiContext, env: DetailsEnv): void {
   const { doc, gm, t } = ctx;
-  doc.getElementById(DETAILS_ID)?.remove();
+  closeCurrent?.();
 
-  //! AGENTS.md §1.7: user-opened dialog, monetization elements untouched, fully removed on close
-  const overlay = el(doc, 'div', { id: DETAILS_ID, className: 'starledger-overlay' });
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-modal', 'true');
-  const panel = el(doc, 'div', { className: 'starledger-dialog' });
+  //! AGENTS.md §1.7: in-flow panel, no overlay, monetization elements untouched, fully removed on close
+  const panel = el(doc, 'div', { id: DETAILS_ID, className: 'starledger-dialog' });
+  panel.setAttribute('role', 'dialog');
   const body = el(doc, 'div', { className: 'starledger-dialog-body' });
   const buttons = new Map<StatsPeriod, HTMLButtonElement>();
   const bar = el(doc, 'div', { className: 'starledger-periods' });
   const closeButton = el(doc, 'button', { type: 'button', textContent: t('close') });
+  const previousFocus = doc.activeElement instanceof HTMLElement ? doc.activeElement : null;
 
   let seq = 0;
   let open = true;
 
-  const close = () => {
+  function close() {
+    if (!open) return;
     open = false;
     doc.removeEventListener('keydown', onKey);
-    overlay.remove();
-  };
+    doc.removeEventListener('click', onOutside);
+    panel.remove();
+    if (closeCurrent === close) closeCurrent = null;
+    previousFocus?.focus();
+  }
   function onKey(e: KeyboardEvent) {
     if (e.key === 'Escape') close();
   }
+  function onOutside(e: MouseEvent) {
+    const target = e.target;
+    if (!(target instanceof Node) || panel.contains(target)) return;
+    // The click that opened the panel comes from the box and must not close it
+    if (target instanceof Element && target.closest(`#${BOX_ID}`)) return;
+    close();
+  }
+  closeCurrent = close;
 
   const showError = (error: ApiError) => {
     body.replaceChildren(
@@ -205,10 +279,28 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
     );
   };
 
-  async function load(period: StatsPeriod): Promise<void> {
+  const ready = (): Promise<unknown> => {
+    const settings = loadSettings(gm);
+    if (!settings.consent || !settings.serverUrl || !settings.apiKey) return Promise.resolve();
+    //! AGENTS.md §4: flush on detail open (spec §4.1), our server only, no game request
+    return ctx.queue
+      .flush(
+        createApi(gm, settings, CLIENT_VERSION),
+        settings.deviceId,
+        () => loadSettings(gm).consent,
+      )
+      .then(() => {
+        if (open) ctx.refreshBox?.();
+      })
+      .catch(() => {});
+  };
+
+  async function load(period: StatsPeriod, before?: Promise<unknown>): Promise<void> {
     const mine = ++seq;
     for (const [p, b] of buttons) b.setAttribute('aria-pressed', String(p === period));
     body.replaceChildren(el(doc, 'p', { textContent: t('loading') }));
+    await before;
+    if (!open || mine !== seq) return;
     const settings = loadSettings(gm);
     //! AGENTS.md §1.9: consent and configuration re-checked before every request
     if (!settings.consent || !settings.serverUrl || !settings.apiKey) {
@@ -224,6 +316,10 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
       today: todayKey(env.serverUtcOffsetMinutes),
     });
     if (!open || mine !== seq) return;
+    if (!loadSettings(gm).consent) {
+      showError('not_configured');
+      return;
+    }
     if (!result.ok) {
       showError(result.error);
       return;
@@ -244,10 +340,8 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
   }
 
   closeButton.addEventListener('click', close);
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) close();
-  });
   doc.addEventListener('keydown', onKey);
+  doc.addEventListener('click', onOutside);
 
   panel.append(
     el(
@@ -260,7 +354,7 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
     bar,
     body,
   );
-  overlay.append(panel);
-  doc.body.append(overlay);
-  void load('day');
+  mountPanel(doc, panel);
+  closeButton.focus();
+  void load('day', ready());
 }

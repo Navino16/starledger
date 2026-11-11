@@ -158,6 +158,48 @@ describe('collector wiring', () => {
     await flushTick();
     expect(onCollected).toHaveBeenCalledTimes(1);
     expect(gm.requests.some((r) => r.url.startsWith('https://sl.example.org'))).toBe(true);
+    for (const r of gm.requests.filter((x) => x.method === 'GET')) {
+      expect(r.url).toContain('/api/v1/stats');
+    }
+  });
+
+  it('re-fetches stats once after a collection flush and never otherwise', async () => {
+    consented();
+    saveSettings(gm, { serverUrl: 'https://sl.example.org', apiKey: 'k' });
+    gm.respondWith((o) =>
+      o.method === 'GET'
+        ? {
+            status: 200,
+            body: JSON.stringify({
+              summary: {
+                tiles: { metal: 1, crystal: 1, deuterium: 1, darkMatter: 0, artefacts: 0, msu: 1 },
+                fuel: { recorded: 0, departures: 0, unknownCount: 0 },
+              },
+              counts: {},
+              settings: {},
+            }),
+          }
+        : { status: 200, body: JSON.stringify({ results: [] }) },
+    );
+    const { win, handlers } = setup({ contentHtml: [FIXTURE.replaceAll('100', '900')] });
+    document.body.innerHTML = '';
+    main(gm, document, win);
+    await flushTick();
+    const gets = () => gm.requests.filter((r) => r.method === 'GET');
+    expect(gets()).toHaveLength(1);
+    expect(gm.requests.filter((r) => r.method === 'POST')).toHaveLength(0);
+    await flushTick();
+    expect(gets()).toHaveLength(1);
+    handlers[0]?.(
+      {},
+      {},
+      { url: '/x?action=getMessagesList', data: 'activeSubTab=22&showTrash=false' },
+    );
+    await flushTick();
+    await flushTick();
+    expect(gets()).toHaveLength(2);
+    const methods = gm.requests.map((r) => r.method);
+    expect(methods.lastIndexOf('POST')).toBeLessThan(methods.lastIndexOf('GET'));
   });
 
   it('does not call onCollected or flush when nothing is extracted', async () => {

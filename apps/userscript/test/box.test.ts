@@ -6,7 +6,7 @@ import { createT, MESSAGES } from '../src/i18n';
 import { loadStatsCache, saveSettings, saveStatsCache } from '../src/storage';
 import type { SyncState } from '../src/sync/queue';
 import { type BoxModel, renderBox } from '../src/ui/box';
-import { formatAmount } from '../src/ui/format';
+import { formatAmount, formatTime } from '../src/ui/format';
 
 const ACCOUNT: AccountRef = { serverId: 808, lang: 'en', playerId: 42, playerName: 'Neo' };
 
@@ -127,7 +127,7 @@ describe('renderBox', () => {
     ).toContain('4 pending');
     const synced = state({ lastSyncAt: Date.UTC(2026, 10, 11, 8, 5) });
     expect(render(model({ state: synced })).box.textContent).toContain(
-      t('statusUpToDate').split('{')[0] ?? '',
+      t('statusUpToDate', { time: formatTime(synced.lastSyncAt as number) }),
     );
     const failing = state({ status: 'error', error: 'unreachable' });
     expect(render(model({ state: failing })).box.textContent).toContain('Server unreachable');
@@ -280,10 +280,10 @@ describe('box in the page', () => {
   });
 
   it('keeps using no timers', () => {
-    const spy = vi.spyOn(globalThis, 'setInterval');
+    const spies = [vi.spyOn(globalThis, 'setInterval'), vi.spyOn(globalThis, 'setTimeout')];
     saveSettings(gm, { consent: true });
     main(gm, document, win);
-    expect(spy).not.toHaveBeenCalled();
-    spy.mockRestore();
+    for (const spy of spies) expect(spy).not.toHaveBeenCalled();
+    for (const spy of spies) spy.mockRestore();
   });
 });

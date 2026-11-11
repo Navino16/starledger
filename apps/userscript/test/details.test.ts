@@ -1,5 +1,6 @@
 import type { AccountRef, StatsResponse } from '@app/shared';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { todayKey } from '../src/env/page';
 import { type MemoryGm, memoryGm } from '../src/gm';
 import { createT } from '../src/i18n';
 import { saveSettings } from '../src/storage';
@@ -10,14 +11,19 @@ const ACCOUNT: AccountRef = { serverId: 808, lang: 'en', playerId: 42, playerNam
 const t = createT('en');
 const res = (metal: number, crystal: number, deuterium: number) => ({ metal, crystal, deuterium });
 
-const statsOf = (patch: { unrecognized?: number; conflictCount?: number } = {}): StatsResponse =>
+const statsOf = (
+  patch: { unrecognized?: number; conflictCount?: number; ignoreConsumption?: boolean } = {},
+): StatsResponse =>
   ({
     period: 'day',
     range: null,
     generatedAt: 1,
     counts: { unrecognized: patch.unrecognized ?? 0 },
-    settings: {},
+    settings: { ignoreConsumption: patch.ignoreConsumption ?? false },
     summary: {
+      tiles: { metal: 990, crystal: 1980, deuterium: 2193, darkMatter: 0, artefacts: 0, msu: 4000 },
+      discoveries: { count: 4, xpByLifeform: { '1': 100, '2': 50 }, artefacts: 2 },
+      combats: { shipsLost: { '204': 9 } },
       conflictCount: patch.conflictCount ?? 0,
       fuel: { recorded: 777, departures: 3, unknownCount: 0 },
       expeditions: {
@@ -61,7 +67,7 @@ describe('stats details dialog', () => {
     dialog()?.querySelector<HTMLElement>('[data-period="week"]')?.click();
     await tick();
     expect(stats()).toHaveLength(2);
-    expect(stats()[1]?.url).toMatch(/period=week&today=\d{4}-\d{2}-\d{2}/);
+    expect(stats()[1]?.url).toContain(`period=week&today=${todayKey(0)}`);
   });
 
   it('shows outcome percentages, ships by id and a separate gains/losses/fuel table', async () => {
@@ -76,6 +82,7 @@ describe('stats details dialog', () => {
     );
     expect(shipRows).toContain('20252');
     expect(shipRows).toContain('20301');
+    expect(shipRows).toContain('20409');
     const heads = [...(dialog()?.querySelectorAll('.starledger-balance th') ?? [])].map(
       (h) => h.textContent,
     );
@@ -87,6 +94,12 @@ describe('stats details dialog', () => {
       '777',
     );
     expect(text).toContain(t('balanceScope'));
+    const disc = dialog()?.querySelector('[data-category="discoveries"]');
+    expect(disc?.textContent).toContain('4 discoveries · XP 150 · Artefacts 2');
+    expect(disc?.querySelectorAll('td')[2]?.textContent).toBe('-');
+    const net = dialog()?.querySelector('[data-category="net"]')?.textContent ?? '';
+    expect(net).toContain('M 990');
+    expect(net).toContain('MSU 4k');
   });
 
   it('shows unrecognized and conflict lines only when above 0', async () => {
@@ -104,17 +117,29 @@ describe('stats details dialog', () => {
     expect(dialog()?.textContent).toContain('2 conflicts');
   });
 
-  it('closes on Escape, backdrop click and the close button, removing its listener', async () => {
+  it('mounts in flow at the top of the content area and leaves the page as before on close', async () => {
+    document.body.innerHTML =
+      '<div id="links"></div><div id="contentWrapper"><p>game</p></div><div id="footer"></div>';
+    const initial = document.body.innerHTML;
+    open();
+    const panel = dialog();
+    expect(panel?.parentElement?.id).toBe('contentWrapper');
+    expect(panel?.parentElement?.firstElementChild).toBe(panel);
+    expect(document.querySelector('.starledger-overlay')).toBeNull();
+    [...(panel?.querySelectorAll('button') ?? [])].find((b) => b.textContent === 'Close')?.click();
+    await tick();
+    expect(document.body.innerHTML).toBe(initial);
+  });
+
+  it('closes on Escape, click outside and the close button, but not on a click inside', async () => {
     open();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(dialog()).toBeNull();
     open();
-    dialog()?.click();
+    document.getElementById('footer')?.click();
     expect(dialog()).toBeNull();
     open();
-    dialog()
-      ?.querySelector('.starledger-dialog')
-      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    dialog()?.querySelector('strong')?.click();
     expect(dialog()).not.toBeNull();
     [...(dialog()?.querySelectorAll('button') ?? [])]
       .find((b) => b.textContent === 'Close')
@@ -122,6 +147,72 @@ describe('stats details dialog', () => {
     expect(dialog()).toBeNull();
     await tick();
     expect(document.body.innerHTML).toBe('<div id="links"></div><div id="footer"></div>');
+  });
+
+  it('leaves no listener behind after reopening and closing, and restores focus', async () => {
+    const add = vi.spyOn(document, 'addEventListener');
+    const remove = vi.spyOn(document, 'removeEventListener');
+    const trigger = document.createElement('button');
+    document.body.append(trigger);
+    trigger.focus();
+    open();
+    expect(document.activeElement?.textContent).toBe('Close');
+    open();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(dialog()).toBeNull();
+    expect(document.activeElement).toBe(trigger);
+    await tick();
+    const added = add.mock.calls.filter(([n]) => n === 'keydown' || n === 'click').length;
+    const removed = remove.mock.calls.filter(([n]) => n === 'keydown' || n === 'click').length;
+    expect(removed).toBe(added);
+    add.mockRestore();
+    remove.mockRestore();
+  });
+
+  it('flushes the queue before the first stats request when the detail opens', async () => {
+    const queue = createQueue(gm);
+    queue.enqueue([
+      { kind: 'page_view', serverId: 808, lang: 'en', playerId: 42, ts: 1, page: 'overview' },
+    ] as never);
+    gm.respondWith((o) =>
+      o.method === 'POST'
+        ? { status: 200, body: JSON.stringify({ results: [] }) }
+        : { status: 200, body: JSON.stringify(statsOf()) },
+    );
+    openDetails({ gm, doc: document, t, queue }, { account: ACCOUNT, serverUtcOffsetMinutes: 0 });
+    expect(dialog()?.textContent).toContain('Loading...');
+    await tick();
+    await tick();
+    const kinds = gm.requests.map((r) => r.method);
+    expect(kinds[0]).toBe('POST');
+    expect(kinds.indexOf('GET')).toBeGreaterThan(kinds.indexOf('POST'));
+  });
+
+  it('uses singular forms and notes ignored consumption', async () => {
+    gm.respondWith(() => ({
+      status: 200,
+      body: JSON.stringify(statsOf({ unrecognized: 1, conflictCount: 1, ignoreConsumption: true })),
+    }));
+    open();
+    await tick();
+    const text = dialog()?.textContent ?? '';
+    expect(text).toContain('1 unrecognized report');
+    expect(text).not.toContain('1 unrecognized reports');
+    expect(text).toContain('1 conflict');
+    expect(text).not.toContain('1 conflicts');
+    expect(text).toContain('777 (ignored)');
+    expect(text).toContain(t('balanceScopeNoFuel'));
+  });
+
+  it('shows nothing from a response that arrives after consent was withdrawn', async () => {
+    const pending: ((v: { status: number; body: string }) => void)[] = [];
+    gm.respondWith(() => new Promise((r) => pending.push(r)));
+    open();
+    await tick();
+    saveSettings(gm, { consent: false });
+    pending[0]?.({ status: 200, body: JSON.stringify(statsOf({ unrecognized: 5 })) });
+    await tick();
+    expect(dialog()?.textContent).not.toContain('5 unrecognized');
   });
 
   it('shows the translated error and handles a missing configuration without requesting', async () => {
@@ -141,6 +232,7 @@ describe('stats details dialog', () => {
     const pending: ((v: { status: number; body: string }) => void)[] = [];
     gm.respondWith(() => new Promise((r) => pending.push(r)));
     open();
+    await tick();
     dialog()?.querySelector<HTMLElement>('[data-period="week"]')?.click();
     await tick();
     pending[1]?.({ status: 200, body: JSON.stringify(statsOf({ unrecognized: 7 })) });
