@@ -14,6 +14,10 @@ import { type Kysely, sql, type Transaction } from 'kysely';
 import type { Database } from '../db/schema';
 import { canonicalJson } from './canonical';
 
+export interface IngestLogger {
+  warn: (obj: object, msg: string) => void;
+}
+
 export type LaxBatch = Omit<ObservationBatch, 'observations'> & { observations: unknown[] };
 
 type Ack = BatchAck['results'][number];
@@ -22,6 +26,7 @@ export async function ingestBatch(
   db: Kysely<Database>,
   userId: string,
   batch: LaxBatch,
+  log?: IngestLogger,
 ): Promise<BatchAck> {
   return db.transaction().execute(async (trx) => {
     const now = new Date();
@@ -44,7 +49,7 @@ export async function ingestBatch(
 
     const results: Ack[] = [];
     for (const raw of batch.observations) {
-      results.push(await ingestOne(trx, userId, batch.deviceId, raw));
+      results.push(await ingestOne(trx, userId, batch.deviceId, raw, log));
     }
     return { results };
   });
@@ -61,6 +66,7 @@ async function ingestOne(
   userId: string,
   deviceId: string,
   raw: unknown,
+  log?: IngestLogger,
 ): Promise<Ack> {
   const parsed = observationSchema.safeParse(raw);
   if (!parsed.success) {
@@ -69,21 +75,38 @@ async function ingestOne(
   const obs = parsed.data;
   await sql`savepoint observation`.execute(trx);
   try {
-    const status = await ingestValid(trx, userId, deviceId, obs);
+    const status = await ingestValid(trx, userId, deviceId, obs, log);
     await sql`release savepoint observation`.execute(trx);
     return { clientObservationId: obs.clientObservationId, status };
-  } catch {
+  } catch (error) {
+    // Only data-specific failures (SQLSTATE class 22/23) are rejected; anything else must fail the request so the client retries.
+    const code = (error as { code?: unknown }).code;
+    if (typeof code !== 'string' || !/^2[23]/.test(code)) throw error;
     await sql`rollback to savepoint observation`.execute(trx);
+    log?.warn(
+      { clientObservationId: obs.clientObservationId, sqlState: code },
+      'observation rejected by database',
+    );
     return {
       clientObservationId: obs.clientObservationId,
       status: 'rejected',
-      reason: 'internal error',
+      reason: `database rejected the observation (${code})`,
     };
   }
 }
 
-function interpret(obs: Observation): ParseResult {
-  return obs.kind === 'message' ? parseMessage(obs) : parseFleetDispatch(obs);
+function interpret(obs: Observation, log?: IngestLogger): ParseResult {
+  try {
+    return obs.kind === 'message' ? parseMessage(obs) : parseFleetDispatch(obs);
+  } catch (error) {
+    log?.warn(
+      { clientObservationId: obs.clientObservationId, error: String(error) },
+      'parser threw; observation treated as unrecognized',
+    );
+    const externalKey =
+      obs.kind === 'message' ? `msg:${obs.msgId}` : `fuel:${obs.clientObservationId}`;
+    return { status: 'unrecognized', externalKey, occurredAt: null, reason: 'parser error' };
+  }
 }
 
 async function ingestValid(
@@ -91,8 +114,9 @@ async function ingestValid(
   userId: string,
   deviceId: string,
   obs: Observation,
+  log?: IngestLogger,
 ): Promise<AckStatus> {
-  const result = interpret(obs);
+  const result = interpret(obs, log);
 
   const account = await trx
     .insertInto('accounts')

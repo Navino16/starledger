@@ -14,6 +14,6 @@ export async function observationRoutes(app: FastifyInstance, opts: { db: Kysely
     }
     // apiUser is set by the auth hook that runs before every API route.
     const { userId } = request.apiUser as { userId: string };
-    return ingestBatch(opts.db, userId, envelope.data);
+    return ingestBatch(opts.db, userId, envelope.data, request.log);
   });
 }

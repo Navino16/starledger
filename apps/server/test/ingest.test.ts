@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { BatchAck, MessageObservation, Observation } from '@app/shared';
+import * as shared from '@app/shared';
 import type { FastifyInstance } from 'fastify';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { buildApp } from '../src/app';
 import { generateApiKey } from '../src/auth/api-keys';
 import type { Config } from '../src/config';
@@ -9,6 +10,11 @@ import { canonicalJson } from '../src/ingest/canonical';
 import { ingestBatch, type LaxBatch } from '../src/ingest/ingest';
 import { createUser } from '../src/users/users';
 import { startTestDb, type TestDb } from './helpers/db';
+
+vi.mock('@app/shared', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@app/shared')>();
+  return { ...actual, parseMessage: vi.fn(actual.parseMessage), dayKey: vi.fn(actual.dayKey) };
+});
 
 const config: Config = {
   databaseUrl: 'unused',
@@ -202,14 +208,77 @@ describe('ingestBatch', () => {
     expect(typeof ack.results[0]?.reason).toBe('string');
   });
 
-  it('keeps a savepoint per observation so a failure does not undo the others', async () => {
-    const good = expedition();
-    const bad = expedition({
-      account: { serverId: 808, lang: 'en', playerId: 2 ** 62, playerName: null },
+  it('rejects only the observation the database refuses, keeping those before and after', async () => {
+    const before = expedition();
+    const bad = expedition({}, { extra: '\u0000' });
+    const after = expedition();
+    const warnings: object[] = [];
+    const ack = await ingestBatch(t.db, aliceId, batch([before, bad, after]), {
+      warn: (obj) => warnings.push(obj),
     });
-    const ack = await send(aliceId, [good, bad, expedition()]);
     expect(statuses(ack)).toEqual(['accepted', 'rejected', 'accepted']);
-    expect(await eventsOf(aliceId, `msg:${good.msgId}`)).toHaveLength(1);
+    expect(ack.results[1]?.reason).toMatch(/22/);
+    expect(await eventsOf(aliceId, `msg:${before.msgId}`)).toHaveLength(1);
+    expect(await eventsOf(aliceId, `msg:${bad.msgId}`)).toHaveLength(0);
+    expect(await eventsOf(aliceId, `msg:${after.msgId}`)).toHaveLength(1);
+    expect(warnings).toHaveLength(1);
+    expect(JSON.stringify(warnings)).not.toContain('resourcesgained');
+  });
+
+  it('fails the whole batch on a non-data error and persists nothing', async () => {
+    const first = expedition();
+    const second = expedition();
+    vi.mocked(shared.dayKey).mockImplementationOnce(() => {
+      throw new Error('boom');
+    });
+    await expect(send(aliceId, [first, second])).rejects.toThrow('boom');
+    expect(await eventsOf(aliceId, `msg:${first.msgId}`)).toHaveLength(0);
+    expect(await eventsOf(aliceId, `msg:${second.msgId}`)).toHaveLength(0);
+  });
+
+  it('returns HTTP 500 server_error on a non-data error', async () => {
+    const obs = expedition();
+    vi.mocked(shared.dayKey).mockImplementationOnce(() => {
+      throw new Error('boom');
+    });
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/v1/observations',
+      headers: {
+        authorization: `Bearer ${aliceKey}`,
+        'x-client-version': '0.1.0',
+        'content-type': 'application/json',
+      },
+      payload: JSON.stringify(batch([obs])),
+    });
+    expect(res.statusCode).toBe(500);
+    expect(res.json().error).toBe('server_error');
+    expect(await eventsOf(aliceId, `msg:${obs.msgId}`)).toHaveLength(0);
+  });
+
+  it('treats a parser throw as unrecognized and processes the rest', async () => {
+    const boom = expedition();
+    const fine = expedition();
+    vi.mocked(shared.parseMessage).mockImplementationOnce(() => {
+      throw new Error('parser bug');
+    });
+    const ack = await send(aliceId, [boom, fine]);
+    expect(statuses(ack)).toEqual(['unrecognized', 'accepted']);
+    const [event] = await eventsOf(aliceId, `msg:${boom.msgId}`);
+    expect(event?.status).toBe('unrecognized');
+  });
+
+  it('answers duplicate for a reading equal to the stored data of a conflict event', async () => {
+    const first = expedition();
+    await send(aliceId, [first]);
+    const other = expedition({ msgId: first.msgId }, { resourcesgained: '{"metal":5}' });
+    expect(statuses(await send(aliceId, [other]))).toEqual(['conflict']);
+    const [before] = await eventsOf(aliceId, `msg:${first.msgId}`);
+    const same = { ...first, clientObservationId: randomUUID() };
+    expect(statuses(await send(aliceId, [same]))).toEqual(['duplicate']);
+    const [after] = await eventsOf(aliceId, `msg:${first.msgId}`);
+    expect(after).toEqual(before);
+    expect(after?.status).toBe('conflict');
   });
 
   it('gives each user an own event for the same msgId', async () => {
