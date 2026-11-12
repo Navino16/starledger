@@ -1,10 +1,4 @@
-import {
-  type Observation,
-  PARSER_VERSION,
-  type ParseResult,
-  parseFleetDispatch,
-  parseMessage,
-} from '@app/shared';
+import { type Observation, PARSER_VERSION, type ParseResult, parseObservation } from '@app/shared';
 import type { Kysely, Transaction } from 'kysely';
 import type { Database } from '../db/schema';
 import type { IngestLogger } from './ingest';
@@ -21,7 +15,7 @@ export class UnknownUserError extends Error {}
 
 function interpret(obs: Observation, externalKey: string, log?: IngestLogger): ParseResult {
   try {
-    return obs.kind === 'message' ? parseMessage(obs) : parseFleetDispatch(obs);
+    return parseObservation(obs);
   } catch (error) {
     log?.warn({ externalKey, error: String(error) }, 'parser threw; event treated as unrecognized');
     return { status: 'unrecognized', externalKey, occurredAt: null, reason: 'parser error' };

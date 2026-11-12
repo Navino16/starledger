@@ -46,6 +46,21 @@ const statsOf = (
       combats: { shipsLost: { '204': 9 } },
       conflictCount: patch.conflictCount ?? 0,
       fuel: { recorded: 777, departures: 3, unknownCount: 0 },
+      anomalies: {
+        combats: { count: 2 },
+        rewards: { count: 3 },
+        lithium: {
+          spent: 1200,
+          refunded: 200,
+          net: -1000,
+          spentUnknown: 0,
+          refundUnknown: 0,
+          darkMatterUnknown: 0,
+          darkMatterSpent: 0,
+          scans: 6,
+          collects: 4,
+        },
+      },
       expeditions: {
         outcomes: { resources: 3, nothing: 1, ships: 0 },
         shipsFound: { '202': 5 },
@@ -56,6 +71,7 @@ const statsOf = (
         combats: { gains: res(0, 0, 0), losses: res(0, 0, 0) },
         recycling: { gains: res(0, 0, 0), losses: res(0, 0, 0) },
         wreckfields: { gains: res(0, 0, 0), losses: res(0, 0, 0) },
+        anomalies: { gains: res(40, 30, 20), losses: res(5, 4, 3) },
         fuel: { gains: res(0, 0, 0), losses: res(0, 0, 777) },
       },
     },
@@ -138,6 +154,85 @@ describe('stats details dialog', () => {
     const net = dialog()?.querySelector('[data-category="net"]')?.textContent ?? '';
     expect(net).toContain('M 990');
     expect(net).toContain('MSU 4k');
+  });
+
+  it('shows the anomalies row with gains and losses before fuel', async () => {
+    open();
+    await tick();
+    const cells = dialog()?.querySelectorAll('[data-category="anomalies"] td');
+    expect(cells?.[0]?.textContent).toBe('Anomalies');
+    expect(cells?.[1]?.textContent).toContain('M 40');
+    expect(cells?.[2]?.textContent).toContain('M 5');
+    const order = [...(dialog()?.querySelectorAll('.starledger-balance tr') ?? [])].map(
+      (r) => (r as HTMLElement).dataset.category,
+    );
+    expect(order.slice(order.indexOf('wreckfields'), order.indexOf('fuel') + 1)).toEqual([
+      'wreckfields',
+      'discoveries',
+      'anomalies',
+      'anomalies-lithium',
+      'fuel',
+    ]);
+  });
+
+  it('shows lithium spent, refunded, net and the counts', async () => {
+    open();
+    await tick();
+    const row = dialog()?.querySelector('[data-category="anomalies-lithium"]');
+    const cells = row?.querySelectorAll('td');
+    expect(cells?.[0]?.textContent).toBe('Anomalies: lithium');
+    expect(cells?.[1]?.textContent).toBe(
+      'Lithium: spent 1.2k, refunded 200, net -1k (scans: 6 · collects: 4 · rewards: 3 · combats: 2)',
+    );
+    expect(cells?.[2]?.textContent).toBe('-');
+    expect(cells?.[3]?.textContent).toBe('-');
+  });
+
+  it('shows unknown lithium and paid Dark Matter only when present', async () => {
+    const body = statsOf();
+    const lithium = body.summary.anomalies.lithium;
+    lithium.spentUnknown = 2;
+    lithium.refundUnknown = 1;
+    lithium.darkMatterUnknown = 3;
+    lithium.darkMatterSpent = 50;
+    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
+    open();
+    await tick();
+    const text = dialog()?.querySelector(
+      '[data-category="anomalies-lithium"] td:nth-child(2)',
+    )?.textContent;
+    expect(text).toContain('spent 1.2k + ? (2), refunded 200 + ? (1), net -1k + ? (3)');
+    expect(text).toContain(' · Dark Matter paid: 50 + ? (3)');
+  });
+
+  it('marks each lithium figure only with its own unknowns', async () => {
+    const body = statsOf();
+    body.summary.anomalies.lithium.refundUnknown = 1;
+    body.summary.anomalies.lithium.darkMatterUnknown = 2;
+    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
+    open();
+    await tick();
+    const text = dialog()?.querySelector(
+      '[data-category="anomalies-lithium"] td:nth-child(2)',
+    )?.textContent;
+    expect(text).toContain('spent 1.2k, refunded 200 + ? (1), net -1k + ? (1)');
+    expect(text).toContain('Dark Matter paid: 0 + ? (2)');
+  });
+
+  it('renders without anomalies in the summary', async () => {
+    const body = statsOf();
+    delete (body.summary as Partial<typeof body.summary>).anomalies;
+    delete (body.summary.balance as Partial<typeof body.summary.balance>).anomalies;
+    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
+    open();
+    await tick();
+    const row = dialog()?.querySelector('[data-category="anomalies-lithium"]');
+    expect(row?.querySelector('td:nth-child(2)')?.textContent).toBe(
+      'Lithium: spent ?, refunded ?, net ? (scans: ? · collects: ? · rewards: ? · combats: ?)',
+    );
+    expect(
+      dialog()?.querySelector('[data-category="anomalies"] td:nth-child(2)')?.textContent,
+    ).toContain('M ?');
   });
 
   it('shows the trades row with received, delivered and counts', async () => {

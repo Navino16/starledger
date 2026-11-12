@@ -8,8 +8,8 @@ const dir = join(import.meta.dirname, 'fixtures/messages');
 const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
 
 describe('synthetic message fixtures', () => {
-  it('contains the 20 expected fixtures', () => {
-    expect(files).toHaveLength(20);
+  it('contains the 21 expected fixtures', () => {
+    expect(files).toHaveLength(21);
   });
 
   it.each(files)('%s is a synthetic, valid message observation', (file) => {
@@ -25,8 +25,8 @@ const realDir = join(import.meta.dirname, 'fixtures/messages-real');
 const realFiles = readdirSync(realDir).filter((f) => f.endsWith('.json'));
 
 describe('real message fixtures', () => {
-  it('contains the 27 expected fixtures', () => {
-    expect(realFiles).toHaveLength(27);
+  it('contains the 30 expected fixtures', () => {
+    expect(realFiles).toHaveLength(30);
   });
 
   it.each(realFiles)('%s is a real, valid observation parsed as expected', (file) => {

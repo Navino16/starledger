@@ -13,7 +13,11 @@ import { startTestDb, type TestDb } from './helpers/db';
 
 vi.mock('@app/shared', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@app/shared')>();
-  return { ...actual, parseMessage: vi.fn(actual.parseMessage), dayKey: vi.fn(actual.dayKey) };
+  return {
+    ...actual,
+    parseObservation: vi.fn(actual.parseObservation),
+    dayKey: vi.fn(actual.dayKey),
+  };
 });
 
 const config: Config = {
@@ -259,7 +263,7 @@ describe('ingestBatch', () => {
   it('treats a parser throw as unrecognized and processes the rest', async () => {
     const boom = expedition();
     const fine = expedition();
-    vi.mocked(shared.parseMessage).mockImplementationOnce(() => {
+    vi.mocked(shared.parseObservation).mockImplementationOnce(() => {
       throw new Error('parser bug');
     });
     const ack = await send(aliceId, [boom, fine]);
@@ -316,6 +320,26 @@ describe('ingestBatch', () => {
     expect(statuses(await send(aliceId, [dispatch]))).toEqual(['duplicate']);
     const [event] = await eventsOf(aliceId, `fuel:${dispatch.clientObservationId}`);
     expect(event?.kind).toBe('fuel');
+  });
+
+  it('stores an anomaly_action under anomaly:<id> and reports a resend as duplicate', async () => {
+    const action: Observation = {
+      kind: 'anomaly_action',
+      clientObservationId: randomUUID(),
+      account: { serverId: 808, lang: 'en', playerId: 100001, playerName: null },
+      observedAt: 1_790_000_100_000,
+      serverUtcOffsetMinutes: 60,
+      action: 'scan',
+      lithium: 19915,
+      darkMatter: null,
+      lithiumBonus: 0,
+      lithiumBonusRaw: null,
+      actedAt: 1_790_000_000_000,
+    };
+    expect(statuses(await send(aliceId, [action]))).toEqual(['accepted']);
+    expect(statuses(await send(aliceId, [action]))).toEqual(['duplicate']);
+    const [event] = await eventsOf(aliceId, `anomaly:${action.clientObservationId}`);
+    expect(event?.kind).toBe('anomaly_action');
   });
 
   describe('unrecognized interpretations', () => {

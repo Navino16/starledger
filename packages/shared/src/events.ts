@@ -59,6 +59,7 @@ export type CombatEvent = {
   coords: Coords;
   isExpedition: boolean;
   isProbeOnly: boolean;
+  isAnomaly: boolean;
   ownSide: 'attacker' | 'defender';
   ownPlanetDefended: boolean;
   outcome: CombatOutcome;
@@ -107,6 +108,21 @@ export type FuelEvent = {
   consumption: number | null;
 };
 
+export type AnomalyRewardEvent = {
+  kind: 'anomaly_reward';
+  anomalyCoords: Coords | null;
+  resources: Resources;
+  ships: ShipCounts;
+};
+
+export type AnomalyActionEvent = {
+  kind: 'anomaly_action';
+  action: 'scan' | 'collect' | 'collect_dm';
+  lithium: number | null;
+  darkMatter: number | null;
+  lithiumBonus: number | null;
+};
+
 export type ParsedEvent =
   | ExpeditionEvent
   | LifeformDiscoveryEvent
@@ -115,7 +131,9 @@ export type ParsedEvent =
   | RecyclingEvent
   | WreckfieldEvent
   | TransportEvent
-  | FuelEvent;
+  | FuelEvent
+  | AnomalyRewardEvent
+  | AnomalyActionEvent;
 
 export type ParseResult =
   | { status: 'ok'; externalKey: string; occurredAt: number; event: ParsedEvent }

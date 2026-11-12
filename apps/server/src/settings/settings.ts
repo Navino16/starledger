@@ -23,6 +23,7 @@ export async function getValuationSettings(
   return {
     msuRatio: [Number(row.msu_metal), Number(row.msu_crystal), Number(row.msu_deuterium)],
     expeditionShipRatio: row.expedition_ship_ratio,
+    anomalyShipRatio: row.anomaly_ship_ratio,
     ignoreExpeShipsLoss: row.ignore_expe_ships_loss,
     ignoreConsumption: row.ignore_consumption,
     includeTradesInBalance: row.include_trades_in_balance,
@@ -41,6 +42,7 @@ export async function saveValuationSettings(
     msu_crystal: s.msuRatio[1],
     msu_deuterium: s.msuRatio[2],
     expedition_ship_ratio: s.expeditionShipRatio,
+    anomaly_ship_ratio: s.anomalyShipRatio,
     ignore_expe_ships_loss: s.ignoreExpeShipsLoss,
     ignore_consumption: s.ignoreConsumption,
     include_trades_in_balance: s.includeTradesInBalance,
@@ -65,6 +67,7 @@ const formSchema = z
     msuCrystal: ratio,
     msuDeuterium: ratio,
     expeditionShipRatio: numberField.pipe(z.number().int().min(0).max(100)),
+    anomalyShipRatio: numberField.pipe(z.number().int().min(0).max(100)),
     ignoreExpeShipsLoss: checkbox,
     ignoreConsumption: checkbox,
     includeTradesInBalance: checkbox,

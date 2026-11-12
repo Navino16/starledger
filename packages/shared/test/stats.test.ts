@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type {
+  AnomalyActionEvent,
   CombatEvent,
   ExpeditionEvent,
   FuelEvent,
@@ -51,6 +52,7 @@ const combat = (o: Partial<CombatEvent> = {}): CombatEvent => ({
   coords,
   isExpedition: false,
   isProbeOnly: false,
+  isAnomaly: false,
   ownSide: 'attacker',
   ownPlanetDefended: false,
   outcome: 'won',
@@ -112,6 +114,7 @@ describe('computeStats', () => {
     expect(DEFAULT_VALUATION).toEqual({
       msuRatio: [3, 2, 1],
       expeditionShipRatio: 100,
+      anomalyShipRatio: 100,
       ignoreExpeShipsLoss: false,
       ignoreConsumption: false,
       includeTradesInBalance: false,
@@ -184,6 +187,112 @@ describe('computeStats', () => {
     expect(s.tiles.metal).toBe(-500);
     expect(s.combats.lost).toBe(1);
     expect(s.combats.lootSigned.metal).toBe(-500);
+  });
+
+  it('attaches an anomaly combat to the anomalies category only', () => {
+    const s = run([
+      combat({
+        isAnomaly: true,
+        ownSide: 'defender',
+        outcome: 'draw',
+        lootSign: 0,
+        debrisCreated: res(4800, 1600),
+        shipsLost: { '204': 4 },
+      }),
+    ]);
+    expect(s.anomalies.combats).toEqual({
+      count: 1,
+      won: 0,
+      lost: 0,
+      draw: 1,
+      shipsLost: { '204': 4 },
+    });
+    expect(s.balance.anomalies.losses).toEqual(res(12000, 4000));
+    expect(s.balance.combats).toEqual({ gains: res(), losses: res() });
+    expect(s.combats).toMatchObject({ count: 0, draw: 0, shipsLost: {} });
+    expect(s.combats.debrisCreated).toEqual(res());
+    expect(s.tiles.metal).toBe(-12000);
+    expect(s.tiles.crystal).toBe(-4000);
+  });
+
+  it('counts anomaly rewards and values resources and ships at 100 percent', () => {
+    const s = run(
+      [
+        {
+          kind: 'anomaly_reward',
+          anomalyCoords: null,
+          resources: res(1000, 500, 100),
+          ships: { '202': 2 },
+        },
+        { kind: 'anomaly_reward', anomalyCoords: null, resources: res(10), ships: { '202': 1 } },
+      ],
+      { expeditionShipRatio: 50 },
+    );
+    expect(s.anomalies.rewards).toEqual({
+      count: 2,
+      resources: res(1010, 500, 100),
+      ships: { '202': 3 },
+    });
+    expect(s.balance.anomalies.gains).toEqual(res(7010, 6500, 100));
+    expect(s.tiles.metal).toBe(7010);
+    expect(s.tiles.crystal).toBe(6500);
+    expect(s.tiles.deuterium).toBe(100);
+  });
+
+  it('values anomaly reward ships at the anomaly ship ratio, independently of the expedition one', () => {
+    const anomaly: ParsedEvent = {
+      kind: 'anomaly_reward',
+      anomalyCoords: null,
+      resources: res(1000),
+      ships: { '202': 2 },
+    };
+    const half = run([anomaly], { anomalyShipRatio: 50, expeditionShipRatio: 100 });
+    expect(half.balance.anomalies.gains).toEqual(res(3000, 2000));
+    expect(half.tiles.metal).toBe(3000);
+    expect(half.tiles.crystal).toBe(2000);
+    const other = run([anomaly], { anomalyShipRatio: 100, expeditionShipRatio: 0 });
+    expect(other.balance.anomalies.gains).toEqual(res(5000, 4000));
+    const exp = run([expedition({ shipsFound: { '202': 1 } })], { anomalyShipRatio: 0 });
+    expect(exp.tiles.metal).toBe(2000);
+  });
+
+  it('totals lithium spent, refunded and unknown over anomaly actions without touching tiles', () => {
+    const act = (o: Partial<AnomalyActionEvent>): AnomalyActionEvent => ({
+      kind: 'anomaly_action',
+      action: 'scan',
+      lithium: 0,
+      darkMatter: null,
+      lithiumBonus: 0,
+      ...o,
+    });
+    const s = run([
+      act({ lithium: 1000 }),
+      act({ action: 'collect', lithium: 500, lithiumBonus: 120 }),
+      act({ action: 'collect', lithium: null, lithiumBonus: null }),
+      act({ action: 'collect_dm', lithium: 300, darkMatter: 590 }),
+      act({ action: 'collect_dm', lithium: 200, darkMatter: null }),
+    ]);
+    expect(s.anomalies.lithium).toEqual({
+      spent: 2000,
+      refunded: 120,
+      net: -1880,
+      spentUnknown: 1,
+      refundUnknown: 1,
+      darkMatterUnknown: 1,
+      darkMatterSpent: 590,
+      scans: 1,
+      collects: 4,
+    });
+    expect(s.balance.anomalies).toEqual({ gains: res(), losses: res() });
+    expect(s.tiles).toEqual(run([]).tiles);
+  });
+
+  it('counts a stored combat without isAnomaly as a normal combat', () => {
+    const { isAnomaly: _omitted, ...stored } = combat({ shipsLost: { '204': 1 } });
+    const s = run([stored as CombatEvent]);
+    expect(s.combats.count).toBe(1);
+    expect(s.anomalies.combats.count).toBe(0);
+    expect(s.balance.anomalies.losses).toEqual(res());
   });
 
   it('never counts created debris in tiles', () => {

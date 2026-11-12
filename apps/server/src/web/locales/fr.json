@@ -50,10 +50,11 @@
     "msuCrystal": "Ratio MSU : cristal",
     "msuDeuterium": "Ratio MSU : deutérium",
     "expeditionShipRatio": "Valeur des vaisseaux en expédition (%)",
+    "anomalyShipRatio": "Vaisseaux des récompenses d'anomalie valorisés à (%)",
     "ignoreExpeShipsLoss": "Ignorer les pertes de vaisseaux en expédition",
     "ignoreConsumption": "Ignorer la consommation de carburant",
     "includeTradesInBalance": "Inclure les échanges dans le bilan",
     "save": "Enregistrer",
-    "invalid": "Réglages invalides : les ratios doivent être compris entre 0 (exclu) et 100, et la valeur des vaisseaux un entier de 0 à 100."
+    "invalid": "Réglages invalides : les ratios doivent être compris entre 0 (exclu) et 100, et les valeurs des vaisseaux des entiers de 0 à 100."
   }
 }

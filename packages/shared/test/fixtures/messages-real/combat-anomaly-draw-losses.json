@@ -1,0 +1,62 @@
+{
+  "synthetic": false,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000305",
+    "account": {
+      "serverId": 285,
+      "lang": "fr",
+      "playerId": 100001,
+      "playerName": "Tester"
+    },
+    "observedAt": 1794480000000,
+    "serverUtcOffsetMinutes": 0,
+    "msgId": 116225,
+    "messageType": 25,
+    "subtabId": 21,
+    "raw": {
+      "messagetype": "25",
+      "timestamp": "1794169673",
+      "date": "2026-11-08T20:27:53.000Z",
+      "hashcode": "cr-fr-285-0000000000000000000000000000000000000000",
+      "coords": "1:302:13",
+      "defenderspaceobject": "{\"id\":1004,\"type\":\"anomaly\",\"name\":\"Planet A\",\"coordinates\":{\"galaxy\":1,\"system\":302,\"position\":13},\"owner\":{\"type\":\"player\",\"id\":100001,\"name\":\"Tester\",\"alliance\":{\"id\":300001,\"name\":\"Alliance One\",\"tag\":\"AL1\",\"classId\":0},\"rankId\":null,\"status\":[],\"classId\":0}}",
+      "fleets": "[{\"side\":\"defender\",\"fleetId\":1,\"player\":{\"type\":\"player\",\"id\":100001,\"name\":\"Tester\",\"alliance\":{\"id\":300001,\"name\":\"Alliance One\",\"tag\":\"AL1\",\"classId\":0},\"rankId\":null,\"status\":[],\"classId\":0},\"spaceObject\":{\"id\":1001,\"name\":\"Planet A\",\"type\":\"planet\",\"coordinates\":{\"galaxy\":1,\"system\":300,\"position\":8}},\"combatResearchPercentage\":[{\"id\":109,\"percentage\":0},{\"id\":110,\"percentage\":0},{\"id\":111,\"percentage\":0}],\"combatTechnologies\":[{\"technologyId\":204,\"amount\":4},{\"technologyId\":205,\"amount\":1}]},{\"side\":\"attacker\",\"fleetId\":2,\"player\":{\"type\":\"npc\",\"id\":99999,\"name\":\"profondeurs de l`espace\"},\"spaceObject\":{\"id\":0,\"name\":\"\",\"type\":\"planet\",\"coordinates\":{\"galaxy\":1,\"system\":302,\"position\":13}},\"combatResearchPercentage\":[{\"id\":109,\"percentage\":0},{\"id\":110,\"percentage\":0},{\"id\":111,\"percentage\":0}],\"combatTechnologies\":[{\"technologyId\":202,\"amount\":4},{\"technologyId\":204,\"amount\":8}]}]",
+      "combatrounds": "[{\"statistics\":[{\"side\":\"defender\",\"strength\":350,\"hits\":5,\"absorbedDamage\":65},{\"side\":\"attacker\",\"strength\":420,\"hits\":12,\"absorbedDamage\":50}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":4},{\"technologyId\":205,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":2,\"technologies\":[{\"technologyId\":202,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":4},{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":8}]}]},{\"statistics\":[{\"side\":\"defender\",\"strength\":500,\"hits\":6,\"absorbedDamage\":65},{\"side\":\"attacker\",\"strength\":420,\"hits\":12,\"absorbedDamage\":40}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":4},{\"technologyId\":205,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":2,\"technologies\":[{\"technologyId\":202,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":4},{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":8}]}]},{\"statistics\":[{\"side\":\"defender\",\"strength\":350,\"hits\":5,\"absorbedDamage\":65},{\"side\":\"attacker\",\"strength\":420,\"hits\":12,\"absorbedDamage\":40}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":204,\"destroyed\":1,\"destroyedTotal\":1,\"remaining\":3},{\"technologyId\":205,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":2,\"technologies\":[{\"technologyId\":202,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":4},{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":8}]}]},{\"statistics\":[{\"side\":\"defender\",\"strength\":300,\"hits\":4,\"absorbedDamage\":35},{\"side\":\"attacker\",\"strength\":420,\"hits\":12,\"absorbedDamage\":40}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":204,\"destroyed\":1,\"destroyedTotal\":2,\"remaining\":2},{\"technologyId\":205,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":2,\"technologies\":[{\"technologyId\":202,\"destroyed\":1,\"destroyedTotal\":1,\"remaining\":3},{\"technologyId\":204,\"destroyed\":1,\"destroyedTotal\":1,\"remaining\":7}]}]},{\"statistics\":[{\"side\":\"defender\",\"strength\":250,\"hits\":3,\"absorbedDamage\":45},{\"side\":\"attacker\",\"strength\":365,\"hits\":10,\"absorbedDamage\":30}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":204,\"destroyed\":1,\"destroyedTotal\":3,\"remaining\":1},{\"technologyId\":205,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":2,\"technologies\":[{\"technologyId\":202,\"destroyed\":0,\"destroyedTotal\":1,\"remaining\":3},{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":1,\"remaining\":7}]}]},{\"statistics\":[{\"side\":\"defender\",\"strength\":200,\"hits\":2,\"absorbedDamage\":35},{\"side\":\"attacker\",\"strength\":365,\"hits\":10,\"absorbedDamage\":20}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":204,\"destroyed\":1,\"destroyedTotal\":4,\"remaining\":0},{\"technologyId\":205,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":2,\"technologies\":[{\"technologyId\":202,\"destroyed\":0,\"destroyedTotal\":1,\"remaining\":3},{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":1,\"remaining\":7}]}]}]",
+      "result": "{\"winner\":\"none\",\"loot\":{\"percentage\":100,\"resources\":[{\"resource\":\"metal\",\"amount\":0},{\"resource\":\"crystal\",\"amount\":0},{\"resource\":\"deuterium\",\"amount\":0},{\"resource\":\"food\",\"amount\":0}]},\"debris\":{\"resources\":[{\"resource\":\"metal\",\"total\":4800,\"recycled\":0,\"remaining\":4800},{\"resource\":\"crystal\",\"total\":1600,\"recycled\":0,\"remaining\":1600}],\"requiredShips\":[{\"technologyId\":209,\"amount\":1}],\"shipsUsedForRecycling\":[],\"totalRequiredShips\":[{\"technologyId\":209,\"amount\":1}]},\"totalValueOfUnitsLost\":[{\"side\":\"defender\",\"value\":16000},{\"side\":\"attacker\",\"value\":8000}],\"deathStarDestroyed\":false,\"repairedTechnologies\":[],\"moonCreation\":{\"chance\":0},\"honor\":null,\"tacticalRetreat\":{\"by\":\"none\",\"supremacy\":0}}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:116225",
+    "occurredAt": 1794169673000,
+    "event": {
+      "kind": "combat",
+      "coords": {
+        "galaxy": 1,
+        "system": 302,
+        "position": 13
+      },
+      "isExpedition": false,
+      "isProbeOnly": false,
+      "isAnomaly": true,
+      "ownSide": "defender",
+      "ownPlanetDefended": false,
+      "outcome": "draw",
+      "loot": {
+        "metal": 0,
+        "crystal": 0,
+        "deuterium": 0
+      },
+      "lootSign": 0,
+      "debrisCreated": {
+        "metal": 4800,
+        "crystal": 1600,
+        "deuterium": 0
+      },
+      "shipsLost": {
+        "204": 4
+      }
+    }
+  }
+}

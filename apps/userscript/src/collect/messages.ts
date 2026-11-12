@@ -27,6 +27,42 @@ function readRaw(el: HTMLElement | null): Record<string, string> {
   return raw;
 }
 
+const ANOMALY_REWARD_TYPE = 76;
+
+function lootAmount(el: Element): number | null {
+  const description = el.getAttribute('aria-description') ?? '';
+  return toInt(description.slice(description.lastIndexOf(':') + 1));
+}
+
+function readLootItem(item: Element): Record<string, unknown> {
+  const icon = item.querySelector('resource-icon, technology-icon, [aria-description]');
+  if (!icon) {
+    const tag = item.firstElementChild?.tagName.toLowerCase() ?? 'loot-item';
+    return { type: 'unknown', tag, amount: null };
+  }
+  const tag = icon.tagName.toLowerCase();
+  const amount = lootAmount(icon);
+  if (tag === 'resource-icon') {
+    return { type: 'resource', resource: icon.classList[0] ?? '', amount };
+  }
+  if (tag === 'technology-icon') {
+    const attributes = icon
+      .getAttributeNames()
+      .filter((name) => icon.getAttribute(name) === '')
+      .map((name) => name.toLowerCase());
+    return { type: 'ship', attributes, amount };
+  }
+  return { type: 'unknown', tag, amount };
+}
+
+function readAnomalyReward(msg: HTMLElement, raw: Record<string, string>): void {
+  const items = [...msg.querySelectorAll('.content-box .loot-item')].map(readLootItem);
+  if (items.length > 0) raw['x-loot'] = JSON.stringify(items);
+  const link = msg.querySelector('.msgContent a.txt_link')?.textContent ?? '';
+  const coords = /\[(\d+):(\d+):(\d+)\]/.exec(link);
+  if (coords) raw['x-anomalycoords'] = `${coords[1]}:${coords[2]}:${coords[3]}`;
+}
+
 export function extractMessageObservations(
   root: ParentNode,
   ctx: ExtractContext,
@@ -42,6 +78,8 @@ export function extractMessageObservations(
     const raw = readRaw(msg.querySelector<HTMLElement>('.rawMessageData'));
     const messageType = toInt(raw.messagetype);
     if (messageType === null || !TRACKED.includes(messageType)) continue;
+    //! AGENTS.md §4: passive read of the message the player opened, no game request
+    if (messageType === ANOMALY_REWARD_TYPE) readAnomalyReward(msg, raw);
     const parsed = messageObservationSchema.safeParse({
       kind: 'message',
       clientObservationId: crypto.randomUUID(),
@@ -62,7 +100,10 @@ export type AjaxSettings = { url?: unknown; data?: unknown };
 export type AjaxHandler = (event: unknown, xhr: unknown, settings: AjaxSettings) => void;
 
 export type PageWindow = {
-  $?: (target: unknown) => { on(event: string, handler: AjaxHandler): unknown };
+  $?: (target: unknown) => {
+    on(event: string, handler: AjaxHandler): unknown;
+    data?(key: string): unknown;
+  };
   ogame?: { messages?: { content?: unknown } };
 };
 

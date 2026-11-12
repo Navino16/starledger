@@ -37,7 +37,7 @@
 | 9 | Userscript : encart et détail | ✅ |
 | 10 | Validation PTS : vraies captures, reparse, audit | ☐ |
 | 11 | Carburant | ☐ (code fait, vérification PTS 11.2 step 5) |
-| 12 | Transports entre joueurs | ✅ |
+| 12 | Transports entre joueurs | ☐ (12.3 ajoutée : partenaire) |
 | 13 | Anomalies | ☐ (captures reçues, à détailler) |
 | 14 | Dossier de tolérance et publication | ☐ |
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
@@ -834,8 +834,9 @@ Branche : `feature/userscript-foundation`. Tous les accès `GM_*` passent par un
 
 Comportement :
 - **Consentement.** Tant que `consent` est faux, le script n'affiche qu'un petit encart avec un bouton « Configurer », et ne collecte ni n'envoie rien. L'écran de consentement liste en clair ce qui est envoyé :
-  - les rapports affichés : expéditions, combats (y compris noms et coordonnées des autres joueurs), recyclages, champs d'épaves, découvertes, transports ;
+  - les rapports affichés : expéditions, combats (y compris noms et coordonnées des autres joueurs), recyclages, champs d'épaves, découvertes, transports, récompenses d'anomalies ;
   - les départs de flotte et leur carburant ;
+  - les actions sur la page des anomalies : lithium et antimatière dépensés, et leur heure ;
   - l'identifiant du compte et l'univers ;
   - un identifiant d'appareil ;
   - et à quel serveur (l'URL saisie).
@@ -1004,6 +1005,14 @@ Branche : `feature/pts-validation`. **Prérequis utilisateur** : serveur déploy
 - [x] **Step 4 : lancer.** Attendu : PASS.
 - [x] **Step 5 : commit.** `git commit -m "Add history reparse command"`
 
+### Tâche 10.3 : Types de message non suivis
+
+Décision utilisateur du 2026-11-12 (`docs/decisions.md`) : les arrivées de flotte (34) éventuellement stockées par un ancien client gonflent le compteur de non reconnus.
+
+- L'ingestion ignore une observation `message` dont le type n'est pas dans `TRACKED_MESSAGE_TYPES` (réponse comptée comme ignorée, rien n'est stocké).
+- Le `reparse` retire de l'historique les événements existants de ces types (ou les exclut des stats, au choix de l'implémentation, justifié dans `docs/decisions.md`).
+- Tests : une observation 34 reçue n'est pas stockée ; un événement 34 déjà stocké sort du compteur de non reconnus après `reparse`.
+
 ---
 
 ## Scope 11 — Carburant
@@ -1052,6 +1061,7 @@ Captures reçues le 2026-11-12 : les trois cas sont du type 33 (`docs/ogame-data
 
 - [x] 12.1 parseur et stats
 - [x] 12.2 affichage dans le détail
+- [ ] 12.3 partenaire des transports (décision utilisateur du 2026-11-12, `docs/decisions.md`)
 
 Travail prévu :
 - un parseur `TransportEvent` `{kind:'transport', direction:'received'|'delivered'|'internal', resources}`, sans identité ni coordonnées du partenaire (`docs/decisions.md`, scope 12) ; les transports internes ne sont comptés nulle part ;
@@ -1059,9 +1069,25 @@ Travail prévu :
 - le type 34 n'est plus collecté ; les événements de type 33 déjà stockés sont réinterprétés par le `reparse` existant (les événements non reconnus sont toujours reparsés) ;
 - l'affichage dans le détail.
 
+### Tâche 12.3 : Partenaire des transports
+
+Branche : `feature/transport-partner`, après le scope 13.
+
+- `TransportEvent` gagne `partner: { playerId: number; playerName: string; coords: Coords & { type: 1 | 3 } } | null` : la planète cible pour `delivered`, la planète source pour `received`, `null` pour `internal` (attributs `source*` / `target*`, `docs/ogame-data-formats.md` §3.7).
+- Un attribut du partenaire absent ou illisible rend le message non reconnu, jamais un partenaire partiel.
+- `PARSER_VERSION` incrémenté, pour que le `reparse` complète les transports déjà stockés.
+- Aucun affichage par partenaire dans cette tâche.
+- À revoir avant la publication (scope 14) selon la réponse des ToolDevs sur les données d'autres joueurs.
+
 ## Scope 13 — Anomalies
 
-Captures reçues le 2026-11-12 (formats dans `docs/ogame-data-formats.md` §3.9 et §9, règles dans `docs/decisions.md`). Ce scope reste à détailler en tâches ; les captures encore manquantes sont listées dans `docs/pts-captures.md` et ne le bloquent pas.
+Captures reçues le 2026-11-12 (formats dans `docs/ogame-data-formats.md` §3.9 et §9, règles dans `docs/decisions.md`). Cinq tâches : 13.1 combats d'anomalie, 13.2 récompenses du message 76, 13.3 lithium de la page des anomalies, 13.4 affichage, 13.5 réglage `anomalyShipRatio`. Les captures encore manquantes sont listées dans `docs/pts-captures.md` et ne le bloquent pas.
+
+- [x] 13.1 combats d'anomalie
+- [x] 13.2 récompenses du message 76
+- [x] 13.3 lithium de la page des anomalies
+- [x] 13.4 affichage
+- [x] 13.5 réglage anomalyShipRatio
 
 Travail prévu :
 - l'observation des actions sur la page dédiée (scan, choix, récupération, remboursement), en lecture seule ;
@@ -1069,6 +1095,15 @@ Travail prévu :
 - les chiffres « lithium dépensé », « lithium remboursé » et « net » ;
 - les récompenses dans une catégorie « anomalies » ;
 - une règle d'exclusion ou de rattachement si les missions d'anomalie produisent aussi des rapports de combat ou de transport classiques.
+
+### Tâche 13.5 : Réglage `anomalyShipRatio`
+
+Décision utilisateur du 2026-11-12 : les vaisseaux des récompenses d'anomalie sont valorisés selon un réglage serveur par univers, comme `expeditionShipRatio`.
+
+- `ValuationSettings.anomalyShipRatio` (défaut 100), utilisé par `computeStats` pour `anomaly_reward`.
+- Migration `0002` : colonne `universe_settings.anomaly_ship_ratio` (entier, défaut 100), avec `down`.
+- `apps/server/src/settings/settings.ts`, `routes-account.ts`, le formulaire et l'i18n du serveur : même traitement que `expeditionShipRatio` (entier de 0 à 100).
+- Tests : stats avec un ratio différent de 100, lecture et écriture du réglage, migration.
 
 ## Scope 14 — Dossier de tolérance et publication
 

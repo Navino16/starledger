@@ -11,7 +11,7 @@ import { loadSettings } from '../storage';
 import { createApi } from '../sync/api';
 import { CLIENT_VERSION } from '../version';
 import { el, type UiContext } from './dom';
-import { formatAmount } from './format';
+import { formatAmount, formatPartial } from './format';
 import { openPanel } from './panel';
 
 export const DETAILS_ID = 'starledger-details';
@@ -30,6 +30,7 @@ const CATEGORIES: [BalanceCategory, MessageKey][] = [
   ['combats', 'catCombats'],
   ['recycling', 'catRecycling'],
   ['wreckfields', 'catWreckfields'],
+  ['anomalies', 'catAnomalies'],
   ['fuel', 'catFuel'],
 ];
 
@@ -141,6 +142,26 @@ function discoveriesText(t: T, stats: StatsResponse): string {
   return `${t('discoveriesCount', { n: num(d?.count) })} · ${t('xp')} ${num(xp)} · ${t('tileArtefacts')} ${num(d?.artefacts)}`;
 }
 
+function lithiumText(t: T, stats: StatsResponse): string {
+  const a = stats.summary.anomalies;
+  const l = a?.lithium;
+  const known = (v: unknown) => (typeof v === 'number' ? v : null);
+  const spent = formatPartial(known(l?.spent), l?.spentUnknown);
+  const refunded = formatPartial(known(l?.refunded), l?.refundUnknown);
+  const net = formatPartial(known(l?.net), (l?.spentUnknown ?? 0) + (l?.refundUnknown ?? 0));
+  let text = t('lithiumSummary', { spent, refunded, net });
+  if (l && (l.darkMatterSpent > 0 || l.darkMatterUnknown > 0)) {
+    const paid = formatPartial(l.darkMatterSpent, l.darkMatterUnknown);
+    text += ` · ${t('anomalyDarkMatter', { n: paid })}`;
+  }
+  return `${text} ${t('anomalyCounts', {
+    scans: num(l?.scans),
+    collects: num(l?.collects),
+    rewards: num(a?.rewards?.count),
+    combats: num(a?.combats?.count),
+  })}`;
+}
+
 function balanceTable(doc: Document, t: T, stats: StatsResponse) {
   const { balance, fuel, tiles, trades } = stats.summary;
   const ignoreFuel = stats.settings?.ignoreConsumption === true;
@@ -155,10 +176,10 @@ function balanceTable(doc: Document, t: T, stats: StatsResponse) {
       ),
     ),
   );
-  const fuelCell =
-    fuel?.unknownCount > 0
-      ? `${num(fuel.recorded)} + ? (${fuel.unknownCount})`
-      : num(fuel?.recorded);
+  const fuelCell = formatPartial(
+    typeof fuel?.recorded === 'number' ? fuel.recorded : null,
+    fuel?.unknownCount,
+  );
   const toCell = (c: Cell) => el(doc, 'td', {}, ...c);
   for (const [key, label] of CATEGORIES) {
     const cells: Cell[] =
@@ -173,6 +194,19 @@ function balanceTable(doc: Document, t: T, stats: StatsResponse) {
     const row = el(doc, 'tr', {}, ...cells.map(toCell));
     row.dataset.category = key;
     table.append(row);
+    if (key === 'anomalies') {
+      // Lithium and Dark Matter keep their own units, never summed with resources
+      const lithium = el(
+        doc,
+        'tr',
+        {},
+        ...([[t('catAnomalyLithium')], [lithiumText(t, stats)], ['-'], ['-']] as Cell[]).map(
+          toCell,
+        ),
+      );
+      lithium.dataset.category = 'anomalies-lithium';
+      table.append(lithium);
+    }
     if (key === 'wreckfields') {
       // Lifeform discoveries: own units (XP, artefacts), never summed with resources
       const disc = el(

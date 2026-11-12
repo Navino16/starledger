@@ -11,7 +11,10 @@ const amount = z.number().nonnegative();
 // Any resource name: the game also lists `food` (docs/ogame-data-formats.md §3.3)
 const resource = z.string();
 
-const defenderSchema = z.object({ owner: z.object({ id }).optional() });
+const defenderSchema = z.object({
+  type: z.string().optional(),
+  owner: z.object({ id }).optional(),
+});
 const fleetsSchema = z.array(
   z.object({
     fleetId: id,
@@ -78,7 +81,9 @@ function build(obs: MessageObservation): CombatEvent {
 
   const ownId = obs.account.playerId;
   const ownFleets = fleets.filter((f) => f.player?.id === ownId);
-  const ownPlanetDefended = defender.owner?.id === ownId;
+  // docs/ogame-data-formats.md §3.9: an anomaly lists the player as owner, but it is not a planet of theirs
+  const isAnomaly = defender.type === 'anomaly';
+  const ownPlanetDefended = !isAnomaly && defender.owner?.id === ownId;
   const ownSide = ownFleets[0]?.side ?? (ownPlanetDefended ? 'defender' : null);
   if (ownSide === null) throw new Invalid('own side not found');
 
@@ -129,6 +134,7 @@ function build(obs: MessageObservation): CombatEvent {
     coords,
     isExpedition,
     isProbeOnly,
+    isAnomaly,
     ownSide,
     ownPlanetDefended,
     outcome,

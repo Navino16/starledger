@@ -18,6 +18,13 @@ export function formatAmount(n: number | null): string {
   return '?';
 }
 
+// Unknown is not 0: entries without a known amount are counted apart, never added as 0.
+export function formatPartial(n: number | null, unknownCount: number | undefined): string {
+  return unknownCount && unknownCount > 0
+    ? `${formatAmount(n)} + ? (${unknownCount})`
+    : formatAmount(n);
+}
+
 export function formatTime(ms: number): string {
   const d = new Date(ms);
   const pad = (v: number) => String(v).padStart(2, '0');

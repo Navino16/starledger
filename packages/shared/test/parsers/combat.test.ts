@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseCombat, parseShortCombat } from '../../src/parsers/combat';
 import { loadFixtures, observationOf, withRaw } from './helpers';
@@ -8,6 +9,11 @@ const shortFixtures = fixtures.filter((f) => f.file.startsWith('combat-short-'))
 const attackWon = observationOf(fixtures, 'combat-attack-won.json');
 const defenseLost = observationOf(fixtures, 'combat-defense-lost.json');
 const short = observationOf(fixtures, 'combat-short-ships.json');
+const realDir = join(import.meta.dirname, '../fixtures/messages-real');
+const anomalyWon = observationOf(
+  loadFixtures('combat-anomaly-', realDir),
+  'combat-anomaly-won.json',
+);
 
 const eventOf = (r: ReturnType<typeof parseCombat>) => (r.status === 'ok' ? r.event : null);
 
@@ -92,6 +98,18 @@ describe('parseCombat', () => {
     delete base.repairedTechnologies;
     const r = eventOf(parseCombat(withRaw(defenseLost, { result: JSON.stringify(base) })));
     expect(r).toMatchObject({ ownPlanetDefended: true, shipsLost: { '204': 5 } });
+  });
+
+  it('flags an anomaly combat without treating the anomaly as an own planet', () => {
+    expect(eventOf(parseCombat(anomalyWon))).toMatchObject({
+      isAnomaly: true,
+      ownPlanetDefended: false,
+      ownSide: 'defender',
+    });
+  });
+
+  it('flags a planet combat as not an anomaly', () => {
+    expect(eventOf(parseCombat(defenseLost))).toMatchObject({ isAnomaly: false });
   });
 
   it('keeps defenses out of shipsLost', () => {

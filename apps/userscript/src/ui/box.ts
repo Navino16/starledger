@@ -2,7 +2,7 @@ import type { ApiError, StatsResponse } from '@app/shared';
 import { errorKey, type MessageKey, type T } from '../i18n';
 import type { SyncState } from '../sync/queue';
 import { configureBoxContent, el, mountBox } from './dom';
-import { formatAmount, formatTime } from './format';
+import { formatAmount, formatPartial, formatTime } from './format';
 
 export type BoxModel = {
   state: SyncState;
@@ -38,10 +38,15 @@ function tile(doc: Document, label: string, value: string): HTMLElement {
 function fuelValue(stats: StatsResponse | null): string {
   if (!stats) return '?';
   const { recorded, unknownCount } = stats.summary.fuel;
-  // Unknown is not 0: departures without a known consumption are counted apart, never added as 0
-  return unknownCount > 0
-    ? `${formatAmount(recorded)} + ? (${unknownCount})`
-    : formatAmount(recorded);
+  return formatPartial(recorded, unknownCount);
+}
+
+function lithiumValue(stats: StatsResponse | null): string {
+  const lithium = stats?.summary.anomalies?.lithium;
+  return formatPartial(
+    lithium?.net ?? null,
+    (lithium?.spentUnknown ?? 0) + (lithium?.refundUnknown ?? 0),
+  );
 }
 
 const DOT_CLASS = { up_to_date: 'is-ok', pending: 'is-pending', error: 'is-error' } as const;
@@ -81,6 +86,9 @@ export function renderBox(container: HTMLElement, model: BoxModel, handlers: Box
   fuel.dataset.tile = 'fuel';
   fuel.classList.add('starledger-fuel');
   tiles.append(fuel);
+  const lithium = tile(doc, t('tileLithium'), lithiumValue(stats));
+  lithium.dataset.tile = 'lithium';
+  tiles.append(lithium);
   tiles.addEventListener('click', onOpenDetails);
 
   const { state } = model;

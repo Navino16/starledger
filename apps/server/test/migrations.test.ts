@@ -23,6 +23,38 @@ afterAll(async () => {
   await t.teardown();
 });
 
+describe('migration 0002', () => {
+  it('adds universe_settings.anomaly_ship_ratio defaulting to 100', async () => {
+    const userId = randomUUID();
+    await t.db
+      .insertInto('users')
+      .values({ id: userId, username: 'carol', password_hash: 'h' })
+      .execute();
+    await t.db
+      .insertInto('universe_settings')
+      .values({ user_id: userId, server_id: 1, lang: 'en' })
+      .execute();
+    const row = await t.db
+      .selectFrom('universe_settings')
+      .select('anomaly_ship_ratio')
+      .where('user_id', '=', userId)
+      .executeTakeFirstOrThrow();
+    expect(row.anomaly_ship_ratio).toBe(100);
+  });
+
+  it('drops the column on down', async () => {
+    const { up, down } = await import('../src/db/migrations/0002_anomaly_ship_ratio');
+    await down(t.db);
+    const cols = async () =>
+      (await t.db.introspection.getTables())
+        .find((x) => x.name === 'universe_settings')
+        ?.columns.map((c) => c.name);
+    expect(await cols()).not.toContain('anomaly_ship_ratio');
+    await up(t.db);
+    expect(await cols()).toContain('anomaly_ship_ratio');
+  });
+});
+
 describe('migration 0001', () => {
   it('creates the 8 tables', async () => {
     const rows = await t.db.introspection.getTables();
