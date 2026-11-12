@@ -1,16 +1,20 @@
-//! AGENTS.md §1.7: normal-flow blocks only, no fixed/absolute positioning, no overlay, no opacity change
+//! AGENTS.md §1.7: the box stays in normal flow; only the player-opened dialog uses a fixed backdrop (see ui/panel.ts)
 export const UI_CSS = `
 .starledger-box,.starledger-dialog{box-sizing:border-box;max-width:100%;margin:8px 0;padding:4px;font:11px Verdana,Arial,sans-serif;color:#757ba6;background:#0d131b;border-radius:6px}
 .starledger-box{width:168px;margin:10px 0 0}
-.starledger-dialog{padding:6px;overflow-x:auto;color:#c0c0c2}
+.starledger-backdrop{position:fixed;inset:0;z-index:100000;display:flex;align-items:flex-start;justify-content:center;padding:8vh 8px 8px;box-sizing:border-box;overflow-y:auto;background:rgba(0,0,0,.72)}
+.starledger-dialog{width:720px;margin:0;padding:10px;overflow-x:auto;color:#c0c0c2;border:1px solid #2a3240;box-shadow:0 6px 24px rgba(0,0,0,.8)}
 .starledger-box strong,.starledger-dialog strong,.starledger-dialog h4{color:#b4c8f7;font-weight:bold}
 .starledger-dialog h4{margin:10px 0 4px;padding:4px 6px;font-size:11px;background:linear-gradient(#2a3240,#191c25);border-radius:5px}
-.starledger-box button,.starledger-box input,.starledger-dialog button{max-width:100%;box-sizing:border-box;font:inherit}
+.starledger-box button,.starledger-dialog button,.starledger-dialog input{max-width:100%;box-sizing:border-box;font:inherit}
 .starledger-box button:not(.starledger-tiles):not(.starledger-cta),.starledger-dialog button{padding:3px 8px;margin:2px 0;color:#b4c8f7;font-weight:bold;background:linear-gradient(#2d3645,#191c25);border:1px solid #0a0f16;border-radius:5px;cursor:pointer}
 .starledger-box button:not(.starledger-tiles):not(.starledger-cta):hover,.starledger-dialog button:hover{background:linear-gradient(#3a4558,#20242f);color:#e7e8eb}
-.starledger-box input[type=text],.starledger-box input[type=password]{width:100%;padding:3px 4px;color:#e7e8eb;background:#0a0f16;border:1px solid #2a3240;border-radius:4px}
-.starledger-box label{display:block;margin:6px 0;color:#c0c0c2}
-.starledger-box ul{margin:6px 0;padding-left:18px}
+.starledger-dialog input[type=text],.starledger-dialog input[type=password]{display:block;width:100%;max-width:420px;margin-top:3px;padding:3px 4px;color:#e7e8eb;background:#0a0f16;border:1px solid #2a3240;border-radius:4px}
+.starledger-dialog label{display:block;margin:8px 0;color:#c0c0c2}
+.starledger-dialog ul{margin:6px 0;padding-left:18px;line-height:1.5}
+.starledger-dialog p{margin:6px 0;line-height:1.4}
+.starledger-dialog-head strong{font-size:12px}
+.starledger-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .starledger-warning{color:#e0a030}
 .starledger-head,.starledger-dialog-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px;padding:5px 7px;background:linear-gradient(#2a3240,#181c23);border-radius:5px}
 .starledger-state{display:inline-flex;align-items:center;gap:4px;font-size:10px;white-space:nowrap;color:#757ba6}

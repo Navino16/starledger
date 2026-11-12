@@ -3,9 +3,10 @@ import { loadSettings, saveSettings } from '../storage';
 import { createApi } from '../sync/api';
 import { setDestination } from '../sync/destination';
 import { CLIENT_VERSION } from '../version';
-import { renderConfigureBox, renderConsent } from './consent';
-import { el, isHttpUrl, isInsecureUrl, mountBox, PANEL_ID, type UiContext } from './dom';
+import { renderConsent, SETTINGS_ID } from './consent';
+import { el, isHttpUrl, isInsecureUrl, type UiContext } from './dom';
 import { setOglightHidden } from './oglight';
+import { openPanel } from './panel';
 
 export function renderOptions(ctx: UiContext): void {
   const { doc, t, gm, queue } = ctx;
@@ -33,7 +34,6 @@ export function renderOptions(ctx: UiContext): void {
   const test = el(doc, 'button', { type: 'button', textContent: t('testConnection') });
   const withdraw = el(doc, 'button', { type: 'button', textContent: t('withdraw') });
   const removeKey = el(doc, 'button', { type: 'button', textContent: t('removeKey') });
-  const close = el(doc, 'button', { type: 'button', textContent: t('close') });
 
   const refreshWarning = () => {
     warning.textContent = isInsecureUrl(url.value) ? t('httpWarning') : '';
@@ -74,6 +74,7 @@ export function renderOptions(ctx: UiContext): void {
     key.value = '';
     key.placeholder = patch.apiKey ? t('keySet') : '';
     status.textContent = t('saved');
+    ctx.refreshBox?.();
   });
 
   test.addEventListener('click', async () => {
@@ -96,6 +97,7 @@ export function renderOptions(ctx: UiContext): void {
     key.value = '';
     key.placeholder = '';
     status.textContent = t('keyRemoved');
+    ctx.refreshBox?.();
   });
 
   hide.addEventListener('change', () => {
@@ -107,34 +109,25 @@ export function renderOptions(ctx: UiContext): void {
     saveSettings(gm, { consent: false });
     queue.clear();
     setOglightHidden(gm, doc, false);
-    renderConfigureBox(ctx, () => renderConsent(ctx, () => renderOptions(ctx)));
+    handle.close();
   });
 
-  close.addEventListener('click', () => {
-    doc.getElementById(PANEL_ID)?.remove();
-    ctx.refreshBox?.();
-  });
-
-  mountBox(
+  const handle = openPanel(
     doc,
-    el(
-      doc,
-      'div',
-      {},
+    {
+      id: SETTINGS_ID,
+      title: t('menuLabel'),
+      closeLabel: t('close'),
+      closeOnOutside: false,
+      onClose: () => ctx.refreshBox?.(),
+    },
+    [
       el(doc, 'label', { textContent: t('serverUrl') }, url),
       el(doc, 'label', { textContent: t('apiKey') }, key),
       el(doc, 'label', {}, hide, ` ${t('hideOglight')}`),
       warning,
       status,
-      save,
-      ' ',
-      test,
-      ' ',
-      removeKey,
-      ' ',
-      withdraw,
-      ' ',
-      close,
-    ),
+      el(doc, 'div', { className: 'starledger-actions' }, save, test, removeKey, withdraw),
+    ],
   );
 }
