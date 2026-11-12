@@ -11,7 +11,8 @@ export const UI_CSS = `
 .starledger-box button:not(.starledger-tiles):not(.starledger-cta):hover,.starledger-dialog button:hover{background:linear-gradient(#3a4558,#20242f);color:#e7e8eb}
 .starledger-dialog input[type=text],.starledger-dialog input[type=password]{display:block;width:100%;max-width:420px;margin-top:3px;padding:3px 4px;color:#e7e8eb;background:#0a0f16;border:1px solid #2a3240;border-radius:4px}
 .starledger-dialog label{display:block;margin:8px 0;color:#c0c0c2}
-.starledger-dialog ul{margin:6px 0;padding-left:18px;line-height:1.5}
+.starledger-dialog ul{margin:6px 0;padding-left:18px;line-height:1.5;list-style:disc}
+.starledger-dialog li{display:list-item}
 .starledger-dialog p{margin:6px 0;line-height:1.4}
 .starledger-dialog-head strong{font-size:12px}
 .starledger-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
