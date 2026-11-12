@@ -68,11 +68,12 @@ En plus des exports PTS, l'utilisateur a fourni 16 pages de messages de son comp
 
 ### Anomalies (scope 13)
 
-Types inconnus vus dans l'onglet Divers d'un compte live (2026-11-12), sans aucune ressource : 70, 75, 76, 77. Leur signification reste à identifier (texte affiché dans le jeu).
+Les types 70, 75, 76 et 77 de l'onglet Divers sont identifiés (compte live, 2026-11-12) : stationnement de la flotte, convoi en fuite, récompense livrée, fin de l'anomalie. Format dans `docs/ogame-data-formats.md` §3.9.
 
 
-- [ ] Messages reçus en fin de mission d'anomalie (HTML et HAR)
-- [ ] Rapport de combat ou de transport classique éventuel produit par la même mission (pour éviter de compter deux fois butin et récompense)
+- [x] Messages reçus en fin de mission d'anomalie : la récompense (type 76) n'est lisible que dans le HTML du message (2026-11-12)
+- [x] Rapport de combat produit par la même mission : oui, type 25 avec `defenderspaceobject.type` = `anomaly`, jamais de butin (2026-11-12)
+- [ ] Page des anomalies : HTML de la liste après un scan, de l'écran de récupération, et HAR du scan, du choix, de la récupération et d'un éventuel remboursement de lithium
 
 ## Vérifications sur le PTS
 
