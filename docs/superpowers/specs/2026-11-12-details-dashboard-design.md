@@ -69,7 +69,7 @@ Réussi si : en ouvrant le détail, on lit d'un coup d'œil le bilan de la péri
 - **Ressources et vaisseaux** (décision utilisateur, option A) : les colonnes métal, cristal et deut reprennent les valeurs du serveur, vaisseaux convertis compris (trouvés ou récupérés selon `expeditionShipRatio` / `anomalyShipRatio`, perdus à leur coût), comme OGLight et les tuiles ; la ligne Total est égale aux tuiles. Une infobulle sur les lignes concernées indique que la valeur des vaisseaux est incluse.
 - **Combats** (décision utilisateur) : on ne gagne jamais de vaisseaux en combat ; le butin compte en positif, les vaisseaux perdus en négatif (dans les colonnes converties, le MSU et sous les vignettes).
 - **Lithium** : colonne propre, renseignée pour Anomalies et Total ; jamais additionnée aux ressources.
-- **AM payée** pour les anomalies : en négatif dans la colonne AM de la ligne Anomalies, sans toucher à la tuile AM de l'encart (décision du 2026-11-12).
+- **AM payée** pour les anomalies : hors de la colonne AM, voir « Choix de l'assistant » (la tuile AM de l'encart ne la déduit pas, décision du 2026-11-12).
 
 ### Informations conservées hors du tableau
 
