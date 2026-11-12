@@ -1,0 +1,39 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":dependencyDashboard", "helpers:pinGitHubActionDigests"],
+  "baseBranchPatterns": ["develop"],
+  "labels": ["dependencies"],
+  "schedule": ["before 6am on monday"],
+  "minimumReleaseAge": "1 day",
+  "internalChecksFilter": "strict",
+  "platformAutomerge": false,
+  "automergeSchedule": ["at any time"],
+  "packageRules": [
+    {
+      "description": "Group and auto-merge npm minor and patch updates",
+      "matchManagers": ["npm"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "code-dependencies",
+      "automerge": true
+    },
+    {
+      "description": "Group and auto-merge GitHub Actions minor, patch and digest updates",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pinDigest"],
+      "groupName": "ci-dependencies",
+      "automerge": true
+    },
+    {
+      "description": "Group and auto-merge Dockerfile base image minor and patch updates",
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "groupName": "docker-dependencies",
+      "automerge": true
+    },
+    {
+      "description": "Keep @types/node on the Node major used at runtime (.nvmrc)",
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<=26"
+    }
+  ]
+}
