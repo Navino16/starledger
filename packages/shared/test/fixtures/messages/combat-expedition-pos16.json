@@ -29,6 +29,7 @@
       "coords": { "galaxy": 4, "system": 100, "position": 16 },
       "isExpedition": true,
       "isProbeOnly": false,
+      "isAnomaly": false,
       "ownSide": "attacker",
       "ownPlanetDefended": false,
       "outcome": "won",

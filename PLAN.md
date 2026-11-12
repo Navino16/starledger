@@ -1061,7 +1061,7 @@ Travail prévu :
 
 ## Scope 13 — Anomalies
 
-Captures reçues le 2026-11-12 (formats dans `docs/ogame-data-formats.md` §3.9 et §9, règles dans `docs/decisions.md`). Ce scope reste à détailler en tâches ; les captures encore manquantes sont listées dans `docs/pts-captures.md` et ne le bloquent pas.
+Captures reçues le 2026-11-12 (formats dans `docs/ogame-data-formats.md` §3.9 et §9, règles dans `docs/decisions.md`). Quatre tâches : 13.1 combats d'anomalie (cette tâche), 13.2 récompenses du message 76, 13.3 lithium de la page des anomalies, 13.4 affichage. Les captures encore manquantes sont listées dans `docs/pts-captures.md` et ne le bloquent pas.
 
 Travail prévu :
 - l'observation des actions sur la page dédiée (scan, choix, récupération, remboursement), en lecture seule ;

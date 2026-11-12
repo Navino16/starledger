@@ -20,7 +20,13 @@ export const DEFAULT_VALUATION: ValuationSettings = {
 
 export type StoredEvent = { day: string; status: 'ok' | 'conflict'; event: ParsedEvent };
 
-export type BalanceCategory = 'expeditions' | 'combats' | 'recycling' | 'wreckfields' | 'fuel';
+export type BalanceCategory =
+  | 'expeditions'
+  | 'combats'
+  | 'recycling'
+  | 'wreckfields'
+  | 'fuel'
+  | 'anomalies';
 
 export type Balance = { gains: Resources; losses: Resources };
 
@@ -53,6 +59,9 @@ export type StatsSummary = {
     expeditionShipsLost: ShipCounts;
     debrisCreated: Resources;
     probeOnly: number;
+  };
+  anomalies: {
+    combats: { count: number; won: number; lost: number; draw: number; shipsLost: ShipCounts };
   };
   recycling: { count: number; resources: Resources };
   discoveries: {
@@ -133,6 +142,7 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
       recycling: zeroBalance(),
       wreckfields: zeroBalance(),
       fuel: zeroBalance(),
+      anomalies: zeroBalance(),
     },
     fuel: { recorded: 0, departures: 0, unknownCount: 0 },
     expeditions: {
@@ -154,6 +164,7 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
       debrisCreated: zeroRes(),
       probeOnly: 0,
     },
+    anomalies: { combats: { count: 0, won: 0, lost: 0, draw: 0, shipsLost: {} } },
     recycling: { count: 0, resources: zeroRes() },
     discoveries: {
       count: 0,
@@ -203,6 +214,14 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         break;
       }
       case 'combat': {
+        // docs/decisions.md scope 13: anomaly combats and their losses live in the anomalies category
+        if (e.isAnomaly === true) {
+          stats.anomalies.combats.count++;
+          stats.anomalies.combats[e.outcome]++;
+          addShips(stats.anomalies.combats.shipsLost, e.shipsLost);
+          loss(balance.anomalies, e.shipsLost, false);
+          break;
+        }
         stats.combats.count++;
         stats.combats[e.outcome]++;
         if (e.isProbeOnly) stats.combats.probeOnly++;

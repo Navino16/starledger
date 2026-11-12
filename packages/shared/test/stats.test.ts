@@ -51,6 +51,7 @@ const combat = (o: Partial<CombatEvent> = {}): CombatEvent => ({
   coords,
   isExpedition: false,
   isProbeOnly: false,
+  isAnomaly: false,
   ownSide: 'attacker',
   ownPlanetDefended: false,
   outcome: 'won',
@@ -184,6 +185,40 @@ describe('computeStats', () => {
     expect(s.tiles.metal).toBe(-500);
     expect(s.combats.lost).toBe(1);
     expect(s.combats.lootSigned.metal).toBe(-500);
+  });
+
+  it('attaches an anomaly combat to the anomalies category only', () => {
+    const s = run([
+      combat({
+        isAnomaly: true,
+        ownSide: 'defender',
+        outcome: 'draw',
+        lootSign: 0,
+        debrisCreated: res(4800, 1600),
+        shipsLost: { '204': 4 },
+      }),
+    ]);
+    expect(s.anomalies.combats).toEqual({
+      count: 1,
+      won: 0,
+      lost: 0,
+      draw: 1,
+      shipsLost: { '204': 4 },
+    });
+    expect(s.balance.anomalies.losses).toEqual(res(12000, 4000));
+    expect(s.balance.combats).toEqual({ gains: res(), losses: res() });
+    expect(s.combats).toMatchObject({ count: 0, draw: 0, shipsLost: {} });
+    expect(s.combats.debrisCreated).toEqual(res());
+    expect(s.tiles.metal).toBe(-12000);
+    expect(s.tiles.crystal).toBe(-4000);
+  });
+
+  it('counts a stored combat without isAnomaly as a normal combat', () => {
+    const { isAnomaly: _omitted, ...stored } = combat({ shipsLost: { '204': 1 } });
+    const s = run([stored as CombatEvent]);
+    expect(s.combats.count).toBe(1);
+    expect(s.anomalies.combats.count).toBe(0);
+    expect(s.balance.anomalies.losses).toEqual(res());
   });
 
   it('never counts created debris in tiles', () => {

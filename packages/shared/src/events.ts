@@ -59,6 +59,7 @@ export type CombatEvent = {
   coords: Coords;
   isExpedition: boolean;
   isProbeOnly: boolean;
+  isAnomaly: boolean;
   ownSide: 'attacker' | 'defender';
   ownPlanetDefended: boolean;
   outcome: CombatOutcome;

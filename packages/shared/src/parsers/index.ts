@@ -8,7 +8,7 @@ import { parseRecycling } from './recycling';
 import { parseTransport } from './transport';
 import { parseWreckfield } from './wreckfield';
 
-export const PARSER_VERSION = 3;
+export const PARSER_VERSION = 4;
 
 // Type 34 (fleet arrivals) is not collected: never a trade (docs/ogame-data-formats.md §3.7).
 export const TRACKED_MESSAGE_TYPES = [25, 32, 33, 41, 48, 54, 61] as const;

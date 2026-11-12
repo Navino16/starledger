@@ -39,6 +39,7 @@
       },
       "isExpedition": false,
       "isProbeOnly": false,
+      "isAnomaly": false,
       "ownSide": "defender",
       "ownPlanetDefended": true,
       "outcome": "draw",
