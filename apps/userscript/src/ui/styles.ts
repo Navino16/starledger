@@ -50,4 +50,14 @@ div.starledger-status{margin:6px 0}
 .starledger-dialog td,.starledger-dialog th{padding:3px 6px;text-align:left;border-bottom:1px solid #1f2833}
 .starledger-note{color:#5a6b7a}
 .starledger-periods{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px}
+.starledger-monthnav{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 6px}
+.starledger-month{min-width:110px;text-align:center;color:#6f9fc8;font-weight:700;text-transform:capitalize}
+.starledger-dialog-content .starledger-monthnav button{min-width:28px}
+.starledger-calendar{display:flex;align-items:flex-end;gap:2px;height:64px;margin:0 0 8px;overflow-x:auto}
+.starledger-dialog-content .starledger-calendar button{display:flex;flex-direction:column;justify-content:flex-end;flex:1 0 14px;min-width:14px;height:100%;padding:0;background:none;border:1px solid transparent;border-radius:2px;color:#757ba6;font-size:9px;text-shadow:none}
+.starledger-dialog-content .starledger-calendar button:hover{background:#1f2833}
+.starledger-dialog-content .starledger-calendar button[aria-pressed=true]{background:#1f2833;border-color:#6f9fc8}
+.starledger-bar{display:block;width:100%;background:#64a69b}
+.is-negative .starledger-bar{background:#e2574c}
+.starledger-daynum{display:block;line-height:11px}
 `;

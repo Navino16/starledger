@@ -1,5 +1,5 @@
 import type { AccountRef, StatsResponse } from '@app/shared';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { todayKey } from '../src/env/page';
 import { type MemoryGm, memoryGm } from '../src/gm';
 import { createT } from '../src/i18n';
@@ -426,5 +426,102 @@ describe('stats details dialog', () => {
     expect(dialog()?.textContent).not.toContain('1 unrecognized');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(dialog()).toBeNull();
+  });
+});
+
+describe('details period navigation', () => {
+  let gm: MemoryGm;
+  const tick = () => new Promise((r) => setTimeout(r, 0));
+  const dialog = () => document.getElementById(DETAILS_ID);
+  const stats = () => gm.requests.filter((r) => r.url.includes('/api/v1/stats'));
+  const open = () =>
+    openDetails(
+      { gm, doc: document, t, queue: createQueue(gm) },
+      { account: ACCOUNT, serverUtcOffsetMinutes: 0 },
+    );
+  const days = (month: string, n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      day: `${month}-${String(i + 1).padStart(2, '0')}`,
+      msu: 1,
+    }));
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-03-31T12:00:00Z'));
+    gm = memoryGm();
+    document.body.innerHTML = '<div id="links"></div><div id="footer"></div>';
+    saveSettings(gm, { consent: true, serverUrl: 'https://sl.example.org', apiKey: 'k' });
+    gm.respondWith((req) => ({
+      status: 200,
+      body: JSON.stringify({
+        ...statsOf(),
+        days: days(
+          req.url.includes('today=2026-02') ? '2026-02' : '2026-03',
+          req.url.includes('today=2026-02') ? 28 : 31,
+        ),
+      }),
+    }));
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it('sends the previous month clamped to its last day', async () => {
+    open();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-nav="prev"]')?.click();
+    await tick();
+    expect(stats()).toHaveLength(2);
+    expect(stats()[1]?.url).toContain('today=2026-02-28');
+    expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(28);
+  });
+
+  it('shows the localized month label', async () => {
+    open();
+    await tick();
+    expect(dialog()?.querySelector('.starledger-month')?.textContent).toBe('March 2026');
+  });
+
+  it('selects a day from the calendar', async () => {
+    open();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-period="month"]')?.click();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-day="2026-03-10"]')?.click();
+    await tick();
+    const url = stats().at(-1)?.url ?? '';
+    expect(url).toContain('period=day');
+    expect(url).toContain('today=2026-03-10');
+  });
+
+  it('does not request again for the active period', async () => {
+    open();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-period="day"]')?.click();
+    await tick();
+    expect(stats()).toHaveLength(1);
+  });
+
+  it('shows only the last response after two quick clicks', async () => {
+    const pending: ((v: { status: number; body: string }) => void)[] = [];
+    open();
+    await tick();
+    gm.respondWith(
+      (req) =>
+        new Promise((resolve) => {
+          pending.push((v) => resolve(v));
+          void req;
+        }) as never,
+    );
+    dialog()?.querySelector<HTMLElement>('[data-nav="prev"]')?.click();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-nav="prev"]')?.click();
+    await tick();
+    expect(pending).toHaveLength(2);
+    const body = (n: number) => JSON.stringify({ ...statsOf(), days: days('2026-01', n) });
+    pending[1]?.({ status: 200, body: body(31) });
+    await tick();
+    pending[0]?.({ status: 200, body: body(5) });
+    await tick();
+    expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(31);
   });
 });
