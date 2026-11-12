@@ -37,7 +37,7 @@
 | 9 | Userscript : encart et détail | ✅ |
 | 10 | Validation PTS : vraies captures, reparse, audit | ☐ |
 | 11 | Carburant | ☐ (code fait, vérification PTS 11.2 step 5) |
-| 12 | Transports entre joueurs | ☐ (captures reçues, à détailler) |
+| 12 | Transports entre joueurs | ✅ |
 | 13 | Anomalies | ☐ (captures reçues, à détailler) |
 | 14 | Dossier de tolérance et publication | ☐ |
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
@@ -1048,12 +1048,15 @@ Branche : `feature/userscript-fuel`.
 
 ## Scope 12 — Transports entre joueurs
 
-Captures reçues le 2026-11-12 : les trois cas sont du type 33 (`docs/ogame-data-formats.md` §3.7). Ce scope reste à détailler en tâches.
+Captures reçues le 2026-11-12 : les trois cas sont du type 33 (`docs/ogame-data-formats.md` §3.7).
+
+- [x] 12.1 parseur et stats
+- [x] 12.2 affichage dans le détail
 
 Travail prévu :
-- un parseur `TransportEvent` `{kind:'transport', direction:'received'|'delivered', counterpartPlayerId, resources}`, qui exclut les transports dont la contrepartie est le joueur lui-même ;
+- un parseur `TransportEvent` `{kind:'transport', direction:'received'|'delivered'|'internal', resources}`, sans identité ni coordonnées du partenaire (`docs/decisions.md`, scope 12) ; les transports internes ne sont comptés nulle part ;
 - l'ajout de la catégorie « Échanges » à `StatsSummary` (reçu, envoyé, net), qui n'entre dans les tuiles que si `includeTradesInBalance` est vrai ;
-- un `reparse` pour réinterpréter les types 33 et 34 déjà stockés à l'état brut depuis le scope 8 ;
+- le type 34 n'est plus collecté ; les événements de type 33 déjà stockés sont réinterprétés par le `reparse` existant (les événements non reconnus sont toujours reparsés) ;
 - l'affichage dans le détail.
 
 ## Scope 13 — Anomalies

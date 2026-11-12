@@ -1,0 +1,52 @@
+{
+  "synthetic": false,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000303",
+    "account": {
+      "serverId": 283,
+      "lang": "fr",
+      "playerId": 100001,
+      "playerName": "Tester"
+    },
+    "observedAt": 1794480000000,
+    "serverUtcOffsetMinutes": 0,
+    "msgId": 11545675,
+    "messageType": 33,
+    "subtabId": 23,
+    "raw": {
+      "messagetype": "33",
+      "timestamp": "1794488226",
+      "date": "2026-11-12T12:57:06.000Z",
+      "sourceplanetid": "1002",
+      "sourceplayerid": "100001",
+      "sourceplanetcoordinates": "2:34:5",
+      "sourceplanettype": "3",
+      "sourceplanetname": "Moon A",
+      "sourceplaneticon": "S1_A1_T1_Pskin_ID1",
+      "sourceplayername": "Tester",
+      "targetplanetid": "1001",
+      "targetplayerid": "100001",
+      "targetplanetcoordinates": "2:34:5",
+      "targetplanettype": "1",
+      "targetplanetname": "Planet A",
+      "targetplayername": "Tester",
+      "cargo": "{\"metal\":842550,\"crystal\":1305321,\"deuterium\":669129,\"food\":0}",
+      "resourcesbefore": "{\"metal\":1000000,\"crystal\":500000,\"deuterium\":200000,\"food\":0}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:11545675",
+    "occurredAt": 1794488226000,
+    "event": {
+      "kind": "transport",
+      "direction": "internal",
+      "resources": {
+        "metal": 842550,
+        "crystal": 1305321,
+        "deuterium": 669129
+      }
+    }
+  }
+}

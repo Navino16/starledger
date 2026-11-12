@@ -190,6 +190,15 @@ Notes pour l'utilisateur :
 | Dépenses de lithium | Scope 13 : Ruling : observées au `ajaxSend`/`ajaxSuccess` des actions que le joueur déclenche sur la page des anomalies (`performScan`, `collectRewards`), sans jamais appeler `fetchScanCost` ni `fetchCurrentLithium` nous-mêmes (AGENTS.md §4) ; coût du scan lu dans `#scanCostValue`, coût d'une récupération dans `.collectTotalValue` de la fenêtre ouverte au clic sur « Accepter » (et non `.rewardCostsValue`, qui couvre toutes les vagues) ; une récupération directe sans fenêtre a un coût inconnu ; une récupération en antimatière enregistre l'antimatière payée (`data-dark-matter-price`) et, comme lithium dépensé, le solde affiché au clic, puisqu'elle vide tout le lithium possédé (vérifié sur le PTS). Pas de calcul par différence de solde : la production change le solde en continu. | Un coût illisible au moment de la requête devient inconnu ; en antimatière, le lithium dépensé peut s'écarter de quelques secondes de production. |
 | Types 70, 75, 77 | Scope 13 : Ruling : pas d'événement dans le MVP, ils ne portent aucune quantité ; à reconsidérer pour compter les missions faites ou ratées. | Aucun. |
 
+### Scope 12 — Transports
+
+| Sujet | Décision | Coût si faux |
+|---|---|---|
+| Identité et coordonnées de l'autre joueur | Scope 12 : Ruling : l'événement `transport` ne porte ni identité ni coordonnées du partenaire ; ces données restent dans le brut, en attendant la réponse ToolDev sur les données d'autres joueurs (`docs/pts-captures.md`, section forum). | Une vue par partenaire demandera un `reparse`. |
+| Type 34 | Scope 12 : Ruling : plus collecté (arrivées de flotte : retours et mouvements entre ses propres planètes, jamais un échange) ; le brut déjà stocké est conservé. | Aucun. |
+| Arrivées de flotte (34) déjà stockées | Aucune donnée stockée : aucun serveur n'a encore été configuré et aucun client n'est diffusé ; rien n'est fait côté serveur. | Sur une instance qui en aurait stocké, le compteur de non reconnus est gonflé ; corriger alors en ignorant à l'ingestion les types non suivis. |
+| Transports internes | Scope 12 : Ruling : les transports entre ses propres planètes sont parsés en événements `internal`, comptés nulle part, et ne gonflent donc plus le nombre de messages non reconnus. | Aucun. |
+
 ## Écart noté
 
 Le design §6.4 prévoit la lecture et l'écriture des réglages par l'API ; le plan ne prévoit que la lecture (dans la réponse de stats). Aucune écriture par l'API dans le MVP.

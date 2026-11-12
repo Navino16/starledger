@@ -62,6 +62,12 @@ export type StatsSummary = {
     artefacts: number;
   };
   wreckfields: { count: number; shipsRecovered: ShipCounts };
+  trades: {
+    received: Resources;
+    delivered: Resources;
+    receivedCount: number;
+    deliveredCount: number;
+  };
   conflictCount: number;
 };
 
@@ -156,6 +162,7 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
       artefacts: 0,
     },
     wreckfields: { count: 0, shipsRecovered: {} },
+    trades: { received: zeroRes(), delivered: zeroRes(), receivedCount: 0, deliveredCount: 0 },
     conflictCount: 0,
   };
   const { balance } = stats;
@@ -230,6 +237,15 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         addShips(stats.wreckfields.shipsRecovered, e.shipsRecovered);
         addShipValue(balance.wreckfields.gains, e.shipsRecovered);
         break;
+      case 'transport':
+        if (e.direction === 'received') {
+          stats.trades.receivedCount++;
+          addRes(stats.trades.received, e.resources);
+        } else if (e.direction === 'delivered') {
+          stats.trades.deliveredCount++;
+          addRes(stats.trades.delivered, e.resources);
+        }
+        break;
       case 'fuel':
         stats.fuel.departures++;
         if (e.consumption === null) stats.fuel.unknownCount++;
@@ -244,6 +260,10 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
   for (const { gains, losses } of Object.values(balance)) {
     addRes(net, gains);
     addRes(net, losses, -1);
+  }
+  if (settings.includeTradesInBalance) {
+    addRes(net, stats.trades.received);
+    addRes(net, stats.trades.delivered, -1);
   }
   const [r0, r1, r2] = settings.msuRatio;
   Object.assign(stats.tiles, {

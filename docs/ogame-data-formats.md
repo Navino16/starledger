@@ -105,7 +105,7 @@ Coordinate parsing: Tracker accepts `g:s:p` with optional surrounding brackets (
 | 25 | Combat report (full) | TRK `raw/OgameRawMessageType.ts`, OGL l.8600 |
 | 32 | Debris field harvest report (recycling) | TRK `raw/OgameRawMessageType.ts`, OGL l.9546 |
 | 33 | Resource transport: own planets, delivered to or received from another player (3.7) | TRK `raw/OgameRawMessageType.ts`; live 2026-11-12 |
-| 34 | Fleet arrival — **enum value only, never parsed** | TRK `raw/OgameRawMessageType.ts` |
+| 34 | Fleet arrival — **not collected** (3.7) | TRK `raw/OgameRawMessageType.ts` |
 | 35 | Excluded from combat parsing by OGLight; meaning **(gap)** | OGL l.8830 |
 | 41 | Expedition result | TRK `raw/OgameRawMessageType.ts`, OGL l.9546 |
 | 48 | One-round combat (no full report) | OGL l.8601 |
