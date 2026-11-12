@@ -114,6 +114,7 @@ describe('computeStats', () => {
     expect(DEFAULT_VALUATION).toEqual({
       msuRatio: [3, 2, 1],
       expeditionShipRatio: 100,
+      anomalyShipRatio: 100,
       ignoreExpeShipsLoss: false,
       ignoreConsumption: false,
       includeTradesInBalance: false,
@@ -236,6 +237,23 @@ describe('computeStats', () => {
     expect(s.tiles.metal).toBe(7010);
     expect(s.tiles.crystal).toBe(6500);
     expect(s.tiles.deuterium).toBe(100);
+  });
+
+  it('values anomaly reward ships at the anomaly ship ratio, independently of the expedition one', () => {
+    const anomaly: ParsedEvent = {
+      kind: 'anomaly_reward',
+      anomalyCoords: null,
+      resources: res(1000),
+      ships: { '202': 2 },
+    };
+    const half = run([anomaly], { anomalyShipRatio: 50, expeditionShipRatio: 100 });
+    expect(half.balance.anomalies.gains).toEqual(res(3000, 2000));
+    expect(half.tiles.metal).toBe(3000);
+    expect(half.tiles.crystal).toBe(2000);
+    const other = run([anomaly], { anomalyShipRatio: 100, expeditionShipRatio: 0 });
+    expect(other.balance.anomalies.gains).toEqual(res(5000, 4000));
+    const exp = run([expedition({ shipsFound: { '202': 1 } })], { anomalyShipRatio: 0 });
+    expect(exp.tiles.metal).toBe(2000);
   });
 
   it('totals lithium spent, refunded and unknown over anomaly actions without touching tiles', () => {

@@ -33,6 +33,7 @@
   <p><label><%= it.t('settings.msuCrystal') %> <input type="number" name="msuCrystal" step="any" min="0.01" max="100" required value="<%= u.msuCrystal %>"></label></p>
   <p><label><%= it.t('settings.msuDeuterium') %> <input type="number" name="msuDeuterium" step="any" min="0.01" max="100" required value="<%= u.msuDeuterium %>"></label></p>
   <p><label><%= it.t('settings.expeditionShipRatio') %> <input type="number" name="expeditionShipRatio" step="1" min="0" max="100" required value="<%= u.expeditionShipRatio %>"></label></p>
+  <p><label><%= it.t('settings.anomalyShipRatio') %> <input type="number" name="anomalyShipRatio" step="1" min="0" max="100" required value="<%= u.anomalyShipRatio %>"></label></p>
   <p><label><input type="checkbox" name="ignoreExpeShipsLoss"<%= u.ignoreExpeShipsLoss ? ' checked' : '' %>> <%= it.t('settings.ignoreExpeShipsLoss') %></label></p>
   <p><label><input type="checkbox" name="ignoreConsumption"<%= u.ignoreConsumption ? ' checked' : '' %>> <%= it.t('settings.ignoreConsumption') %></label></p>
   <p><label><input type="checkbox" name="includeTradesInBalance"<%= u.includeTradesInBalance ? ' checked' : '' %>> <%= it.t('settings.includeTradesInBalance') %></label></p>

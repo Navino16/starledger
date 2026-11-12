@@ -50,6 +50,7 @@
     "msuCrystal": "MSU ratio: crystal",
     "msuDeuterium": "MSU ratio: deuterium",
     "expeditionShipRatio": "Expedition ship value (%)",
+    "anomalyShipRatio": "Anomaly reward ships valued at (%)",
     "ignoreExpeShipsLoss": "Ignore ship losses in expeditions",
     "ignoreConsumption": "Ignore fuel consumption",
     "includeTradesInBalance": "Include trades in the balance",

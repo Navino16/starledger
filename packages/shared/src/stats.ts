@@ -5,6 +5,7 @@ import { SHIP_COSTS } from './ships';
 export type ValuationSettings = {
   msuRatio: [number, number, number];
   expeditionShipRatio: number;
+  anomalyShipRatio: number;
   ignoreExpeShipsLoss: boolean;
   ignoreConsumption: boolean;
   includeTradesInBalance: boolean;
@@ -13,6 +14,7 @@ export type ValuationSettings = {
 export const DEFAULT_VALUATION: ValuationSettings = {
   msuRatio: [3, 2, 1],
   expeditionShipRatio: 100,
+  anomalyShipRatio: 100,
   ignoreExpeShipsLoss: false,
   ignoreConsumption: false,
   includeTradesInBalance: false,
@@ -288,12 +290,12 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         }
         break;
       case 'anomaly_reward':
-        // docs/decisions.md scope 13: anomaly ships are valued at 100 %, not at expeditionShipRatio
+        // User decision 2026-11-12 (docs/decisions.md): anomaly ships use anomalyShipRatio
         stats.anomalies.rewards.count++;
         addRes(stats.anomalies.rewards.resources, e.resources);
         addShips(stats.anomalies.rewards.ships, e.ships);
         addRes(balance.anomalies.gains, e.resources);
-        addShipValue(balance.anomalies.gains, e.ships);
+        addShipValue(balance.anomalies.gains, e.ships, settings.anomalyShipRatio);
         break;
       case 'anomaly_action': {
         // docs/decisions.md scope 13: lithium and the Dark Matter paid stay out of balance and tiles

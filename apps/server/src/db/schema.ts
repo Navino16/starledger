@@ -92,6 +92,7 @@ export interface UniverseSettingsTable {
   msu_crystal: Numeric;
   msu_deuterium: Numeric;
   expedition_ship_ratio: Generated<number>;
+  anomaly_ship_ratio: Generated<number>;
   ignore_expe_ships_loss: Generated<boolean>;
   ignore_consumption: Generated<boolean>;
   include_trades_in_balance: Generated<boolean>;

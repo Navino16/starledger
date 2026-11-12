@@ -50,6 +50,7 @@
     "msuCrystal": "Ratio MSU : cristal",
     "msuDeuterium": "Ratio MSU : deutérium",
     "expeditionShipRatio": "Valeur des vaisseaux en expédition (%)",
+    "anomalyShipRatio": "Vaisseaux des récompenses d'anomalie valorisés à (%)",
     "ignoreExpeShipsLoss": "Ignorer les pertes de vaisseaux en expédition",
     "ignoreConsumption": "Ignorer la consommation de carburant",
     "includeTradesInBalance": "Inclure les échanges dans le bilan",

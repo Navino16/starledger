@@ -90,6 +90,7 @@ const valid = {
   msuCrystal: '1.5',
   msuDeuterium: '1',
   expeditionShipRatio: '50',
+  anomalyShipRatio: '60',
   ignoreExpeShipsLoss: 'on',
 };
 
@@ -105,6 +106,7 @@ describe('valuation settings store', () => {
     const s = {
       msuRatio: [2.5, 1.5, 1] as [number, number, number],
       expeditionShipRatio: 40,
+      anomalyShipRatio: 30,
       ignoreExpeShipsLoss: true,
       ignoreConsumption: false,
       includeTradesInBalance: true,
@@ -135,6 +137,20 @@ describe('POST /account/settings/:serverId/:lang', () => {
     expect(res.body).toContain('action="/account/settings/12/fr"');
     expect(res.body).toContain('value="2.5"');
     expect(res.body).toContain('value="1.5"');
+    expect(res.body).toContain('name="anomalyShipRatio"');
+    expect(res.body).toContain('value="100"');
+  });
+
+  it('prefills a saved anomaly ship ratio', async () => {
+    await addAccount(aliceId);
+    await saveValuationSettings(t.db, aliceId, 808, 'en', {
+      ...DEFAULT_VALUATION,
+      anomalyShipRatio: 37,
+    });
+    const { res } = await accountPage(await login('alice'));
+    expect(res.body).toContain(
+      'name="anomalyShipRatio" step="1" min="0" max="100" required value="37"',
+    );
   });
 
   it('shows a note when the user has no accounts', async () => {
@@ -152,6 +168,7 @@ describe('POST /account/settings/:serverId/:lang', () => {
     expect(await getValuationSettings(t.db, aliceId, 808, 'en')).toEqual({
       msuRatio: [2.5, 1.5, 1],
       expeditionShipRatio: 50,
+      anomalyShipRatio: 60,
       ignoreExpeShipsLoss: true,
       ignoreConsumption: false,
       includeTradesInBalance: false,
@@ -168,6 +185,9 @@ describe('POST /account/settings/:serverId/:lang', () => {
     ['ship ratio above 100', { expeditionShipRatio: '101' }],
     ['negative ship ratio', { expeditionShipRatio: '-1' }],
     ['fractional ship ratio', { expeditionShipRatio: '50.5' }],
+    ['anomaly ratio above 100', { anomalyShipRatio: '101' }],
+    ['negative anomaly ratio', { anomalyShipRatio: '-1' }],
+    ['fractional anomaly ratio', { anomalyShipRatio: '1.5' }],
   ])('rejects %s with 400 and saves nothing', async (_name, override) => {
     await addAccount(aliceId);
     const { token, cookie } = await accountPage(await login('alice'));
@@ -209,6 +229,19 @@ describe('POST /account/settings/:serverId/:lang', () => {
       const res = await post(
         '/account/settings/808/en',
         { ...valid, expeditionShipRatio: v, _csrf: token },
+        cookie,
+      );
+      expect(res.statusCode).toBe(302);
+    }
+  });
+
+  it('accepts the anomaly ratio bounds 0 and 100', async () => {
+    await addAccount(aliceId);
+    const { token, cookie } = await accountPage(await login('alice'));
+    for (const v of ['0', '100']) {
+      const res = await post(
+        '/account/settings/808/en',
+        { ...valid, anomalyShipRatio: v, _csrf: token },
         cookie,
       );
       expect(res.statusCode).toBe(302);
