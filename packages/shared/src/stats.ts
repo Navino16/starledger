@@ -30,6 +30,28 @@ export type BalanceCategory =
   | 'fuel'
   | 'anomalies';
 
+export type DetailRowKey =
+  | 'expeditions'
+  | 'combats'
+  | 'recycling'
+  | 'wreckfields'
+  | 'anomalies'
+  | 'discoveries'
+  | 'fuel'
+  | 'trades'
+  | 'total';
+
+// null means not applicable (shown as "-"); unknown counts the row's unknown values.
+export type DetailRow = {
+  count: number | null;
+  resources: Resources | null;
+  msu: number | null;
+  darkMatter: number | null;
+  artefacts: number | null;
+  lithium: number | null;
+  unknown: number;
+};
+
 export type Balance = { gains: Resources; losses: Resources };
 
 export type StatsSummary = {
@@ -48,6 +70,7 @@ export type StatsSummary = {
     outcomes: Record<ExpeditionResult, number>;
     resources: Resources;
     darkMatter: number;
+    artefacts: number;
     shipsFound: ShipCounts;
     shipsLost: ShipCounts;
   };
@@ -92,6 +115,8 @@ export type StatsSummary = {
     deliveredCount: number;
   };
   conflictCount: number;
+  rows: Record<DetailRowKey, DetailRow>;
+  ships: { found: ShipCounts; lost: ShipCounts };
 };
 
 const EXPEDITION_RESULT_KEYS = {
@@ -144,6 +169,19 @@ const addShipValue = (into: Resources, ships: ShipCounts | null, percent = 100):
   }
 };
 
+// + 0 normalises Math.ceil's -0
+export const toMsu = (res: Resources, ratio: [number, number, number]): number =>
+  Math.ceil(
+    res.metal + (res.crystal * ratio[0]) / ratio[1] + (res.deuterium * ratio[0]) / ratio[2],
+  ) + 0;
+
+const netOf = ({ gains, losses }: Balance): Resources => {
+  const net = zeroRes();
+  addRes(net, gains);
+  addRes(net, losses, -1);
+  return net;
+};
+
 const zeroBalance = (): Balance => ({ gains: zeroRes(), losses: zeroRes() });
 
 // design §5.6: tile rules; unknown (null) values contribute nothing.
@@ -164,6 +202,7 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
       outcomes: zeroCounts(EXPEDITION_RESULTS),
       resources: zeroRes(),
       darkMatter: 0,
+      artefacts: 0,
       shipsFound: {},
       shipsLost: {},
     },
@@ -203,6 +242,8 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
     wreckfields: { count: 0, shipsRecovered: {} },
     trades: { received: zeroRes(), delivered: zeroRes(), receivedCount: 0, deliveredCount: 0 },
     conflictCount: 0,
+    rows: {} as Record<DetailRowKey, DetailRow>,
+    ships: { found: {}, lost: {} },
   };
   const { balance } = stats;
 
@@ -223,6 +264,7 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         }
         stats.expeditions.darkMatter += e.darkMatter ?? 0;
         stats.tiles.darkMatter += e.darkMatter ?? 0;
+        stats.expeditions.artefacts += e.artifacts ?? 0;
         stats.tiles.artefacts += e.artifacts ?? 0;
         addShips(stats.expeditions.shipsFound, e.shipsFound);
         addShips(stats.expeditions.shipsLost, e.shipsLost);
@@ -336,13 +378,90 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
     addRes(net, stats.trades.received);
     addRes(net, stats.trades.delivered, -1);
   }
-  const [r0, r1, r2] = settings.msuRatio;
   Object.assign(stats.tiles, {
     metal: net.metal,
     crystal: net.crystal,
     deuterium: net.deuterium,
-    // + 0 normalises Math.ceil's -0
-    msu: Math.ceil(net.metal + (net.crystal * r0) / r1 + (net.deuterium * r0) / r2) + 0,
+    msu: toMsu(net, settings.msuRatio),
   });
+  fillDetail(stats, settings);
   return stats;
+}
+
+function fillDetail(stats: StatsSummary, settings: ValuationSettings): void {
+  const { balance, tiles, anomalies, rows, ships } = stats;
+  const { msuRatio } = settings;
+  const empty: DetailRow = {
+    count: null,
+    resources: null,
+    msu: null,
+    darkMatter: null,
+    artefacts: null,
+    lithium: null,
+    unknown: 0,
+  };
+  const withRes = (count: number, resources: Resources, extra: Partial<DetailRow> = {}) => ({
+    ...empty,
+    count,
+    resources,
+    msu: toMsu(resources, msuRatio),
+    ...extra,
+  });
+  const lithiumUnknown = anomalies.lithium.spentUnknown + anomalies.lithium.refundUnknown;
+  const fuelResources = settings.ignoreConsumption
+    ? null
+    : { metal: 0, crystal: 0, deuterium: 0 - stats.fuel.recorded };
+
+  rows.expeditions = withRes(stats.expeditions.count, netOf(balance.expeditions), {
+    darkMatter: stats.expeditions.darkMatter,
+    artefacts: stats.expeditions.artefacts,
+  });
+  rows.combats = withRes(stats.combats.count, netOf(balance.combats));
+  rows.recycling = withRes(stats.recycling.count, netOf(balance.recycling));
+  rows.wreckfields = withRes(stats.wreckfields.count, netOf(balance.wreckfields));
+  // Paid Dark Matter stays out of the AM column so the total keeps matching the tile.
+  rows.anomalies = withRes(
+    anomalies.combats.count + anomalies.rewards.count,
+    netOf(balance.anomalies),
+    { lithium: anomalies.lithium.net, unknown: lithiumUnknown },
+  );
+  rows.discoveries = {
+    ...empty,
+    count: stats.discoveries.count,
+    artefacts: stats.discoveries.artefacts,
+  };
+  rows.fuel = {
+    ...empty,
+    count: stats.fuel.departures,
+    resources: fuelResources,
+    msu: fuelResources ? toMsu(fuelResources, msuRatio) : null,
+    unknown: stats.fuel.unknownCount,
+  };
+  if (settings.includeTradesInBalance) {
+    const trades = zeroRes();
+    addRes(trades, stats.trades.received);
+    addRes(trades, stats.trades.delivered, -1);
+    rows.trades = withRes(stats.trades.receivedCount + stats.trades.deliveredCount, trades);
+  } else {
+    rows.trades = { ...empty };
+  }
+
+  const shown = Object.values(rows);
+  rows.total = {
+    count: shown.reduce((sum, r) => sum + (r.count ?? 0), 0),
+    resources: { metal: tiles.metal, crystal: tiles.crystal, deuterium: tiles.deuterium },
+    msu: tiles.msu,
+    darkMatter: tiles.darkMatter,
+    artefacts: tiles.artefacts,
+    lithium: anomalies.lithium.net,
+    unknown: shown.reduce((sum, r) => sum + r.unknown, 0),
+  };
+
+  addShips(ships.found, stats.expeditions.shipsFound);
+  addShips(ships.found, anomalies.rewards.ships);
+  addShips(ships.found, stats.wreckfields.shipsRecovered);
+  addShips(ships.lost, stats.expeditions.shipsLost);
+  addShips(ships.lost, stats.combats.shipsLost);
+  addShips(ships.lost, stats.combats.expeditionShipsLost);
+  addShips(ships.lost, anomalies.combats.shipsLost);
 }

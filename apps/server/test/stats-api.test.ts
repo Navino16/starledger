@@ -233,7 +233,9 @@ describe('GET /api/v1/stats', () => {
     const res = await get(q(999_999_999));
     expect(res.statusCode).toBe(200);
     const body = res.json<StatsResponse>();
-    expect(body.summary).toEqual(computeStats([], DEFAULT_VALUATION));
+    expect(body.summary).toEqual(
+      computeStats([], { ...DEFAULT_VALUATION, ignoreConsumption: true }),
+    );
     expect(body.counts.unrecognized).toBe(0);
   });
 
