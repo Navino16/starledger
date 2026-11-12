@@ -23,7 +23,13 @@ export function openPanel(doc: Document, opts: PanelOptions, content: Node[]): P
   panel.setAttribute('role', 'dialog');
   panel.setAttribute('aria-modal', 'true');
   const backdrop = el(doc, 'div', { className: BACKDROP_CLASS }, panel);
-  const closeButton = el(doc, 'button', { type: 'button', textContent: opts.closeLabel });
+  const closeButton = el(
+    doc,
+    'button',
+    { type: 'button', className: 'starledger-close', title: opts.closeLabel },
+    // The game's own close icon sprite; its text is hidden by the game's .ui-icon rule
+    el(doc, 'span', { className: 'ui-icon ui-icon-closethick', textContent: opts.closeLabel }),
+  );
   const previousFocus = doc.activeElement instanceof HTMLElement ? doc.activeElement : null;
   let open = true;
 
@@ -57,7 +63,7 @@ export function openPanel(doc: Document, opts: PanelOptions, content: Node[]): P
       el(doc, 'strong', { textContent: opts.title }),
       closeButton,
     ),
-    ...content,
+    el(doc, 'div', { className: 'starledger-dialog-content' }, ...content),
   );
   doc.body.append(backdrop);
   closeButton.focus();
