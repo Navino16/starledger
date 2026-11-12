@@ -74,7 +74,8 @@ Les types 70, 75, 76 et 77 de l'onglet Divers sont identifiés (compte live, 202
 - [x] Messages reçus en fin de mission d'anomalie : la récompense (type 76) n'est lisible que dans le HTML du message (2026-11-12)
 - [x] Rapport de combat produit par la même mission : oui, type 25 avec `defenderspaceobject.type` = `anomaly`, jamais de butin (2026-11-12)
 - [x] Page des anomalies : HTML des quatre onglets, dont la liste après un scan et les missions actives (PTS, 2026-11-12) ; requêtes lues dans le script du jeu (`docs/ogame-data-formats.md` §9)
-- [ ] Fenêtre de récupération des récompenses (lithium et antimatière) : HTML
+- [x] Fenêtre de récupération des récompenses, version lithium : HTML (compte live, 2026-11-12)
+- [ ] Fenêtre de récupération en antimatière, et une vague non payable faute de lithium : HTML
 - [ ] HAR (ou réponses copiées) de `performScan`, `activateMission` et `collectRewards`, dont une récupération avec bonus de lithium (`lithiumBonus`)
 - [ ] Activer une mission (« Rechercher ») ne coûte pas de lithium : solde avant et après
 

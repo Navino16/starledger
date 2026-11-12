@@ -596,6 +596,8 @@ observed on the network.
 - **Collecting can be paid in lithium or in Dark Matter**: the Dark Matter overlay
   (`.orionCollectRewardsDarkMatter[data-dark-matter-price]`) adds `darkMatterPrice` to the request.
 - Collecting launches a reward-delivery fleet; the reward arrives later as message 76 (3.9).
+- The collect overlay is loaded from `page=componentOnly&component=orion&action=fetchCollectRewardsOverlay&ajax=1&spaceObjectId=<id>`
+  (9.4); with the "don't show again" preference, `.directCollect` posts without any overlay.
 - `lithiumBonus` is the only refund-like field found; its amount format is unknown.
 - No request for deleting a mission was found in the script.
 
@@ -610,4 +612,23 @@ observed on the network.
 - Seen anomaly kinds (fr): "Livraison précieuse", "Livraison : cristal", "Rencontre mineure /
   intermédiaire d`extraterrestres"; PvP missions give double rewards and can be attacked by
   other players.
+
+### 9.4 Collect overlay (`.orionCollectRewards`)
+
+Seen on a live account (2026-11-12), lithium version only:
+
+- Root `div.orionCollectRewards[data-space-object-id][data-collect-rewards-url]`; buttons
+  `.orionCollectConfirm` ("Accepter") and `.orionCollectCancel`.
+- **Rewards are collected wave by wave**: `.collectWaveList > .collectWaveRow.affordable`, each with
+  `.cwWave`, `.cwRewards .rewardLine` (resource icon class + `.rewardAmount`, exact values, no `≈`)
+  and `.cwCost` ("Cout en lithium : n", localized text). A mission can therefore be collected
+  several times, each collect giving its own message 76.
+- `.collectSummaryRewards .rewardLine`: the sum of the listed waves; `.collectDeliveryTarget`: the
+  receiving planet.
+- `.collectTotalValue`: total lithium cost of the listed waves (dot-grouped), `.have`: lithium owned.
+- **The mission's `.rewardCostsValue` is the cost of all its waves**, not of one collect: in the
+  capture it was 3 × the wave cost while the overlay listed 2 waves.
+- **(gap)** Rows without `affordable` and the Dark Matter overlay (`.orionCollectRewardsDarkMatter`,
+  served by the game, not built in the script) were not seen; the Dark Matter one probably
+  appears when the lithium is insufficient **(inferred)**.
 
