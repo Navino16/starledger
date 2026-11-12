@@ -603,7 +603,11 @@ observed on the network.
   `loca`, `ipiMenuData`.
 - `shipMeta.icon` lowercased is the valueless attribute of `<technology-icon>` in message 76 (3.9):
   the table maps it to the ship id without relying on the localized name.
-- **The scan response carries no cost** (confirmed by the response above). The game subtracts `$('#scanCostValue').data('value')`,
+- **The scan response carries no cost** (confirmed by the response above).
+- `activateMission` response, verified on PTS 2026-11-12: `status`, `success`, `message`
+  (localized "Mission d`anomalie activée"), `missionsWithoutFleet`, `anomalyDiscoveryUsage`,
+  `ipiMenuData`, `newAjaxToken`, `components`. **No cost and no lithium field**: activation looks
+  free (to confirm with the balance before and after). The game subtracts `$('#scanCostValue').data('value')`,
   set by `fetchScanCost`; in the dumps `#scanCostValue` only has `data-tooltip-title` (localized,
   dot-grouped), so the cost must be read from the DOM at the moment of the request.
 - **Collecting can be paid in lithium or in Dark Matter**: the Dark Matter overlay
