@@ -656,7 +656,13 @@ Seen on a live account (2026-11-12), lithium version only:
   `.collectTotalValue` and `.collectSummaryRewards` cover the waves paid by this collect only.
 - **The mission's `.rewardCostsValue` is the cost of all its waves**, not of one collect (3 × the
   wave cost in the capture).
-- **(gap)** Rows without `affordable` and the Dark Matter overlay (`.orionCollectRewardsDarkMatter`,
-  served by the game, not built in the script) were not seen; the Dark Matter one probably
-  appears when the lithium is insufficient **(inferred)**.
+- Not enough lithium (PTS, 2026-11-12): rows are `.collectWaveRow.unaffordable`,
+  `.collectTotalValue` gets the class `overmark`, `p.collectRewardsWarning` says so, and
+  `p.collectMissingLithium` gives the missing lithium and its Dark Matter price
+  (`.overmark` then `.premium_txt`, localized sentence). There is no "Accepter" button: the only
+  action is `a.orionCollectWithDarkMatter` ("Collect all"), which opens a second overlay from
+  `page=componentOnly&component=orion&action=fetchCollectRewardsDarkMatterOverlay&spaceObjectId=<id>&ajax=1`.
+- **(gap)** That second overlay (`.orionCollectRewardsDarkMatter[data-dark-matter-price]`) was not
+  captured, and whether a Dark Matter collect also spends the lithium owned (the sentence says the
+  Dark Matter pays the *missing* part) is unknown: lithium balance before and after needed.
 

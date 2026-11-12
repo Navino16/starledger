@@ -75,7 +75,9 @@ Les types 70, 75, 76 et 77 de l'onglet Divers sont identifiés (compte live, 202
 - [x] Rapport de combat produit par la même mission : oui, type 25 avec `defenderspaceobject.type` = `anomaly`, jamais de butin (2026-11-12). Le parseur actuel les lit (1 à 6 rounds, gagnés, nuls, perdus) mais les classe en défense de planète : à corriger au scope 13
 - [x] Page des anomalies : HTML des quatre onglets, dont la liste après un scan et les missions actives (PTS, 2026-11-12) ; requêtes lues dans le script du jeu (`docs/ogame-data-formats.md` §9)
 - [x] Fenêtre de récupération des récompenses, version lithium : HTML (compte live, 2026-11-12)
-- [ ] Fenêtre de récupération en antimatière, et une vague non payable faute de lithium : HTML
+- [x] Vague non payable faute de lithium : classe `unaffordable`, lithium manquant et son prix en antimatière affichés, seul bouton « Collect all » (PTS, 2026-11-12)
+- [ ] Deuxième fenêtre ouverte par « Collect all » (confirmation en antimatière) : HTML
+- [ ] Récupération payée en antimatière : solde de lithium et d'antimatière avant et après (le lithium possédé est-il aussi dépensé ?)
 - [x] Réponse de `performScan` : aucun coût, estimations par mission, table `shipMeta` (PTS, 2026-11-12)
 - [x] Réponse de `activateMission` : aucun coût ni lithium (PTS, 2026-11-12)
 - [x] Réponse de `collectRewards` sans bonus : ni coût ni récompense, `lithiumBonus` à `null` (2026-11-12)
