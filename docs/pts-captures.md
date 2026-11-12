@@ -80,7 +80,7 @@ Les types 70, 75, 76 et 77 de l'onglet Divers sont identifiés (compte live, 202
 - [x] Réponse de `activateMission` : aucun coût ni lithium (PTS, 2026-11-12)
 - [x] Réponse de `collectRewards` sans bonus : ni coût ni récompense, `lithiumBonus` à `null` (2026-11-12)
 - [ ] Réponse de `collectRewards` avec bonus de lithium (`lithiumBonus` non nul)
-- [ ] Message 76 avec une récompense autre que ressources ou vaisseaux (expérience FdV, artefacts, objet premium)
+- [ ] Message 76 avec une récompense autre que ressources ou vaisseaux (expérience FdV, artefacts, objet premium), **seulement si l'occasion se présente** : ces sortes ne sont vues que dans `rewardLoca` et peut-être jamais attribuées ; en attendant, un tel message est lu comme non reconnu, jamais compté à zéro
 - [x] Activer une mission (« Rechercher ») ne coûte pas de lithium : le solde a augmenté de la seule production malgré un coût de récompense affiché de 48 792 (compte live, 2026-11-12)
 
 ## Vérifications sur le PTS
