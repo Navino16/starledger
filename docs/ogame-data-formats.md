@@ -558,8 +558,8 @@ Planet/target type ids: `1` planet, `2` debris field, `3` moon
 4. **Timezone**: no meta tag; only `serverData.xml` `timezone` / `timezoneOffset` (format unknown)
    and page globals `serverTimeZoneOffsetInMinutes` / `localTimeZoneOffsetInMinutes`.
 5. `data-raw-datetime` format, subtab 25 meaning, type 35 meaning.
-6. **Anomaly page**: the requests are known from the game script (9.2), but not their responses,
-   nor the collect overlay DOM, nor the shape of `lithiumBonus`.
+6. **Anomaly page**: a non-null `lithiumBonus`, the Dark Matter collect overlay (9.4) and the
+   markup of lifeform experience, artifact and premium item rewards in a message 76 (3.9).
 
 ---
 

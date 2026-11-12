@@ -38,7 +38,7 @@
 | 10 | Validation PTS : vraies captures, reparse, audit | ☐ |
 | 11 | Carburant | ☐ (code fait, vérification PTS 11.2 step 5) |
 | 12 | Transports entre joueurs | ⛔ attend les captures (design §9.2) |
-| 13 | Anomalies | ⛔ attend les captures (design §9.1) |
+| 13 | Anomalies | ☐ (captures reçues, à détailler) |
 | 14 | Dossier de tolérance et publication | ☐ |
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
 
@@ -1056,9 +1056,9 @@ Travail prévu :
 - un `reparse` pour réinterpréter les types 33 et 34 déjà stockés à l'état brut depuis le scope 8 ;
 - l'affichage dans le détail.
 
-## Scope 13 — Anomalies ⛔
+## Scope 13 — Anomalies
 
-**Bloqué** jusqu'aux captures du design §9.1 : HTML et HAR de la page des anomalies et des messages de fin de mission. Ce scope sera détaillé quand elles seront disponibles.
+Captures reçues le 2026-11-12 (formats dans `docs/ogame-data-formats.md` §3.9 et §9, règles dans `docs/decisions.md`). Ce scope reste à détailler en tâches ; les captures encore manquantes sont listées dans `docs/pts-captures.md` et ne le bloquent pas.
 
 Travail prévu :
 - l'observation des actions sur la page dédiée (scan, choix, récupération, remboursement), en lecture seule ;
