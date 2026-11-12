@@ -76,7 +76,7 @@ Les types 70, 75, 76 et 77 de l'onglet Divers sont identifiés (compte live, 202
 - [x] Page des anomalies : HTML des quatre onglets, dont la liste après un scan et les missions actives (PTS, 2026-11-12) ; requêtes lues dans le script du jeu (`docs/ogame-data-formats.md` §9)
 - [x] Fenêtre de récupération des récompenses, version lithium : HTML (compte live, 2026-11-12)
 - [x] Vague non payable faute de lithium : classe `unaffordable`, lithium manquant et son prix en antimatière affichés, seul bouton « Collect all » (PTS, 2026-11-12)
-- [ ] Deuxième fenêtre ouverte par « Collect all » (confirmation en antimatière) : HTML
+- [x] Deuxième fenêtre ouverte par « Collect all » : action `collectRewardsWithDarkMatter`, prix dans `data-dark-matter-price` (PTS, 2026-11-12)
 - [ ] Récupération payée en antimatière : solde de lithium et d'antimatière avant et après (le lithium possédé est-il aussi dépensé ?)
 - [x] Réponse de `performScan` : aucun coût, estimations par mission, table `shipMeta` (PTS, 2026-11-12)
 - [x] Réponse de `activateMission` : aucun coût ni lithium (PTS, 2026-11-12)
