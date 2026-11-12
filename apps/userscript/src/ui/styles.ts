@@ -1,6 +1,7 @@
 //! AGENTS.md §1.7: normal-flow blocks only, no fixed/absolute positioning, no overlay, no opacity change
 export const UI_CSS = `
 .starledger-box,.starledger-dialog{box-sizing:border-box;max-width:100%;margin:8px 0;padding:4px;font:11px Verdana,Arial,sans-serif;color:#757ba6;background:#0d131b;border-radius:6px}
+.starledger-box{margin:8px 4px 8px -2px}
 .starledger-dialog{padding:6px;overflow-x:auto;color:#c0c0c2}
 .starledger-box strong,.starledger-dialog strong,.starledger-dialog h4{color:#b4c8f7;font-weight:bold}
 .starledger-dialog h4{margin:10px 0 4px;padding:4px 6px;font-size:11px;background:linear-gradient(#2a3240,#191c25);border-radius:5px}
