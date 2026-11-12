@@ -306,7 +306,9 @@ tower". **None carries a resource attribute in `.rawMessageData`.**
   `aria-description="<localized name>: <integer>"`; `.amount` is the localized, dot-grouped value.
 - Ships: `<technology-icon ... transportersmall="" ...>` (202), `fighterlight=""` (204): the ship
   is a valueless attribute named after the game's technical name; same `aria-description` format.
-- Seen: 1 to 4 items per message, resources and ships mixed, no lithium.
+- Seen: 1 to 4 items per message, resources and ships mixed, no lithium. The scanner announces
+  other reward kinds (lifeform experience, artifacts, premium items, 9.2) whose markup in a 76
+  is not captured yet.
 
 **Anomaly missions also produce combat reports (25)** at the anomaly coordinates: the player is
 the defender, the attacker is `{ "type": "npc", "id": 99999 }` with a localized name, and
@@ -590,7 +592,18 @@ observed on the network.
 | `increaseMaxScanResults`, `increaseAnomalyDiscoveryCapacity` | slot purchase | none | `status`, `slotPurchase`, `maxScanResults`, `anomalyDiscoveryCapacity` |
 | `renameMission` | mission rename | | |
 
-- **The scan response carries no cost.** The game subtracts `$('#scanCostValue').data('value')`,
+- `performScan` response, verified on PTS 2026-11-12: `status` (`"success"`), `success` (true),
+  `message` (localized "Scan réussi"), `newAjaxToken`, `returnAjaxList` (HTML cards, 9.3),
+  `scannerResults` (array of empty objects), `scannerRewardEntries` keyed by `anomalyMissionId`:
+  `{ "type": "resource", "resourceType": "metal|crystal|deuterium", "quantity", "approximate": true }`
+  or `{ "type": "ship", "techId": null, "label", "quantity": null, "quantityMin", "quantityMax" }`
+  (estimates, not gains), `rewardLoca` (reward kinds: 1 resources, 2 lifeform experience,
+  3 artifacts, 4 ships, 5 premium items), `shipMeta` (`{ "<techId>": { "icon", "name" } }`, e.g.
+  `202` → `transporterSmall`, `204` → `fighterLight`, `219` → `explorer`, defenses 401–408 too),
+  `loca`, `ipiMenuData`.
+- `shipMeta.icon` lowercased is the valueless attribute of `<technology-icon>` in message 76 (3.9):
+  the table maps it to the ship id without relying on the localized name.
+- **The scan response carries no cost** (confirmed by the response above). The game subtracts `$('#scanCostValue').data('value')`,
   set by `fetchScanCost`; in the dumps `#scanCostValue` only has `data-tooltip-title` (localized,
   dot-grouped), so the cost must be read from the DOM at the moment of the request.
 - **Collecting can be paid in lithium or in Dark Matter**: the Dark Matter overlay

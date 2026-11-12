@@ -76,7 +76,9 @@ Les types 70, 75, 76 et 77 de l'onglet Divers sont identifiés (compte live, 202
 - [x] Page des anomalies : HTML des quatre onglets, dont la liste après un scan et les missions actives (PTS, 2026-11-12) ; requêtes lues dans le script du jeu (`docs/ogame-data-formats.md` §9)
 - [x] Fenêtre de récupération des récompenses, version lithium : HTML (compte live, 2026-11-12)
 - [ ] Fenêtre de récupération en antimatière, et une vague non payable faute de lithium : HTML
-- [ ] HAR (ou réponses copiées) de `performScan`, `activateMission` et `collectRewards`, dont une récupération avec bonus de lithium (`lithiumBonus`)
+- [x] Réponse de `performScan` : aucun coût, estimations par mission, table `shipMeta` (PTS, 2026-11-12)
+- [ ] Réponses de `activateMission` et `collectRewards`, dont une récupération avec bonus de lithium (`lithiumBonus`)
+- [ ] Message 76 avec une récompense autre que ressources ou vaisseaux (expérience FdV, artefacts, objet premium)
 - [ ] Activer une mission (« Rechercher ») ne coûte pas de lithium : solde avant et après
 
 ## Vérifications sur le PTS
