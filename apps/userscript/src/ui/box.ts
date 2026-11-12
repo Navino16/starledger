@@ -43,7 +43,10 @@ function fuelValue(stats: StatsResponse | null): string {
 
 function lithiumValue(stats: StatsResponse | null): string {
   const lithium = stats?.summary.anomalies?.lithium;
-  return formatPartial(lithium?.net ?? null, lithium?.unknownCount);
+  return formatPartial(
+    lithium?.net ?? null,
+    (lithium?.spentUnknown ?? 0) + (lithium?.refundUnknown ?? 0),
+  );
 }
 
 const DOT_CLASS = { up_to_date: 'is-ok', pending: 'is-pending', error: 'is-error' } as const;

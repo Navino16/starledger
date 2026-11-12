@@ -122,14 +122,16 @@ describe('renderBox', () => {
 
   it('shows the net lithium, negative included', () => {
     const net = (n: number) =>
-      tile(render(model({ stats: statsOf({}, { net: n, unknownCount: 0 }) })).box, 'lithium');
+      tile(render(model({ stats: statsOf({}, { net: n }) })).box, 'lithium');
     expect(net(-1500)).toBe('-1.5k');
     expect(net(300)).toBe('300');
   });
 
   it('marks partial lithium and shows ? without anomalies or stats', () => {
-    const partial = statsOf({}, { net: -1500, unknownCount: 2 });
+    const partial = statsOf({}, { net: -1500, spentUnknown: 1, refundUnknown: 1 });
     expect(tile(render(model({ stats: partial })).box, 'lithium')).toBe('-1.5k + ? (2)');
+    const dmOnly = statsOf({}, { net: -1500, darkMatterUnknown: 4 });
+    expect(tile(render(model({ stats: dmOnly })).box, 'lithium')).toBe('-1.5k');
     expect(tile(render(model()).box, 'lithium')).toBe('?');
     expect(tile(render(model({ stats: null, statsAt: null })).box, 'lithium')).toBe('?');
   });

@@ -834,8 +834,9 @@ Branche : `feature/userscript-foundation`. Tous les accès `GM_*` passent par un
 
 Comportement :
 - **Consentement.** Tant que `consent` est faux, le script n'affiche qu'un petit encart avec un bouton « Configurer », et ne collecte ni n'envoie rien. L'écran de consentement liste en clair ce qui est envoyé :
-  - les rapports affichés : expéditions, combats (y compris noms et coordonnées des autres joueurs), recyclages, champs d'épaves, découvertes, transports ;
+  - les rapports affichés : expéditions, combats (y compris noms et coordonnées des autres joueurs), recyclages, champs d'épaves, découvertes, transports, récompenses d'anomalies ;
   - les départs de flotte et leur carburant ;
+  - les actions sur la page des anomalies : lithium et antimatière dépensés, et leur heure ;
   - l'identifiant du compte et l'univers ;
   - un identifiant d'appareil ;
   - et à quel serveur (l'URL saisie).
@@ -1081,6 +1082,12 @@ Branche : `feature/transport-partner`, après le scope 13.
 ## Scope 13 — Anomalies
 
 Captures reçues le 2026-11-12 (formats dans `docs/ogame-data-formats.md` §3.9 et §9, règles dans `docs/decisions.md`). Cinq tâches : 13.1 combats d'anomalie, 13.2 récompenses du message 76, 13.3 lithium de la page des anomalies, 13.4 affichage, 13.5 réglage `anomalyShipRatio`. Les captures encore manquantes sont listées dans `docs/pts-captures.md` et ne le bloquent pas.
+
+- [x] 13.1 combats d'anomalie
+- [x] 13.2 récompenses du message 76
+- [x] 13.3 lithium de la page des anomalies
+- [x] 13.4 affichage
+- [x] 13.5 réglage anomalyShipRatio
 
 Travail prévu :
 - l'observation des actions sur la page dédiée (scan, choix, récupération, remboursement), en lecture seule ;

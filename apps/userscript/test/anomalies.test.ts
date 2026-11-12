@@ -152,6 +152,24 @@ describe('installAnomalyCollector', () => {
     expect(obs(2)).toMatchObject({ lithiumBonus: null, lithiumBonusRaw: JSON.stringify(bonus) });
   });
 
+  it('records a null cost when the request carries no spaceObjectId', () => {
+    const { run, obs } = setup();
+    document.body.innerHTML = overlay('', '7', '', '<span class="collectTotalValue">5</span>');
+    run({ url: url('collectRewards') });
+    expect(obs().lithium).toBeNull();
+  });
+
+  it('drops an oversized lithiumBonus JSON but still emits the observation', () => {
+    const { run, obs, onObservations } = setup();
+    const bonus = { message: 'x'.repeat(4001) };
+    run(
+      { url: url('collectRewards'), data: 'spaceObjectId=7' },
+      { status: 'success', lithiumBonus: bonus },
+    );
+    expect(onObservations).toHaveBeenCalledTimes(1);
+    expect(obs()).toMatchObject({ lithiumBonus: null, lithiumBonusRaw: null });
+  });
+
   it('parses a JSON responseText body', () => {
     const { run, obs } = setup();
     run({ url: url('performScan') }, '{"status":"success"}');

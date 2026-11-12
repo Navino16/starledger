@@ -69,7 +69,9 @@ export type StatsSummary = {
       spent: number;
       refunded: number;
       net: number;
-      unknownCount: number;
+      spentUnknown: number;
+      refundUnknown: number;
+      darkMatterUnknown: number;
       darkMatterSpent: number;
       scans: number;
       collects: number;
@@ -183,7 +185,9 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         spent: 0,
         refunded: 0,
         net: 0,
-        unknownCount: 0,
+        spentUnknown: 0,
+        refundUnknown: 0,
+        darkMatterUnknown: 0,
         darkMatterSpent: 0,
         scans: 0,
         collects: 0,
@@ -302,12 +306,12 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         const l = stats.anomalies.lithium;
         if (e.action === 'scan') l.scans++;
         else l.collects++;
-        if (e.lithium === null) l.unknownCount++;
+        if (e.lithium === null) l.spentUnknown++;
         else l.spent += e.lithium;
-        if (e.lithiumBonus === null) l.unknownCount++;
+        if (e.lithiumBonus === null) l.refundUnknown++;
         else l.refunded += e.lithiumBonus;
         if (e.action === 'collect_dm') {
-          if (e.darkMatter === null) l.unknownCount++;
+          if (e.darkMatter === null) l.darkMatterUnknown++;
           else l.darkMatterSpent += e.darkMatter;
         }
         l.net = l.refunded - l.spent;

@@ -439,6 +439,11 @@ describe('consent version', () => {
     expect(loadSettings(gm).consent).toBe(true);
   });
 
+  it('asks again when the stored consent predates the anomaly lines (version 1)', () => {
+    gm.set('starledger.settings', { consent: true, consentVersion: 1, deviceId: 'd' });
+    expect(loadSettings(gm).consent).toBe(false);
+  });
+
   it('tolerates a non-object stored value', () => {
     gm.set('starledger.settings', null);
     expect(loadSettings(gm).consent).toBe(false);
@@ -448,7 +453,13 @@ describe('consent version', () => {
     main(gm, document);
     click('#starledger-box button');
     const text = document.body.textContent ?? '';
-    for (const word of ['player id and name', 'fleet departures', 'departure time', 'viewed'])
+    for (const word of [
+      'player id and name',
+      'fleet departures',
+      'departure time',
+      'viewed',
+      'anomaly',
+    ])
       expect(text).toContain(word);
   });
 });

@@ -53,7 +53,9 @@ const statsOf = (
           spent: 1200,
           refunded: 200,
           net: -1000,
-          unknownCount: 0,
+          spentUnknown: 0,
+          refundUnknown: 0,
+          darkMatterUnknown: 0,
           darkMatterSpent: 0,
           scans: 6,
           collects: 4,
@@ -180,7 +182,7 @@ describe('stats details dialog', () => {
     const cells = row?.querySelectorAll('td');
     expect(cells?.[0]?.textContent).toBe('Anomalies: lithium');
     expect(cells?.[1]?.textContent).toBe(
-      'Lithium: spent 1.2k, refunded 200, net -1k (6 scans, 4 collects, 3 rewards, 2 combats)',
+      'Lithium: spent 1.2k, refunded 200, net -1k (scans: 6 · collects: 4 · rewards: 3 · combats: 2)',
     );
     expect(cells?.[2]?.textContent).toBe('-');
     expect(cells?.[3]?.textContent).toBe('-');
@@ -189,7 +191,9 @@ describe('stats details dialog', () => {
   it('shows unknown lithium and paid Dark Matter only when present', async () => {
     const body = statsOf();
     const lithium = body.summary.anomalies.lithium;
-    lithium.unknownCount = 2;
+    lithium.spentUnknown = 2;
+    lithium.refundUnknown = 1;
+    lithium.darkMatterUnknown = 3;
     lithium.darkMatterSpent = 50;
     gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
     open();
@@ -197,8 +201,22 @@ describe('stats details dialog', () => {
     const text = dialog()?.querySelector(
       '[data-category="anomalies-lithium"] td:nth-child(2)',
     )?.textContent;
-    expect(text).toContain('spent 1.2k + ? (2), refunded');
-    expect(text).toContain(' · Dark Matter paid: 50');
+    expect(text).toContain('spent 1.2k + ? (2), refunded 200 + ? (1), net -1k + ? (3)');
+    expect(text).toContain(' · Dark Matter paid: 50 + ? (3)');
+  });
+
+  it('marks each lithium figure only with its own unknowns', async () => {
+    const body = statsOf();
+    body.summary.anomalies.lithium.refundUnknown = 1;
+    body.summary.anomalies.lithium.darkMatterUnknown = 2;
+    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
+    open();
+    await tick();
+    const text = dialog()?.querySelector(
+      '[data-category="anomalies-lithium"] td:nth-child(2)',
+    )?.textContent;
+    expect(text).toContain('spent 1.2k, refunded 200 + ? (1), net -1k + ? (1)');
+    expect(text).toContain('Dark Matter paid: 0 + ? (2)');
   });
 
   it('renders without anomalies in the summary', async () => {
@@ -210,7 +228,7 @@ describe('stats details dialog', () => {
     await tick();
     const row = dialog()?.querySelector('[data-category="anomalies-lithium"]');
     expect(row?.querySelector('td:nth-child(2)')?.textContent).toBe(
-      'Lithium: spent ?, refunded ?, net ? (? scans, ? collects, ? rewards, ? combats)',
+      'Lithium: spent ?, refunded ?, net ? (scans: ? · collects: ? · rewards: ? · combats: ?)',
     );
     expect(
       dialog()?.querySelector('[data-category="anomalies"] td:nth-child(2)')?.textContent,

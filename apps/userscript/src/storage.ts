@@ -12,7 +12,7 @@ export type ClientSettings = {
 const KEY = 'starledger.settings';
 
 // Bump when the consent wording changes: older stored consent counts as none.
-export const CONSENT_VERSION = 1;
+export const CONSENT_VERSION = 2;
 
 type Stored = Partial<ClientSettings> & { consentVersion?: number };
 

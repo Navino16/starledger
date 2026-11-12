@@ -63,9 +63,11 @@ export function installAnomalyCollector(win: PageWindow, deps: AnomalyCollectorD
   const snapshots = new WeakMap<object, Snapshot>();
 
   const overlay = (selector: string, spaceObjectId: string | null): Element | null =>
-    Array.from(doc.querySelectorAll(selector)).find(
-      (el) => el.getAttribute('data-space-object-id') === spaceObjectId,
-    ) ?? null;
+    spaceObjectId === null
+      ? null
+      : (Array.from(doc.querySelectorAll(selector)).find(
+          (el) => el.getAttribute('data-space-object-id') === spaceObjectId,
+        ) ?? null);
 
   const scanCost = (): number | null => {
     const fromData = wholeNumber(win.$?.('#scanCostValue').data?.('value'));

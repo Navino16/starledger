@@ -145,10 +145,15 @@ function discoveriesText(t: T, stats: StatsResponse): string {
 function lithiumText(t: T, stats: StatsResponse): string {
   const a = stats.summary.anomalies;
   const l = a?.lithium;
-  const spent = formatPartial(typeof l?.spent === 'number' ? l.spent : null, l?.unknownCount);
-  let text = t('lithiumSummary', { spent, refunded: num(l?.refunded), net: num(l?.net) });
-  if (l && l.darkMatterSpent > 0)
-    text += ` · ${t('anomalyDarkMatter', { n: num(l.darkMatterSpent) })}`;
+  const known = (v: unknown) => (typeof v === 'number' ? v : null);
+  const spent = formatPartial(known(l?.spent), l?.spentUnknown);
+  const refunded = formatPartial(known(l?.refunded), l?.refundUnknown);
+  const net = formatPartial(known(l?.net), (l?.spentUnknown ?? 0) + (l?.refundUnknown ?? 0));
+  let text = t('lithiumSummary', { spent, refunded, net });
+  if (l && (l.darkMatterSpent > 0 || l.darkMatterUnknown > 0)) {
+    const paid = formatPartial(l.darkMatterSpent, l.darkMatterUnknown);
+    text += ` · ${t('anomalyDarkMatter', { n: paid })}`;
+  }
   return `${text} ${t('anomalyCounts', {
     scans: num(l?.scans),
     collects: num(l?.collects),

@@ -55,6 +55,6 @@
     "ignoreConsumption": "Ignore fuel consumption",
     "includeTradesInBalance": "Include trades in the balance",
     "save": "Save",
-    "invalid": "Invalid settings: ratios must be between 0 (excluded) and 100, and the ship value an integer from 0 to 100."
+    "invalid": "Invalid settings: ratios must be between 0 (excluded) and 100, and the ship values integers from 0 to 100."
   }
 }
