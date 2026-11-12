@@ -1012,12 +1012,12 @@ Branche : `feature/userscript-fuel`.
 
 ### Tâche 11.1 : Vérifications sur le PTS (spike jetable, sans code conservé)
 
-- [ ] Sur le PTS, vérifier avec les outils de dev :
+- [x] Sur le PTS, vérifier avec les outils de dev :
   1. l'envoi de flotte passe-t-il par `$.ajax` ou `$.post`, et déclenche-t-il bien les événements jQuery globaux `ajaxSend` et `ajaxSuccess` ?
   2. `fleetDispatcher.getConsumption()` et les autres champs du §6.1 sont-ils encore lisibles dans `ajaxSend` ?
   3. `miniFleet` déclenche-t-il `ajaxSuccess`, et quelle est la forme exacte de sa réponse ?
   4. un rappel rembourse-t-il du deutérium ?
-- [ ] Noter les réponses dans `docs/ogame-data-formats.md` §6. **Si le point 1 ou 2 est négatif**, s'arrêter et revoir l'approche avec l'utilisateur. Remplacer une fonction du jeu est exclu (Global Constraints).
+- [x] Noter les réponses dans `docs/ogame-data-formats.md` §6. **Si le point 1 ou 2 est négatif**, s'arrêter et revoir l'approche avec l'utilisateur. Remplacer une fonction du jeu est exclu (Global Constraints).
 
 ### Tâche 11.2 : Collecte passive des départs
 
