@@ -72,5 +72,11 @@ div.starledger-status{margin:6px 0}
 .starledger-shiptile{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:40px;padding:2px;background:#11161d;border-radius:3px}
 .starledger-found{color:#e7e8eb}
 .starledger-lost{color:#e2574c}
+.starledger-tablewrap{overflow-x:auto}
+.starledger-dialog .starledger-balance{min-width:520px}
+.starledger-dialog .starledger-balance th:first-child,.starledger-dialog .starledger-balance td:first-child{position:sticky;left:0;background:#0d1014}
+.starledger-dialog .starledger-balance td:not(:first-child),.starledger-dialog .starledger-balance th:not(:first-child){text-align:right}
+.starledger-dialog .starledger-balance tr[data-category=total] td{border-top:1px solid #6f9fc8;font-weight:bold}
+.starledger-dialog td.is-negative .starledger-amount{color:#e2574c}
 @media (max-width:560px){.starledger-split{grid-template-columns:minmax(0,1fr)}}
 `;

@@ -1,10 +1,4 @@
-import type {
-  AccountRef,
-  ApiError,
-  BalanceCategory,
-  StatsPeriod,
-  StatsResponse,
-} from '@app/shared';
+import type { AccountRef, ApiError, StatsPeriod, StatsResponse } from '@app/shared';
 import { todayKey } from '../env/page';
 import { detectLang, errorKey, type MessageKey, type T } from '../i18n';
 import { loadSettings } from '../storage';
@@ -13,8 +7,8 @@ import { CLIENT_VERSION } from '../version';
 import { renderCalendar, shiftMonth } from './details/calendar';
 import { renderDonut } from './details/donut';
 import { renderShips } from './details/ships';
+import { renderNotes, renderTable } from './details/table';
 import { el, type UiContext } from './dom';
-import { formatAmount, formatPartial } from './format';
 import type { IconPage } from './icons';
 import { openPanel } from './panel';
 
@@ -28,186 +22,6 @@ const PERIODS: [StatsPeriod, MessageKey][] = [
   ['month', 'periodMonth'],
   ['all', 'periodAll'],
 ];
-
-const CATEGORIES: [BalanceCategory, MessageKey][] = [
-  ['expeditions', 'catExpeditions'],
-  ['combats', 'catCombats'],
-  ['recycling', 'catRecycling'],
-  ['wreckfields', 'catWreckfields'],
-  ['anomalies', 'catAnomalies'],
-  ['fuel', 'catFuel'],
-];
-
-const num = (v: unknown): string => formatAmount(typeof v === 'number' ? v : null);
-
-type Cell = (string | Node)[];
-
-function amount(doc: Document, res: string, value: unknown): HTMLElement {
-  const node = el(doc, 'span', { className: 'starledger-amount', textContent: num(value) });
-  node.dataset.res = res;
-  return node;
-}
-
-function resourcesCell(
-  doc: Document,
-  t: T,
-  r: { metal?: number; crystal?: number; deuterium?: number } | undefined,
-): Cell {
-  return [
-    `${t('resMetal')} `,
-    amount(doc, 'metal', r?.metal),
-    ` · ${t('resCrystal')} `,
-    amount(doc, 'crystal', r?.crystal),
-    ` · ${t('resDeuterium')} `,
-    amount(doc, 'deuterium', r?.deuterium),
-  ];
-}
-
-function discoveriesText(t: T, stats: StatsResponse): string {
-  const d = stats.summary.discoveries;
-  const xp = d?.xpByLifeform
-    ? Object.values(d.xpByLifeform).reduce((sum, v) => sum + v, 0)
-    : undefined;
-  return `${t('discoveriesCount', { n: num(d?.count) })} · ${t('xp')} ${num(xp)} · ${t('tileArtefacts')} ${num(d?.artefacts)}`;
-}
-
-function lithiumText(t: T, stats: StatsResponse): string {
-  const a = stats.summary.anomalies;
-  const l = a?.lithium;
-  const known = (v: unknown) => (typeof v === 'number' ? v : null);
-  const spent = formatPartial(known(l?.spent), l?.spentUnknown);
-  const refunded = formatPartial(known(l?.refunded), l?.refundUnknown);
-  const net = formatPartial(known(l?.net), (l?.spentUnknown ?? 0) + (l?.refundUnknown ?? 0));
-  let text = t('lithiumSummary', { spent, refunded, net });
-  if (l && (l.darkMatterSpent > 0 || l.darkMatterUnknown > 0)) {
-    const paid = formatPartial(l.darkMatterSpent, l.darkMatterUnknown);
-    text += ` · ${t('anomalyDarkMatter', { n: paid })}`;
-  }
-  return `${text} ${t('anomalyCounts', {
-    scans: num(l?.scans),
-    collects: num(l?.collects),
-    rewards: num(a?.rewards?.count),
-    combats: num(a?.combats?.count),
-  })}`;
-}
-
-function balanceTable(doc: Document, t: T, stats: StatsResponse) {
-  const { balance, fuel, tiles, trades } = stats.summary;
-  const ignoreFuel = stats.settings?.ignoreConsumption === true;
-  const table = el(doc, 'table', { className: 'starledger-balance' });
-  table.append(
-    el(
-      doc,
-      'tr',
-      {},
-      ...[t('colCategory'), t('colGains'), t('colLosses'), t('colFuel')].map((h) =>
-        el(doc, 'th', { textContent: h }),
-      ),
-    ),
-  );
-  const fuelCell = formatPartial(
-    typeof fuel?.recorded === 'number' ? fuel.recorded : null,
-    fuel?.unknownCount,
-  );
-  const toCell = (c: Cell) => el(doc, 'td', {}, ...c);
-  for (const [key, label] of CATEGORIES) {
-    const cells: Cell[] =
-      key === 'fuel'
-        ? [[t(label)], ['-'], ['-'], [ignoreFuel ? `${fuelCell} (${t('fuelIgnored')})` : fuelCell]]
-        : [
-            [t(label)],
-            resourcesCell(doc, t, balance?.[key]?.gains),
-            resourcesCell(doc, t, balance?.[key]?.losses),
-            ['-'],
-          ];
-    const row = el(doc, 'tr', {}, ...cells.map(toCell));
-    row.dataset.category = key;
-    table.append(row);
-    if (key === 'anomalies') {
-      // Lithium and Dark Matter keep their own units, never summed with resources
-      const lithium = el(
-        doc,
-        'tr',
-        {},
-        ...([[t('catAnomalyLithium')], [lithiumText(t, stats)], ['-'], ['-']] as Cell[]).map(
-          toCell,
-        ),
-      );
-      lithium.dataset.category = 'anomalies-lithium';
-      table.append(lithium);
-    }
-    if (key === 'wreckfields') {
-      // Lifeform discoveries: own units (XP, artefacts), never summed with resources
-      const disc = el(
-        doc,
-        'tr',
-        {},
-        ...([[t('catDiscoveries')], [discoveriesText(t, stats)], ['-'], ['-']] as Cell[]).map(
-          toCell,
-        ),
-      );
-      disc.dataset.category = 'discoveries';
-      table.append(disc);
-    }
-  }
-  const tradesRow = el(
-    doc,
-    'tr',
-    {},
-    ...(
-      [
-        [
-          `${t('catTrades')} ${t('tradesCounts', {
-            received: num(trades?.receivedCount),
-            delivered: num(trades?.deliveredCount),
-          })}`,
-        ],
-        resourcesCell(doc, t, trades?.received),
-        resourcesCell(doc, t, trades?.delivered),
-        ['-'],
-      ] as Cell[]
-    ).map(toCell),
-  );
-  tradesRow.dataset.category = 'trades';
-  table.append(tradesRow);
-  const net = el(
-    doc,
-    'tr',
-    {},
-    el(doc, 'td', { textContent: t('catNet') }),
-    el(
-      doc,
-      'td',
-      { colSpan: 3 },
-      ...resourcesCell(doc, t, tiles),
-      ` · ${t('tileMsu')} `,
-      amount(doc, 'msu', tiles?.msu),
-    ),
-  );
-  net.dataset.category = 'net';
-  table.append(net);
-  return table;
-}
-
-function tradesNetNote(doc: Document, t: T, stats: StatsResponse): HTMLElement | null {
-  const trades = stats.summary.trades;
-  if (!trades?.received || !trades.delivered) return null;
-  const { received: r, delivered: d } = trades;
-  const note = el(
-    doc,
-    'p',
-    { className: 'starledger-note' },
-    `${t('tradesNet')} `,
-    ...resourcesCell(doc, t, {
-      metal: r.metal - d.metal,
-      crystal: r.crystal - d.crystal,
-      deuterium: r.deuterium - d.deuterium,
-    }),
-    ` — ${t(stats.settings?.includeTradesInBalance ? 'tradesIncluded' : 'tradesExcluded')}`,
-  );
-  note.dataset.tradesNet = '';
-  return note;
-}
 
 function renderContent(doc: Document, t: T, stats: StatsResponse, win?: IconPage): HTMLElement[] {
   const { summary } = stats;
@@ -232,34 +46,9 @@ function renderContent(doc: Document, t: T, stats: StatsResponse, win?: IconPage
       ),
     ),
     el(doc, 'h4', { textContent: t('sectionBalance') }),
-    balanceTable(doc, t, stats),
-    el(doc, 'p', {
-      className: 'starledger-note',
-      textContent: t(stats.settings?.ignoreConsumption ? 'balanceScopeNoFuel' : 'balanceScope'),
-    }),
+    renderTable(doc, t, stats, win),
+    renderNotes(doc, t, stats),
   ];
-  const tradesNet = tradesNetNote(doc, t, stats);
-  if (tradesNet) nodes.push(tradesNet);
-  const unrecognized = stats.counts?.unrecognized ?? 0;
-  if (unrecognized > 0) {
-    nodes.push(
-      el(doc, 'p', {
-        className: 'starledger-unrecognized',
-        textContent: t(unrecognized === 1 ? 'unrecognizedOne' : 'unrecognized', {
-          n: String(unrecognized),
-        }),
-      }),
-    );
-  }
-  const conflicts = summary.conflictCount ?? 0;
-  if (conflicts > 0) {
-    nodes.push(
-      el(doc, 'p', {
-        className: 'starledger-conflicts',
-        textContent: t(conflicts === 1 ? 'conflictsOne' : 'conflicts', { n: String(conflicts) }),
-      }),
-    );
-  }
   return nodes;
 }
 

@@ -41,6 +41,30 @@ const statsOf = (
               deliveredCount: 1,
             },
           }),
+      rows: Object.fromEntries(
+        [
+          'expeditions',
+          'combats',
+          'recycling',
+          'wreckfields',
+          'anomalies',
+          'discoveries',
+          'fuel',
+          'trades',
+          'total',
+        ].map((k) => [
+          k,
+          {
+            count: 1,
+            resources: res(1, 1, k === 'fuel' ? -777 : 1),
+            msu: k === 'total' ? 4000 : 1,
+            darkMatter: null,
+            artefacts: null,
+            lithium: null,
+            unknown: k === 'fuel' ? 2 : 0,
+          },
+        ]),
+      ),
       tiles: { metal: 990, crystal: 1980, deuterium: 2193, darkMatter: 0, artefacts: 0, msu: 4000 },
       discoveries: { count: 4, xpByLifeform: { '1': 100, '2': 50 }, artefacts: 2 },
       combats: { shipsLost: { '204': 9 } },
@@ -107,179 +131,33 @@ describe('stats details dialog', () => {
     expect(stats()[1]?.url).toContain(`period=week&today=${todayKey(0)}`);
   });
 
-  it('shows the known fuel beside the unknown departures', async () => {
-    const body = statsOf();
-    body.summary.fuel.unknownCount = 2;
-    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
-    open();
-    await tick();
-    expect(dialog()?.querySelector('[data-category="fuel"] td:nth-child(4)')?.textContent).toBe(
-      '777 + ? (2)',
-    );
-  });
-
-  it('shows outcome percentages, ships by id and a separate gains/losses/fuel table', async () => {
+  it('shows outcome percentages, ships by id and the balance table with its notes', async () => {
     open();
     await tick();
     const text = dialog()?.textContent ?? '';
     expect(text).toContain('Resources: 3 (75.0%)');
     expect(text).toContain('Nothing: 1 (25.0%)');
-    expect(text).not.toContain('Ships:');
-    expect(dialog()?.querySelectorAll('[data-ship]').length).toBeGreaterThan(0);
     expect(dialog()?.querySelector('[data-ship="202"] .starledger-found')?.textContent).toBe('5');
     expect(dialog()?.querySelector('[data-ship="202"] .starledger-lost')?.textContent).toBe('-2');
-    const heads = [...(dialog()?.querySelectorAll('.starledger-balance th') ?? [])].map(
-      (h) => h.textContent,
-    );
-    expect(heads).toEqual(['Category', 'Gains', 'Losses', 'Fuel']);
-    const exp = dialog()?.querySelectorAll('[data-category="expeditions"] td');
-    expect(exp?.[1]?.textContent).toContain('M 1k');
-    expect(exp?.[2]?.textContent).toContain('M 10');
-    const amounts = [...(exp?.[1]?.querySelectorAll('.starledger-amount') ?? [])];
-    expect(amounts.map((a) => (a as HTMLElement).dataset.res)).toEqual([
-      'metal',
-      'crystal',
-      'deuterium',
-    ]);
-    expect(dialog()?.querySelector('[data-category="net"] [data-res="msu"]')).not.toBeNull();
-    expect(dialog()?.querySelector('[data-category="fuel"] td:nth-child(4)')?.textContent).toBe(
-      '777',
-    );
-    expect(text).toContain(t('balanceScope'));
-    const disc = dialog()?.querySelector('[data-category="discoveries"]');
-    expect(disc?.textContent).toContain('4 discoveries · XP 150 · Artefacts 2');
-    expect(disc?.querySelectorAll('td')[2]?.textContent).toBe('-');
-    const net = dialog()?.querySelector('[data-category="net"]')?.textContent ?? '';
-    expect(net).toContain('M 990');
-    expect(net).toContain('MSU 4k');
-  });
-
-  it('shows the anomalies row with gains and losses before fuel', async () => {
-    open();
-    await tick();
-    const cells = dialog()?.querySelectorAll('[data-category="anomalies"] td');
-    expect(cells?.[0]?.textContent).toBe('Anomalies');
-    expect(cells?.[1]?.textContent).toContain('M 40');
-    expect(cells?.[2]?.textContent).toContain('M 5');
-    const order = [...(dialog()?.querySelectorAll('.starledger-balance tr') ?? [])].map(
-      (r) => (r as HTMLElement).dataset.category,
-    );
-    expect(order.slice(order.indexOf('wreckfields'), order.indexOf('fuel') + 1)).toEqual([
-      'wreckfields',
-      'discoveries',
-      'anomalies',
-      'anomalies-lithium',
-      'fuel',
-    ]);
-  });
-
-  it('shows lithium spent, refunded, net and the counts', async () => {
-    open();
-    await tick();
-    const row = dialog()?.querySelector('[data-category="anomalies-lithium"]');
-    const cells = row?.querySelectorAll('td');
-    expect(cells?.[0]?.textContent).toBe('Anomalies: lithium');
-    expect(cells?.[1]?.textContent).toBe(
-      'Lithium: spent 1.2k, refunded 200, net -1k (scans: 6 · collects: 4 · rewards: 3 · combats: 2)',
-    );
-    expect(cells?.[2]?.textContent).toBe('-');
-    expect(cells?.[3]?.textContent).toBe('-');
-  });
-
-  it('shows unknown lithium and paid Dark Matter only when present', async () => {
-    const body = statsOf();
-    const lithium = body.summary.anomalies.lithium;
-    lithium.spentUnknown = 2;
-    lithium.refundUnknown = 1;
-    lithium.darkMatterUnknown = 3;
-    lithium.darkMatterSpent = 50;
-    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
-    open();
-    await tick();
-    const text = dialog()?.querySelector(
-      '[data-category="anomalies-lithium"] td:nth-child(2)',
-    )?.textContent;
-    expect(text).toContain('spent 1.2k + ? (2), refunded 200 + ? (1), net -1k + ? (3)');
-    expect(text).toContain(' · Dark Matter paid: 50 + ? (3)');
-  });
-
-  it('marks each lithium figure only with its own unknowns', async () => {
-    const body = statsOf();
-    body.summary.anomalies.lithium.refundUnknown = 1;
-    body.summary.anomalies.lithium.darkMatterUnknown = 2;
-    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
-    open();
-    await tick();
-    const text = dialog()?.querySelector(
-      '[data-category="anomalies-lithium"] td:nth-child(2)',
-    )?.textContent;
-    expect(text).toContain('spent 1.2k, refunded 200 + ? (1), net -1k + ? (1)');
-    expect(text).toContain('Dark Matter paid: 0 + ? (2)');
-  });
-
-  it('renders without anomalies in the summary', async () => {
-    const body = statsOf();
-    delete (body.summary as Partial<typeof body.summary>).anomalies;
-    delete (body.summary.balance as Partial<typeof body.summary.balance>).anomalies;
-    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
-    open();
-    await tick();
-    const row = dialog()?.querySelector('[data-category="anomalies-lithium"]');
-    expect(row?.querySelector('td:nth-child(2)')?.textContent).toBe(
-      'Lithium: spent ?, refunded ?, net ? (scans: ? · collects: ? · rewards: ? · combats: ?)',
+    expect(dialog()?.querySelectorAll('.starledger-balance tr[data-category]')).toHaveLength(9);
+    expect(dialog()?.querySelector('[data-category="total"] [data-col="msu"]')?.textContent).toBe(
+      '4k',
     );
     expect(
-      dialog()?.querySelector('[data-category="anomalies"] td:nth-child(2)')?.textContent,
-    ).toContain('M ?');
+      dialog()?.querySelector('[data-category="fuel"] [data-col="deuterium"]')?.textContent,
+    ).toBe('-777 + ? (2)');
+    expect(dialog()?.querySelector('.starledger-notes')?.textContent).toContain('XP 150');
   });
 
-  it('shows the trades row with received, delivered and counts', async () => {
+  it('shows ? cells when an older server sends no rows', async () => {
+    const body = statsOf();
+    delete (body.summary as Partial<typeof body.summary>).rows;
+    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
     open();
     await tick();
-    const row = dialog()?.querySelector('[data-category="trades"]');
-    const cells = row?.querySelectorAll('td');
-    expect(cells?.[0]?.textContent).toBe('Trades (received: 3, delivered: 1)');
-    expect(cells?.[1]?.textContent).toContain('M 500');
-    expect(cells?.[2]?.textContent).toContain('M 200');
-    expect(cells?.[3]?.textContent).toBe('-');
-    const rows = [...(dialog()?.querySelectorAll('.starledger-balance tr') ?? [])];
-    const order = rows.map((r) => (r as HTMLElement).dataset.category);
-    expect(order.indexOf('trades')).toBeGreaterThan(order.indexOf('discoveries'));
-    expect(order.indexOf('net')).toBe(order.indexOf('trades') + 1);
-  });
-
-  it('shows the trades net as excluded by default and included on demand', async () => {
-    open();
-    await tick();
-    const net = dialog()?.querySelector('[data-trades-net]');
-    expect(net?.className).toBe('starledger-note');
-    expect(net?.textContent).toContain('Trades net:');
-    expect(net?.textContent).toContain('M 300');
-    expect(net?.textContent).toContain('C -100');
-    expect(net?.textContent).toContain('D 0');
-    expect(net?.textContent).toContain('not included in the net');
-    dialog()?.remove();
-    gm.respondWith(() => ({
-      status: 200,
-      body: JSON.stringify(statsOf({ includeTrades: true })),
-    }));
-    open();
-    await tick();
-    const on = dialog()?.querySelector('[data-trades-net]')?.textContent ?? '';
-    expect(on).toContain(' — included in the net');
-    expect(on).not.toContain('not included');
-  });
-
-  it('shows dashes and no net paragraph when the server omits trades', async () => {
-    gm.respondWith(() => ({ status: 200, body: JSON.stringify(statsOf({ noTrades: true })) }));
-    open();
-    await tick();
-    const row = dialog()?.querySelector('[data-category="trades"]');
-    const cells = row?.querySelectorAll('td');
-    expect(cells?.[0]?.textContent).toBe('Trades (received: ?, delivered: ?)');
-    expect(cells?.[1]?.textContent).toBe('M ? · C ? · D ?');
-    expect(cells?.[2]?.textContent).toBe('M ? · C ? · D ?');
-    expect(dialog()?.querySelector('[data-trades-net]')).toBeNull();
+    expect(
+      dialog()?.querySelector('[data-category="expeditions"] [data-col="metal"]')?.textContent,
+    ).toBe('?');
   });
 
   it('shows unrecognized and conflict lines only when above 0', async () => {
@@ -381,8 +259,7 @@ describe('stats details dialog', () => {
     expect(text).not.toContain('1 unrecognized reports');
     expect(text).toContain('1 conflict');
     expect(text).not.toContain('1 conflicts');
-    expect(text).toContain('777 (ignored)');
-    expect(text).toContain(t('balanceScopeNoFuel'));
+    expect(text).toContain(t('fuelIgnoredNote'));
   });
 
   it('shows nothing from a response that arrives after consent was withdrawn', async () => {
