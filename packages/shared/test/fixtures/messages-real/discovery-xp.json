@@ -1,0 +1,47 @@
+{
+  "synthetic": false,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000104",
+    "account": {
+      "serverId": 808,
+      "lang": "en",
+      "playerId": 100001,
+      "playerName": "Tester"
+    },
+    "observedAt": 1794480476167,
+    "serverUtcOffsetMinutes": 0,
+    "msgId": 4755235,
+    "messageType": 61,
+    "subtabId": 22,
+    "raw": {
+      "messagetype": "61",
+      "timestamp": "1794480326",
+      "date": "2026-11-12T10:45:26.000Z",
+      "coords": "4:120:8",
+      "lifeform": "4",
+      "lifeformdiscovered": "Kaeleshs",
+      "lifeformalreadyowned": "1",
+      "discoverytype": "lifeform-xp",
+      "lifeformgainedexperience": "4932"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:4755235",
+    "occurredAt": 1794480326000,
+    "event": {
+      "kind": "lifeform_discovery",
+      "coords": {
+        "galaxy": 4,
+        "system": 120,
+        "position": 8
+      },
+      "result": "lifeform_xp",
+      "lifeform": 4,
+      "xp": 4932,
+      "artifacts": null,
+      "artifactsSize": null
+    }
+  }
+}

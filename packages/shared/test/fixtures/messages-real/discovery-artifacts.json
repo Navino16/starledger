@@ -1,0 +1,45 @@
+{
+  "synthetic": false,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000103",
+    "account": {
+      "serverId": 808,
+      "lang": "en",
+      "playerId": 100001,
+      "playerName": "Tester"
+    },
+    "observedAt": 1794480476168,
+    "serverUtcOffsetMinutes": 0,
+    "msgId": 4752600,
+    "messageType": 61,
+    "subtabId": 22,
+    "raw": {
+      "messagetype": "61",
+      "timestamp": "1794477532",
+      "date": "2026-11-12T09:58:52.000Z",
+      "coords": "5:200:1",
+      "discoverytype": "artifacts",
+      "artifactsfound": "14",
+      "artifactssize": "normal"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:4752600",
+    "occurredAt": 1794477532000,
+    "event": {
+      "kind": "lifeform_discovery",
+      "coords": {
+        "galaxy": 5,
+        "system": 200,
+        "position": 1
+      },
+      "result": "artifacts",
+      "lifeform": null,
+      "xp": null,
+      "artifacts": 14,
+      "artifactsSize": "normal"
+    }
+  }
+}

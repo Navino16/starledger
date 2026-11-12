@@ -170,6 +170,13 @@ fleet lost (OGL l.8738, l.8767).
 | `lifeformalreadyowned` | `"1"` / other, optional | boolean | TRK `msg/lifeform` |
 | `shipslost` | not applicable to 61 | Discoveries involve no fleet ships; not read (OGLight reads the field for both 41 and 61, but that was only an inference) | OGL l.8734 |
 
+Verified on PTS 2026-11-12: `discoverytype` is present for `artifacts`, `lifeform-xp` and `ship-lost`
+and **absent for a discovery with no result** (a message with only `messagetype`, `timestamp`,
+`date` and `coords`, i.e. `none`). `lifeform-found` was not seen. A `lifeform-xp` message also
+carries `lifeformdiscovered` (localized lifeform name, e.g. `Kaeleshs`) and `lifeformalreadyowned`
+(`"1"`); an `artifacts` message carries `artifactsfound` and `artifactssize` (`normal`, counts
+matching the in-game display); a `ship-lost` message carries no other attribute.
+
 OGLight classifies 61 by `artifactsfound > 0` → artifact, else `lifeformgainedexperience > 0` →
 lifeform XP, else nothing (OGL l.8742–8746).
 
@@ -193,6 +200,18 @@ Raw attributes (all JSON except `coords`):
 | `loot.resources` | array of `{ "resource": "metal"\|"crystal"\|"deuterium", "amount": n }` | TRK `msg/combat`, OGL l.8852–8854 |
 | `debris.resources` | array of `{ "resource", "total": n, "remaining": n }` (Tracker reads `total`, OGLight reads `remaining`) | TRK `msg/combat`, OGL l.8888–8891 |
 | `repairedTechnologies` | array of `{ "technologyId", "amount" }` (defences/ships repaired for the planet owner) | OGL l.8880–8883 |
+
+Verified on PTS 2026-11-12 (probes attacking an empty inactive moon):
+- `combatrounds` can be `[]` (a fight with no round): no ship is lost.
+- `loot.resources` also lists `food` (and `loot.percentage`); amounts of unknown resources are
+  ignored when summing metal / crystal / deuterium.
+- The game writes empty lists as `[]`: `debris.resources` (with `requiredShips`,
+  `shipsUsedForRecycling`, `totalRequiredShips`) and `repairedTechnologies`; they are not omitted.
+- Each `fleets[]` entry also has `spaceObject`, `combatResearchPercentage` (array of
+  `{ "id", "percentage" }`) and, for a defender without ships, `fleetId` `-1` and
+  `combatTechnologies` `[]`. `combatTechnologies[]` entries carry `amount`.
+- `result` also has `totalValueOfUnitsLost`, `deathStarDestroyed`, `moonCreation`, `honor` and
+  `tacticalRetreat`.
 
 No `lootFactor` field exists in the raw data: it is a sign Tracker derives itself
 (+1 attacker who won, −1 defending planet owner who lost, 0 otherwise; 0 for expedition fights)
@@ -227,6 +246,10 @@ OGLight treats a 48 message as probe-only when `shipslost` contains only key `21
 | `targetcoordinates` | `"g:s:p"` (debris field) | TRK `msg/debris` |
 | `coords` | `"g:s:p"` (OGLight reads this one instead) | OGL l.8786 |
 | `recycledresources` | JSON `{ "metal": n, "crystal": n, "deuterium"?: n }` (deuterium may be absent) | TRK `msg/debris`, OGL l.8787 |
+
+Verified on PTS 2026-11-12: the message also has `recycleramount`, `totalcapacity`,
+`debrisresources` (JSON `{ "metal", "crystal", "deuterium" }`, all three keys) and
+`recycledresources` with all three keys too; `coords` equals `targetcoordinates`.
 
 ### 3.6 Wreckfield (54)
 

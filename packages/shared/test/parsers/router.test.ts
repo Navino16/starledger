@@ -17,7 +17,7 @@ describe('parseMessage', () => {
   });
 
   it('exposes the parser version and tracked types', () => {
-    expect(PARSER_VERSION).toBe(1);
+    expect(PARSER_VERSION).toBe(2);
     expect(TRACKED_MESSAGE_TYPES).toEqual([25, 32, 33, 34, 41, 48, 54, 61]);
   });
 
