@@ -648,9 +648,11 @@ Seen on a live account (2026-11-12), lithium version only:
 - `.collectSummaryRewards .rewardLine`: the sum of the listed waves; `.collectDeliveryTarget`: the
   receiving planet.
 - `.collectTotalValue`: total lithium cost of the listed waves (dot-grouped), `.have`: lithium owned.
-- The overlay lists only the waves already fought and not yet collected: in the capture the
-  mission was still running (wave 3 of 3 to come), so 2 waves were listed. Collecting again later
-  pays for the remaining waves.
+- The overlay lists the waves already fought: in the first capture the mission was still running
+  (wave 3 of 3 to come), so 2 waves were listed. On a second collect of the same mission (second
+  capture), waves 1 and 2 are listed again as `.collectWaveRow.collected` with `.cwCost` =
+  "Récompenses récupérées" (localized text, no number), and only the `affordable` wave 3 counts:
+  `.collectTotalValue` and `.collectSummaryRewards` cover the waves paid by this collect only.
 - **The mission's `.rewardCostsValue` is the cost of all its waves**, not of one collect (3 × the
   wave cost in the capture).
 - **(gap)** Rows without `affordable` and the Dark Matter overlay (`.orionCollectRewardsDarkMatter`,
