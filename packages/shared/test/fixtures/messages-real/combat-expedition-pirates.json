@@ -1,0 +1,59 @@
+{
+  "synthetic": false,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000209",
+    "account": {
+      "serverId": 283,
+      "lang": "fr",
+      "playerId": 100001,
+      "playerName": "Tester"
+    },
+    "observedAt": 1794480000000,
+    "serverUtcOffsetMinutes": 0,
+    "msgId": 11490166,
+    "messageType": 25,
+    "subtabId": 21,
+    "raw": {
+      "messagetype": "25",
+      "timestamp": "1794424099",
+      "date": "2026-11-11T19:08:19.000Z",
+      "hashcode": "cr-fr-283-0000000000000000000000000000000000000000",
+      "coords": "4:152:16",
+      "defenderspaceobject": "{\"id\":null,\"type\":\"planet\",\"name\":\"Moon A\",\"coordinates\":{\"galaxy\":4,\"system\":152,\"position\":16},\"owner\":{\"type\":\"player\",\"id\":100001,\"name\":\"Tester\",\"alliance\":{\"id\":300001,\"name\":\"Alliance One\",\"tag\":\"AL1\",\"classId\":0},\"rankId\":null,\"status\":[],\"classId\":0}}",
+      "fleets": "[{\"side\":\"defender\",\"fleetId\":1,\"player\":{\"type\":\"player\",\"id\":100001,\"name\":\"Tester\",\"alliance\":{\"id\":300001,\"name\":\"Alliance One\",\"tag\":\"AL1\",\"classId\":0},\"rankId\":null,\"status\":[],\"classId\":0},\"spaceObject\":{\"id\":1001,\"name\":\"Moon A\",\"type\":\"moon\",\"coordinates\":{\"galaxy\":4,\"system\":152,\"position\":1}},\"combatResearchPercentage\":[{\"id\":109,\"percentage\":0},{\"id\":110,\"percentage\":0},{\"id\":111,\"percentage\":0}],\"combatTechnologies\":[{\"technologyId\":203,\"amount\":3070},{\"technologyId\":210,\"amount\":1},{\"technologyId\":207,\"amount\":1},{\"technologyId\":219,\"amount\":1}]},{\"side\":\"attacker\",\"fleetId\":-1,\"player\":{\"type\":\"npc\",\"id\":99999,\"name\":\"Pirates\"},\"spaceObject\":{\"id\":0,\"name\":\"\",\"type\":\"planet\",\"coordinates\":{\"galaxy\":4,\"system\":152,\"position\":16}},\"combatResearchPercentage\":[{\"id\":109,\"percentage\":0},{\"id\":110,\"percentage\":0},{\"id\":111,\"percentage\":0}],\"combatTechnologies\":[{\"technologyId\":204,\"amount\":5},{\"technologyId\":203,\"amount\":847}]}]",
+      "combatrounds": "[{\"statistics\":[{\"side\":\"defender\",\"strength\":43030,\"hits\":3073,\"absorbedDamage\":9631},{\"side\":\"attacker\",\"strength\":9892,\"hits\":852,\"absorbedDamage\":34471}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":203,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":3070},{\"technologyId\":210,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":207,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":219,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":-1,\"technologies\":[{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":5},{\"technologyId\":203,\"destroyed\":1,\"destroyedTotal\":1,\"remaining\":846}]}]},{\"statistics\":[{\"side\":\"defender\",\"strength\":43030,\"hits\":3073,\"absorbedDamage\":9609},{\"side\":\"attacker\",\"strength\":9881,\"hits\":851,\"absorbedDamage\":34732}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":203,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":3070},{\"technologyId\":210,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":207,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":219,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":-1,\"technologies\":[{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":5},{\"technologyId\":203,\"destroyed\":1,\"destroyedTotal\":2,\"remaining\":845}]}]},{\"statistics\":[{\"side\":\"defender\",\"strength\":43030,\"hits\":3073,\"absorbedDamage\":9609},{\"side\":\"attacker\",\"strength\":9870,\"hits\":850,\"absorbedDamage\":34867}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":203,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":3070},{\"technologyId\":210,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":207,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":219,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":-1,\"technologies\":[{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":5},{\"technologyId\":203,\"destroyed\":1,\"destroyedTotal\":3,\"remaining\":844}]}]},{\"statistics\":[{\"side\":\"defender\",\"strength\":43030,\"hits\":3073,\"absorbedDamage\":9609},{\"side\":\"attacker\",\"strength\":9859,\"hits\":849,\"absorbedDamage\":34367}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":203,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":3070},{\"technologyId\":210,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":207,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":219,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":-1,\"technologies\":[{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":5},{\"technologyId\":203,\"destroyed\":1,\"destroyedTotal\":4,\"remaining\":843}]}]},{\"statistics\":[{\"side\":\"defender\",\"strength\":43030,\"hits\":3073,\"absorbedDamage\":9587},{\"side\":\"attacker\",\"strength\":9848,\"hits\":848,\"absorbedDamage\":34752}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":203,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":3070},{\"technologyId\":210,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":207,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":219,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":-1,\"technologies\":[{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":5},{\"technologyId\":203,\"destroyed\":1,\"destroyedTotal\":5,\"remaining\":842}]}]},{\"statistics\":[{\"side\":\"defender\",\"strength\":43030,\"hits\":3073,\"absorbedDamage\":9576},{\"side\":\"attacker\",\"strength\":9837,\"hits\":847,\"absorbedDamage\":34575}],\"fleets\":[{\"side\":\"defender\",\"fleetId\":1,\"technologies\":[{\"technologyId\":203,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":3070},{\"technologyId\":210,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":207,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1},{\"technologyId\":219,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":1}]},{\"side\":\"attacker\",\"fleetId\":-1,\"technologies\":[{\"technologyId\":204,\"destroyed\":0,\"destroyedTotal\":0,\"remaining\":5},{\"technologyId\":203,\"destroyed\":1,\"destroyedTotal\":6,\"remaining\":841}]}]}]",
+      "result": "{\"winner\":\"none\",\"loot\":{\"percentage\":100,\"resources\":[{\"resource\":\"metal\",\"amount\":0},{\"resource\":\"crystal\",\"amount\":0},{\"resource\":\"deuterium\",\"amount\":0},{\"resource\":\"food\",\"amount\":0}]},\"debris\":{\"resources\":[{\"resource\":\"metal\",\"total\":7200,\"recycled\":0,\"remaining\":7200},{\"resource\":\"crystal\",\"total\":7200,\"recycled\":0,\"remaining\":7200}],\"requiredShips\":[{\"technologyId\":219,\"amount\":1}],\"shipsUsedForRecycling\":[],\"totalRequiredShips\":[{\"technologyId\":219,\"amount\":1}]},\"totalValueOfUnitsLost\":[{\"side\":\"defender\",\"value\":0},{\"side\":\"attacker\",\"value\":72000}],\"deathStarDestroyed\":false,\"repairedTechnologies\":[],\"moonCreation\":{\"chance\":0},\"honor\":null,\"tacticalRetreat\":{\"by\":\"none\",\"supremacy\":0}}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:11490166",
+    "occurredAt": 1794424099000,
+    "event": {
+      "kind": "combat",
+      "coords": {
+        "galaxy": 4,
+        "system": 152,
+        "position": 16
+      },
+      "isExpedition": true,
+      "isProbeOnly": false,
+      "ownSide": "defender",
+      "ownPlanetDefended": true,
+      "outcome": "draw",
+      "loot": {
+        "metal": 0,
+        "crystal": 0,
+        "deuterium": 0
+      },
+      "lootSign": 0,
+      "debrisCreated": {
+        "metal": 7200,
+        "crystal": 7200,
+        "deuterium": 0
+      },
+      "shipsLost": {}
+    }
+  }
+}

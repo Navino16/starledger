@@ -1,0 +1,52 @@
+{
+  "synthetic": false,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000204",
+    "account": {
+      "serverId": 283,
+      "lang": "fr",
+      "playerId": 100001,
+      "playerName": "Tester"
+    },
+    "observedAt": 1794480000000,
+    "serverUtcOffsetMinutes": 0,
+    "msgId": 11523793,
+    "messageType": 41,
+    "subtabId": 22,
+    "raw": {
+      "messagetype": "41",
+      "timestamp": "1794467800",
+      "date": "2026-11-12T07:16:40.000Z",
+      "coords": "1:101:16",
+      "depletion": "1",
+      "size": "2",
+      "expeditionresult": "items",
+      "itemsgained": "[{\"id\":\"c2bad58fcec374d709099d11d0549e59ea7e233e\",\"amount\":1,\"name\":\"Boosteurs d`\\u00e9nergie en argent\"}]"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:11523793",
+    "occurredAt": 1794467800000,
+    "event": {
+      "kind": "expedition",
+      "coords": {
+        "galaxy": 1,
+        "system": 101,
+        "position": 16
+      },
+      "result": "item",
+      "size": 2,
+      "depletion": 1,
+      "resources": null,
+      "darkMatter": null,
+      "shipsFound": null,
+      "shipsLost": null,
+      "itemId": "c2bad58fcec374d709099d11d0549e59ea7e233e",
+      "lifeform": null,
+      "lifeformXp": null,
+      "artifacts": null
+    }
+  }
+}

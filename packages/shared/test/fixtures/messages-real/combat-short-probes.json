@@ -1,0 +1,47 @@
+{
+  "synthetic": false,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000215",
+    "account": {
+      "serverId": 285,
+      "lang": "fr",
+      "playerId": 100001,
+      "playerName": "Tester"
+    },
+    "observedAt": 1794480000000,
+    "serverUtcOffsetMinutes": 0,
+    "msgId": 166770,
+    "messageType": 48,
+    "subtabId": 21,
+    "raw": {
+      "messagetype": "48",
+      "timestamp": "1794233575",
+      "date": "2026-11-09T14:12:55.000Z",
+      "hashcode": "",
+      "coords": "2:271:14",
+      "targetplanetcoordinates": "2:271:14",
+      "targetplanetid": "1001",
+      "targetplanetname": "Planet A",
+      "shipslost": "{\"210\":20}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:166770",
+    "occurredAt": 1794233575000,
+    "event": {
+      "kind": "combat_short",
+      "coords": {
+        "galaxy": 2,
+        "system": 271,
+        "position": 14
+      },
+      "isExpedition": false,
+      "isProbeOnly": true,
+      "shipsLost": {
+        "210": 20
+      }
+    }
+  }
+}

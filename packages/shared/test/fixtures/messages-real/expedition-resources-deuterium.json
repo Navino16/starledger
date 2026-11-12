@@ -1,0 +1,56 @@
+{
+  "synthetic": false,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000207",
+    "account": {
+      "serverId": 283,
+      "lang": "fr",
+      "playerId": 100001,
+      "playerName": "Tester"
+    },
+    "observedAt": 1794480000000,
+    "serverUtcOffsetMinutes": 0,
+    "msgId": 11523805,
+    "messageType": 41,
+    "subtabId": 22,
+    "raw": {
+      "messagetype": "41",
+      "timestamp": "1794467809",
+      "date": "2026-11-12T07:16:49.000Z",
+      "coords": "6:186:16",
+      "depletion": "1",
+      "size": "2",
+      "expeditionresult": "ressources",
+      "resourcesgained": "{\"deuterium\":3683246}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:11523805",
+    "occurredAt": 1794467809000,
+    "event": {
+      "kind": "expedition",
+      "coords": {
+        "galaxy": 6,
+        "system": 186,
+        "position": 16
+      },
+      "result": "resources",
+      "size": 2,
+      "depletion": 1,
+      "resources": {
+        "metal": 0,
+        "crystal": 0,
+        "deuterium": 3683246
+      },
+      "darkMatter": 0,
+      "shipsFound": null,
+      "shipsLost": null,
+      "itemId": null,
+      "lifeform": null,
+      "lifeformXp": null,
+      "artifacts": null
+    }
+  }
+}
