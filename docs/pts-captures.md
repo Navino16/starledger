@@ -45,7 +45,7 @@ Les exports contiennent le pseudo et ceux des autres joueurs : ils sont anonymis
 ### Découvertes de formes de vie (61)
 
 - [x] Expérience de forme de vie gagnée
-- [ ] Forme de vie trouvée
+- [~] Forme de vie trouvée : impossible à capturer sur ce compte (toutes les formes de vie déjà découvertes, le jeu renvoie alors `lifeform-xp` avec `lifeformalreadyowned`). Reste couvert par la fixture synthétique ; non vérifié sur le PTS, accepté (2026-11-12).
 - [x] Vaisseau perdu
 
 ### Recyclage (32)
