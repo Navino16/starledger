@@ -104,7 +104,7 @@ Coordinate parsing: Tracker accepts `g:s:p` with optional surrounding brackets (
 |---|---|---|
 | 25 | Combat report (full) | TRK `raw/OgameRawMessageType.ts`, OGL l.8600 |
 | 32 | Debris field harvest report (recycling) | TRK `raw/OgameRawMessageType.ts`, OGL l.9546 |
-| 33 | Resource transport — **enum value only, never parsed** | TRK `raw/OgameRawMessageType.ts` |
+| 33 | Resource transport: own planets, delivered to or received from another player (3.7) | TRK `raw/OgameRawMessageType.ts`; live 2026-11-12 |
 | 34 | Fleet arrival — **enum value only, never parsed** | TRK `raw/OgameRawMessageType.ts` |
 | 35 | Excluded from combat parsing by OGLight; meaning **(gap)** | OGL l.8830 |
 | 41 | Expedition result | TRK `raw/OgameRawMessageType.ts`, OGL l.9546 |
@@ -265,15 +265,25 @@ Verified on PTS 2026-11-12: the message also has `recycleramount`, `totalcapacit
 ### 3.7 Transport / fleet arrival / resources delivered
 
 - Tracker declares type `33` = resource transport and `34` = fleet arrival but parses neither
-  (TRK `raw/OgameRawMessageType.ts`; no other reference in the codebase).
-- OGLight reads, for every non-54 message in subtabs 23 and 24, the attribute
-  `data-raw-cargo` as JSON `{ "metal", "crystal", "deuterium", ... }` and labels it "cargo"
-  when any value > 0 (OGL l.8788, l.8800–8805). **(inferred)** these are transport / arrival
-  messages carrying the delivered resources.
-- **(gap)** Neither source reads sender / receiver player ids or planet ids on these messages,
-  nor confirms the numeric type of a "resources delivered by another player" message.
-  `data-raw-targetplayerid` is read globally by OGLight (OGL l.8567) but only used for spy reports.
-  Must be captured on the PTS.
+  (TRK `raw/OgameRawMessageType.ts`). OGLight reads `data-raw-cargo` on subtabs 23 and 24
+  (OGL l.8788, l.8800–8805).
+- **Type 33 covers the three transport cases** (live, 2026-11-12: 281 + 50 messages, subtab 23).
+  They are told apart by `sourceplayerid` / `targetplayerid` against the account's player id:
+
+| Case | `sourceplayerid` | `targetplayerid` | Title (fr) | `resourcesbefore` |
+|---|---|---|---|---|
+| Between own planets | own | own | | present |
+| Delivered to another player | own | other | Arrivée sur une planète | **absent** |
+| Received from another player | other | own | Livraison de ressources par une flotte étrangère | present |
+
+- Common attributes: `timestamp`, `date`, `cargo` (JSON `{ "metal", "crystal", "deuterium",
+  "food" }`, the delivered amounts), `source*` and `target*` planet attributes (`planetid`,
+  `planetcoordinates`, `planettype` 1 planet / 3 moon, `planetname`, `playerid`, `playername`),
+  `sourceplaneticon`. No `hashcode`: the message id is the only key.
+- `resourcesbefore` (JSON, same keys) is the receiving planet's stock before delivery, present
+  only when the receiver is the account.
+- Type 34 (fleet arrival, ~280 live messages) was only seen between own planets or from an
+  unknown source to own planets; it is not needed for transports.
 
 ### 3.8 Espionage report (bonus, subtab 20)
 
@@ -551,8 +561,7 @@ Planet/target type ids: `1` planet, `2` debris field, `3` moon
 
 ## 8. Main gaps to capture on the PTS
 
-1. **Transport / resources delivered**: numeric type of the message, presence of sender and
-   receiver player ids and planet ids, exact keys of `data-raw-cargo`. Types 33/34 are only named.
+1. ~~Transport / resources delivered~~: type 33 for the three cases, told apart by player ids (3.7).
 2. ~~Fleet id in `sendFleet` response~~: absent (6.3). Only the movement page exposes it (6.5).
 3. ~~`miniFleet` consumption~~: absent (6.4); galaxy dispatches have an unknown consumption.
 4. **Timezone**: no meta tag; only `serverData.xml` `timezone` / `timezoneOffset` (format unknown)

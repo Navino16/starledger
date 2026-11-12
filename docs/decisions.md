@@ -198,6 +198,5 @@ Le design §6.4 prévoit la lecture et l'écriture des réglages par l'API ; le 
 
 - Réponses ToolDev sur le fil forum (masquage d'OGLight, données d'autres joueurs dans les rapports de combat, fond sombre des fenêtres réglages et détail).
 - Anomalies (scope 13) : réponse de `collectRewards` avec bonus de lithium, message 76 avec une récompense autre que ressources ou vaisseaux (si l'occasion se présente) (liste à jour dans `docs/pts-captures.md`).
-- Identification des trois cas de transport (scope 12).
 - Installer la GitHub App Codecov (facultatif).
 - Réactiver CodeQL dans le ruleset après le premier merge `develop` → `main`.

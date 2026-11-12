@@ -37,7 +37,7 @@
 | 9 | Userscript : encart et détail | ✅ |
 | 10 | Validation PTS : vraies captures, reparse, audit | ☐ |
 | 11 | Carburant | ☐ (code fait, vérification PTS 11.2 step 5) |
-| 12 | Transports entre joueurs | ⛔ attend les captures (design §9.2) |
+| 12 | Transports entre joueurs | ☐ (captures reçues, à détailler) |
 | 13 | Anomalies | ☐ (captures reçues, à détailler) |
 | 14 | Dossier de tolérance et publication | ☐ |
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
@@ -1046,9 +1046,9 @@ Branche : `feature/userscript-fuel`.
 
 ---
 
-## Scope 12 — Transports entre joueurs ⛔
+## Scope 12 — Transports entre joueurs
 
-**Bloqué** jusqu'aux captures du design §9.2 : transport reçu, transport livré et transport entre ses propres planètes. Ce scope sera détaillé quand elles seront disponibles.
+Captures reçues le 2026-11-12 : les trois cas sont du type 33 (`docs/ogame-data-formats.md` §3.7). Ce scope reste à détailler en tâches.
 
 Travail prévu :
 - un parseur `TransportEvent` `{kind:'transport', direction:'received'|'delivered', counterpartPlayerId, resources}`, qui exclut les transports dont la contrepartie est le joueur lui-même ;

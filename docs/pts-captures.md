@@ -59,12 +59,12 @@ En plus des exports PTS, l'utilisateur a fourni 16 pages de messages de son comp
 
 ### Transports (scope 12)
 
-281 messages de transport (type 33) du compte live sont disponibles pour concevoir le parseur ; il faut encore identifier les trois cas ci-dessous parmi eux.
+Les trois cas sont tous du type 33, distingués par les identifiants des joueurs source et cible (`docs/ogame-data-formats.md` §3.7).
 
 
-- [ ] Ressources reçues d'un autre joueur
-- [ ] Ressources livrées à un autre joueur
-- [ ] Transport entre ses propres planètes (doit être exclu)
+- [x] Ressources reçues d'un autre joueur (compte live, 2026-11-12)
+- [x] Ressources livrées à un autre joueur (compte live, 2026-11-12)
+- [x] Transport entre ses propres planètes (doit être exclu) : 281 + 48 messages (compte live, 2026-11-12)
 
 ### Anomalies (scope 13)
 
