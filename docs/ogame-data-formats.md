@@ -615,7 +615,12 @@ observed on the network.
 - Collecting launches a reward-delivery fleet; the reward arrives later as message 76 (3.9).
 - The collect overlay is loaded from `page=componentOnly&component=orion&action=fetchCollectRewardsOverlay&ajax=1&spaceObjectId=<id>`
   (9.4); with the "don't show again" preference, `.directCollect` posts without any overlay.
-- `lithiumBonus` is the only refund-like field found; its amount format is unknown.
+- `collectRewards` response, captured 2026-11-12: `status`, `success`, `message` (localized
+  "Récompenses récupérées"), `canCollectReward` (false once nothing is left), `lithiumBonus`
+  (`null` when there is no bonus), `ipiMenuData`, `newAjaxToken`, `components`. **No cost and no
+  reward amounts**: the cost comes from the overlay (9.4), the rewards from message 76.
+- `lithiumBonus` is the only refund-like field found; its non-null shape (`{ title, message }` per
+  the script) and where the amount sits are unknown.
 - No request for deleting a mission was found in the script.
 
 ### 9.3 DOM read on the page
