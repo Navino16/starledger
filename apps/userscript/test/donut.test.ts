@@ -72,6 +72,14 @@ describe('renderDonut', () => {
     expect(d.querySelector('svg')?.getAttribute('aria-label')).toBe(t('noExpedition'));
   });
 
+  it('labels the chart ? without outcomes and keeps the no-expedition text for {}', () => {
+    const t = createT('en');
+    const label = (o: Record<string, number> | undefined) =>
+      renderDonut(document, t, o).querySelector('svg')?.getAttribute('aria-label');
+    expect(label(undefined)).toBe('?');
+    expect(label({})).toBe(t('noExpedition'));
+  });
+
   describe('arc geometry', () => {
     const CIRC = 2 * Math.PI * 40;
     const arcs = (d: HTMLElement) =>

@@ -91,7 +91,8 @@ export function renderDonut(
     item.dataset.legend = key;
     legend.append(item);
   }
-  svg.setAttribute('aria-label', summaries.length > 0 ? summaries.join(', ') : t('noExpedition'));
+  const emptyLabel = outcomes === undefined ? '?' : t('noExpedition');
+  svg.setAttribute('aria-label', summaries.length > 0 ? summaries.join(', ') : emptyLabel);
   const center = el(doc, 'span', {
     className: 'starledger-donut-total',
     textContent: outcomes === undefined ? '?' : String(total),
