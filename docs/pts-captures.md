@@ -38,8 +38,8 @@ En plus des exports PTS, l'utilisateur a fourni 16 pages de messages de son comp
 ### Combats
 
 - [x] Combats en défense, perdus avec et sans pertes, et nuls (compte live, 2026-11-12) ; reste un combat en attaque à plusieurs rounds
-- [ ] Combat terminé au premier round (48)
-- [ ] Espionnage où seules les sondes se battent et sont détruites
+- [x] Combat terminé au premier round (48), compte live 2026-11-12
+- [x] Espionnage où les sondes sont détruites (48, `shipslost` = sondes), compte live 2026-11-12
 - [ ] Défense sans réparation de défenses : le jeu omet-il la liste ou écrit-il `[]` ? Réponse partielle (PTS 2026-11-12) : `repairedTechnologies` vaut `[]` dans le rapport d'une attaque de sondes sans combat ; à confirmer sur une vraie défense
 - [x] Attaque de sondes envoyée sur la lune vide d'un inactif, rapport à zéro round (25, `combatrounds` vide, vainqueur attaquant)
 - [ ] Combat sans butin : même question. Réponse partielle (PTS 2026-11-12) : la liste `loot.resources` est présente avec des montants à 0 (et une entrée `food`), `debris.resources` vaut `[]`. Un combat sans butin et sans débris a donc bien des listes écrites `[]` ; reste à confirmer pour un combat avec butin réel
@@ -67,6 +67,9 @@ En plus des exports PTS, l'utilisateur a fourni 16 pages de messages de son comp
 - [ ] Transport entre ses propres planètes (doit être exclu)
 
 ### Anomalies (scope 13)
+
+Types inconnus vus dans l'onglet Divers d'un compte live (2026-11-12), sans aucune ressource : 70, 75, 76, 77. Leur signification reste à identifier (texte affiché dans le jeu).
+
 
 - [ ] Messages reçus en fin de mission d'anomalie (HTML et HAR)
 - [ ] Rapport de combat ou de transport classique éventuel produit par la même mission (pour éviter de compter deux fois butin et récompense)
