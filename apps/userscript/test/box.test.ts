@@ -11,7 +11,10 @@ import { formatAmount, formatTime } from '../src/ui/format';
 
 const ACCOUNT: AccountRef = { serverId: 808, lang: 'en', playerId: 42, playerName: 'Neo' };
 
-const statsOf = (patch: Partial<StatsResponse['summary']['fuel']> = {}): StatsResponse =>
+const statsOf = (
+  patch: Partial<StatsResponse['summary']['fuel']> = {},
+  lithium?: Partial<StatsResponse['summary']['anomalies']['lithium']>,
+): StatsResponse =>
   ({
     period: 'day',
     range: null,
@@ -28,6 +31,7 @@ const statsOf = (patch: Partial<StatsResponse['summary']['fuel']> = {}): StatsRe
         msu: 999999,
       },
       fuel: { recorded: 12000, departures: 5, unknownCount: 0, ...patch },
+      ...(lithium ? { anomalies: { lithium } } : {}),
       conflictCount: 0,
     },
   }) as unknown as StatsResponse;
@@ -114,6 +118,20 @@ describe('renderBox', () => {
   it('shows the known fuel beside the unknown departures, never counting them as 0', () => {
     const { box } = render(model({ stats: statsOf({ recorded: 12000, unknownCount: 2 }) }));
     expect(tile(box, 'fuel')).toBe('12k + ? (2)');
+  });
+
+  it('shows the net lithium, negative included', () => {
+    const net = (n: number) =>
+      tile(render(model({ stats: statsOf({}, { net: n, unknownCount: 0 }) })).box, 'lithium');
+    expect(net(-1500)).toBe('-1.5k');
+    expect(net(300)).toBe('300');
+  });
+
+  it('marks partial lithium and shows ? without anomalies or stats', () => {
+    const partial = statsOf({}, { net: -1500, unknownCount: 2 });
+    expect(tile(render(model({ stats: partial })).box, 'lithium')).toBe('-1.5k + ? (2)');
+    expect(tile(render(model()).box, 'lithium')).toBe('?');
+    expect(tile(render(model({ stats: null, statsAt: null })).box, 'lithium')).toBe('?');
   });
 
   it('marks cached figures as old with their time', () => {
