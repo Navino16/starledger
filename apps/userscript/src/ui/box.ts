@@ -25,6 +25,8 @@ const TILES = [
   ['msu', 'tileMsu'],
 ] as const satisfies readonly [keyof StatsResponse['summary']['tiles'], MessageKey][];
 
+const TILE_ORDER = ['metal', 'crystal', 'deuterium', 'darkMatter', 'artefacts', 'lithium', 'msu'];
+
 function tile(doc: Document, label: string, value: string): HTMLElement {
   return el(
     doc,
@@ -33,12 +35,6 @@ function tile(doc: Document, label: string, value: string): HTMLElement {
     el(doc, 'span', { className: 'starledger-label', textContent: label }),
     el(doc, 'span', { className: 'starledger-value', textContent: value }),
   );
-}
-
-function fuelValue(stats: StatsResponse | null): string {
-  if (!stats) return '?';
-  const { recorded, unknownCount } = stats.summary.fuel;
-  return formatPartial(recorded, unknownCount);
 }
 
 function lithiumValue(stats: StatsResponse | null): string {
@@ -51,15 +47,16 @@ function lithiumValue(stats: StatsResponse | null): string {
 
 const DOT_CLASS = { up_to_date: 'is-ok', pending: 'is-pending', error: 'is-error' } as const;
 
-function statusText(model: BoxModel, t: T): string {
+function statusText(model: BoxModel, t: T): { text: string; title?: string } {
   const { state } = model;
   if (state.status === 'error' && state.error) {
-    return t('statusError', { error: t(errorKey(state.error)) });
+    return { text: t('statusError', { error: t(errorKey(state.error)) }) };
   }
-  if (state.status === 'pending') return t('statusPending', { n: String(state.pending) });
-  return state.lastSyncAt === null
-    ? t('statusUpToDateNever')
-    : t('statusUpToDate', { time: formatTime(state.lastSyncAt) });
+  if (state.status === 'pending') return { text: t('statusPending', { n: String(state.pending) }) };
+  if (state.lastSyncAt === null) return { text: t('statusUpToDateNever') };
+  // The green dot says "up to date": the time alone keeps the header on one line in the 168px box
+  const time = formatTime(state.lastSyncAt);
+  return { text: time, title: t('statusUpToDate', { time }) };
 }
 
 export function renderBox(container: HTMLElement, model: BoxModel, handlers: BoxHandlers): void {
@@ -77,18 +74,21 @@ export function renderBox(container: HTMLElement, model: BoxModel, handlers: Box
     className: 'starledger-tiles',
     title: t('detailsHint'),
   });
+  const nodes = new Map<string, HTMLElement>();
   for (const [key, label] of TILES) {
     const node = tile(doc, t(label), formatAmount(stats ? stats.summary.tiles[key] : null));
     node.dataset.tile = key;
-    tiles.append(node);
+    nodes.set(key, node);
   }
-  const fuel = tile(doc, t('tileFuel'), fuelValue(stats));
-  fuel.dataset.tile = 'fuel';
-  fuel.classList.add('starledger-fuel');
-  tiles.append(fuel);
   const lithium = tile(doc, t('tileLithium'), lithiumValue(stats));
   lithium.dataset.tile = 'lithium';
-  tiles.append(lithium);
+  nodes.set('lithium', lithium);
+  nodes.get('msu')?.classList.add('starledger-wide');
+  // Fuel has no tile: it is already deducted from the deuterium tile and shown in the detail
+  for (const key of TILE_ORDER) {
+    const node = nodes.get(key);
+    if (node) tiles.append(node);
+  }
   tiles.addEventListener('click', onOpenDetails);
 
   const { state } = model;
@@ -96,18 +96,21 @@ export function renderBox(container: HTMLElement, model: BoxModel, handlers: Box
     className: `starledger-dot ${DOT_CLASS[state.status] ?? 'is-ok'}`,
   });
   if (state.status === 'error' && state.error) dot.title = t(errorKey(state.error));
+  const status = statusText(model, t);
+  const stateNode = el(
+    doc,
+    'span',
+    { className: 'starledger-state' },
+    dot,
+    el(doc, 'span', { className: 'starledger-status', textContent: status.text }),
+  );
+  if (status.title) stateNode.title = status.title;
   const header = el(
     doc,
     'div',
     { className: 'starledger-head' },
     el(doc, 'strong', { textContent: t('boxTitle') }),
-    el(
-      doc,
-      'span',
-      { className: 'starledger-state' },
-      dot,
-      el(doc, 'span', { className: 'starledger-status', textContent: statusText(model, t) }),
-    ),
+    stateNode,
   );
   if (model.stale) {
     const text =

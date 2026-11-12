@@ -21,6 +21,7 @@ Décisions prises pendant l'exécution du plan (scopes 1 à 7). Chaque entrée i
 | 2026-11-12 | Antimatière des récupérations d'anomalie | Confirme la Ruling : l'antimatière payée pour une récupération n'est pas déduite de la tuile AM (tuile = AM trouvée) ; elle est affichée à part dans le détail des anomalies. À revoir à l'usage. |
 | 2026-11-12 | Vaisseaux des récompenses d'anomalie (remplace l'arbitrage initial à 100 %) | Valorisés selon un réglage serveur `anomalyShipRatio` par univers, comme `expeditionShipRatio` (défaut 100 %). Tâche 13.5. |
 | 2026-11-12 | Arrivées de flotte (34) déjà stockées | Rien à faire tant qu'aucun serveur n'est configuré, mais le nettoyage est à prévoir : ignorer à l'ingestion et au `reparse` les types de message non suivis. Tâche 10.3. |
+| 2026-11-12 | Tuiles de l'encart | Pas de tuile carburant : il est déjà déduit de la tuile deut (sauf `ignoreConsumption`) et reste visible dans le détail. Ordre : métal, cristal, deut / AM, artefacts, lithium / MSU sur toute la largeur. Quand l'encart est à jour, l'en-tête n'affiche que l'heure (libellé complet au survol). Design §5.6 amendé. |
 
 ## Arbitrages pris sans l'utilisateur
 

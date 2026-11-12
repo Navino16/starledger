@@ -189,7 +189,7 @@ Règles de suivi :
 - Il s'affiche sur toutes les pages du jeu, à l'endroit habituel (sous `#links`), et doit rester utilisable sur mobile.
 - Il montre les **stats partagées du serveur** pour **le compte et l'univers en cours**, **pour la journée en cours** (heure serveur).
 - **Indicateurs de base** (inspirés d'OGLight) : métal, cristal, deut, AM, artefacts, MSU.
-- **Indicateurs ajoutés** : carburant enregistré, avec sa couverture si elle est partielle, et lithium net des anomalies.
+- **Indicateur ajouté** : lithium net des anomalies. Le carburant n'a pas de tuile : il est déjà déduit de la tuile deut et figure dans le détail, avec sa couverture si elle est partielle *(décision utilisateur du 2026-11-12)*.
 - Il indique la **fraîcheur** des données et ce qui est **en attente** d'envoi.
 - **Détail au clic**, inspiré de la fenêtre d'OGLight :
   - sélection jour, semaine, mois ou total ;
