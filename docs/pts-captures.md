@@ -54,7 +54,7 @@ En plus des exports PTS, l'utilisateur a fourni 16 pages de messages de son comp
 ### Recyclage (32)
 
 - [ ] Champ avec du métal **et** du cristal
-- [ ] Champ plus gros que la capacité des recycleurs (il en reste)
+- [x] Champ plus gros que la capacité des recycleurs (il en reste) : `recycledresources` est plafonné à `totalcapacity` et c'est lui qui est compté, pas `debrisresources` (compte live, 2026-11-12)
 - [ ] Recyclage en position 16, issu d'une expédition
 
 ### Transports (scope 12)
