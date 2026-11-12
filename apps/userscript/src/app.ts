@@ -1,5 +1,6 @@
-import type { AccountRef, ApiError } from '@app/shared';
-import { installMessageCollector, type PageWindow } from './collect/messages';
+import type { AccountRef, ApiError, Observation } from '@app/shared';
+import { type FleetPageWindow, installFleetCollector } from './collect/fleet';
+import { installMessageCollector } from './collect/messages';
 import { readAccount, readServerUtcOffset, todayKey } from './env/page';
 import type { Gm } from './gm';
 import { createT, detectLang } from './i18n';
@@ -20,7 +21,7 @@ import { CLIENT_VERSION } from './version';
 export function main(
   gm: Gm,
   doc: Document,
-  win?: PageWindow & { serverTime?: unknown },
+  win?: FleetPageWindow & { serverTime?: unknown },
   onCollected: () => void = () => {},
 ): void {
   //! AGENTS.md §4: our errors must never break the game's page or its ajax chain
@@ -32,7 +33,7 @@ export function main(
 function bootstrap(
   gm: Gm,
   doc: Document,
-  win?: PageWindow & { serverTime?: unknown },
+  win?: FleetPageWindow & { serverTime?: unknown },
   onCollected: () => void = () => {},
 ): void {
   if (!isAllowedUniverse(doc)) return;
@@ -137,25 +138,24 @@ function bootstrap(
 
   if (win && account && serverUtcOffsetMinutes !== null) {
     // Unknown is not 0: without both, nothing is collected
-    installMessageCollector(win, {
-      doc,
-      ctx: { account, serverUtcOffsetMinutes },
-      onObservations: (observations) => {
-        const current = loadSettings(gm);
-        //! AGENTS.md §1.9: consent re-read before every enqueue
-        if (!current.consent) return;
-        const { accepted } = ctx.queue.enqueue(observations);
-        if (accepted === 0) return;
-        refreshBox();
-        if (current.serverUrl && current.apiKey) {
-          //! AGENTS.md §4: our server only, after a player-triggered response, no game request
-          void syncThenStats(createApi(gm, current, CLIENT_VERSION), current.deviceId).catch(
-            () => {},
-          );
-        }
-        onCollected();
-      },
-    });
+    const onObservations = (observations: Observation[]) => {
+      const current = loadSettings(gm);
+      //! AGENTS.md §1.9: consent re-read before every enqueue
+      if (!current.consent) return;
+      const { accepted } = ctx.queue.enqueue(observations);
+      if (accepted === 0) return;
+      refreshBox();
+      if (current.serverUrl && current.apiKey) {
+        //! AGENTS.md §4: our server only, after a player-triggered response, no game request
+        void syncThenStats(createApi(gm, current, CLIENT_VERSION), current.deviceId).catch(
+          () => {},
+        );
+      }
+      onCollected();
+    };
+    const collectorDeps = { doc, ctx: { account, serverUtcOffsetMinutes }, onObservations };
+    installMessageCollector(win, collectorDeps);
+    installFleetCollector(win, collectorDeps);
   }
 
   if (settings.serverUrl && settings.apiKey) {
