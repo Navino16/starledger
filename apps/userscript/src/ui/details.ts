@@ -155,7 +155,10 @@ function balanceTable(doc: Document, t: T, stats: StatsResponse) {
       ),
     ),
   );
-  const fuelCell = fuel?.unknownCount > 0 ? `? (${fuel.unknownCount})` : num(fuel?.recorded);
+  const fuelCell =
+    fuel?.unknownCount > 0
+      ? `${num(fuel.recorded)} + ? (${fuel.unknownCount})`
+      : num(fuel?.recorded);
   const toCell = (c: Cell) => el(doc, 'td', {}, ...c);
   for (const [key, label] of CATEGORIES) {
     const cells: Cell[] =

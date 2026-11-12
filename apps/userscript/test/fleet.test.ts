@@ -1,6 +1,10 @@
 import { type FleetDispatchObservation, fleetDispatchObservationSchema } from '@app/shared';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { main } from '../src/app';
 import { installFleetCollector } from '../src/collect/fleet';
+import { memoryGm } from '../src/gm';
+import { saveSettings } from '../src/storage';
+import { createQueue } from '../src/sync/queue';
 
 const account = { serverId: 808, lang: 'en', playerId: 42, playerName: 'Zed' };
 const ctx = { account, serverUtcOffsetMinutes: 60 };
@@ -182,6 +186,34 @@ describe('installFleetCollector', () => {
     expect(delivered(onObservations, 1).ships).toEqual({});
   });
 
+  it('keeps ships unknown ({}) when shipCount is absent from a miniFleet request', () => {
+    const { fire, onObservations } = setup(null);
+    const xhr = { responseJSON: { response: { success: true } } };
+    const data = 'mission=6&galaxy=6&system=4&position=14&type=1';
+    fire('ajaxSend', xhr, { url: MINI_URL, data });
+    fire('ajaxSuccess', xhr, { url: MINI_URL, data });
+    expect(delivered(onObservations).ships).toEqual({});
+  });
+
+  it('records nothing when targetPlanet is absent at sendFleet', () => {
+    const dispatcher = defaultDispatcher();
+    delete (dispatcher as { targetPlanet?: unknown }).targetPlanet;
+    const { fire, onObservations } = setup(dispatcher);
+    const xhr = { responseJSON: { success: true } };
+    fire('ajaxSend', xhr, { url: SEND_URL });
+    fire('ajaxSuccess', xhr, { url: SEND_URL });
+    expect(onObservations).not.toHaveBeenCalled();
+  });
+
+  it('records one observation when ajaxSuccess fires twice for the same request', () => {
+    const { fire, onObservations } = setup();
+    const xhr = { responseJSON: { success: true } };
+    fire('ajaxSend', xhr, { url: SEND_URL });
+    fire('ajaxSuccess', xhr, { url: SEND_URL });
+    fire('ajaxSuccess', xhr, { url: SEND_URL });
+    expect(onObservations).toHaveBeenCalledTimes(1);
+  });
+
   it('records nothing for a failed miniFleet', () => {
     const { fire, onObservations } = setup(null);
     const xhr = { responseJSON: { success: true, response: { success: false } } };
@@ -210,5 +242,40 @@ describe('installFleetCollector', () => {
     expect(() => fire('ajaxSend', xhr, { url: SEND_URL })).not.toThrow();
     expect(() => fire('ajaxSuccess', xhr, { url: SEND_URL })).not.toThrow();
     expect(onObservations).not.toHaveBeenCalled();
+  });
+});
+
+describe('app wiring', () => {
+  const run = (consent: boolean) => {
+    document.head.innerHTML =
+      '<meta name="ogame-universe" content="s808-en.ogame.gameforge.com"><meta name="ogame-player-id" content="42"><meta name="ogame-player-name" content="Zed">';
+    document.body.innerHTML = '<div id="links"></div>';
+    const gm = memoryGm();
+    if (consent) saveSettings(gm, { consent: true });
+    const handlers: Record<string, Handler[]> = {};
+    const win = {
+      serverTime: new Date(),
+      fleetDispatcher: defaultDispatcher(),
+      $: (_t: unknown) => ({
+        on: (e: string, h: Handler) => {
+          handlers[e] = [...(handlers[e] ?? []), h];
+        },
+      }),
+    };
+    main(gm, document, win);
+    const xhr = { responseJSON: { success: true } };
+    for (const h of handlers.ajaxSend ?? []) h({}, xhr, { url: SEND_URL });
+    for (const h of handlers.ajaxSuccess ?? []) h({}, xhr, { url: SEND_URL });
+    return createQueue(gm).items();
+  };
+
+  it('enqueues a confirmed dispatch when consent is given', () => {
+    const items = run(true);
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({ kind: 'fleet_dispatch', consumption: 123 });
+  });
+
+  it('enqueues nothing without consent', () => {
+    expect(run(false)).toHaveLength(0);
   });
 });

@@ -107,10 +107,10 @@ export function installFleetCollector(win: FleetPageWindow, deps: FleetCollector
       position: body.get('position'),
     });
     if (mission === null || target === null) return null;
-    const shipCount = num(body.get('shipCount')) ?? 0;
+    const shipCount = num(body.get('shipCount'));
     const ships: Record<string, number> = {};
-    if (mission === 6) ships[PROBES] = shipCount;
-    else if (mission === 8) ships[RECYCLERS] = shipCount;
+    if (shipCount !== null && mission === 6) ships[PROBES] = shipCount;
+    else if (shipCount !== null && mission === 8) ships[RECYCLERS] = shipCount;
     return {
       source: 'minifleet',
       mission,
@@ -151,13 +151,14 @@ export function installFleetCollector(win: FleetPageWindow, deps: FleetCollector
           ? (body?.response as { success?: unknown } | undefined)?.success === true
           : body?.success === true;
       if (!ok) return;
+      const now = Date.now();
       const parsed = fleetDispatchObservationSchema.safeParse({
         kind: 'fleet_dispatch',
         clientObservationId: crypto.randomUUID(),
         account: ctx.account,
-        observedAt: Date.now(),
+        observedAt: now,
         serverUtcOffsetMinutes: ctx.serverUtcOffsetMinutes,
-        sentAt: Date.now(),
+        sentAt: now,
         ...snapshot,
       });
       if (parsed.success) deps.onObservations([parsed.data]);

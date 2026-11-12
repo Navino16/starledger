@@ -38,8 +38,10 @@ function tile(doc: Document, label: string, value: string): HTMLElement {
 function fuelValue(stats: StatsResponse | null): string {
   if (!stats) return '?';
   const { recorded, unknownCount } = stats.summary.fuel;
-  // Unknown is not 0: a departure without a known consumption makes the total unknown
-  return unknownCount > 0 ? `? (${unknownCount})` : formatAmount(recorded);
+  // Unknown is not 0: departures without a known consumption are counted apart, never added as 0
+  return unknownCount > 0
+    ? `${formatAmount(recorded)} + ? (${unknownCount})`
+    : formatAmount(recorded);
 }
 
 const DOT_CLASS = { up_to_date: 'is-ok', pending: 'is-pending', error: 'is-error' } as const;

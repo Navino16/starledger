@@ -111,9 +111,9 @@ describe('renderBox', () => {
     expect(tile(render(model()).box, 'fuel')).toBe('12k');
   });
 
-  it('shows ? and the unknown departures for fuel, never 0', () => {
-    const { box } = render(model({ stats: statsOf({ recorded: 0, unknownCount: 2 }) }));
-    expect(tile(box, 'fuel')).toBe('? (2)');
+  it('shows the known fuel beside the unknown departures, never counting them as 0', () => {
+    const { box } = render(model({ stats: statsOf({ recorded: 12000, unknownCount: 2 }) }));
+    expect(tile(box, 'fuel')).toBe('12k + ? (2)');
   });
 
   it('marks cached figures as old with their time', () => {
