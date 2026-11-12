@@ -17,6 +17,10 @@ Décisions prises pendant l'exécution du plan (scopes 1 à 7). Chaque entrée i
 | 2026-11-11 | CLI admin | Tester la saisie masquée du mot de passe (fait, faux terminal dans les tests). |
 | 2026-11-11 | Merge autonome | Merger soi-même les PR quand la CI et Codecov sont OK ; ne s'arrêter que pour une décision. |
 | 2026-11-12 | Fenêtres réglages et détail (remplace la Ruling M2) | Les réglages (consentement compris) et le détail des stats s'ouvrent dans une fenêtre centrée avec un fond sombre plein écran, comme les fenêtres d'OGLight. Elle n'est ouverte que par un clic du joueur ; elle se ferme par son bouton, Échap ou, pour le détail seulement, un clic sur le fond ; elle est entièrement retirée à la fermeture. Le fond recouvre la pub, la Boutique, le Marchand et le footer tant qu'elle est ouverte : GRAY AREA (AGENTS.md §1.7, §3), question posée sur le fil du forum le 2026-11-12, publication bloquée jusqu'à l'accord écrit d'un ToolDev. Si la réponse est non : fenêtre sans fond limitée à la zone de contenu, ou retour à M2. |
+| 2026-11-12 | Partenaire des transports (remplace la Ruling du scope 12) | L'événement `transport` porte l'identité (id, nom) et les coordonnées du partenaire dès maintenant, l'outil n'étant pas publié. À revoir avant la publication (scope 14) selon la réponse des ToolDevs sur les données d'autres joueurs. Tâche 12.3. |
+| 2026-11-12 | Antimatière des récupérations d'anomalie | Confirme la Ruling : l'antimatière payée pour une récupération n'est pas déduite de la tuile AM (tuile = AM trouvée) ; elle est affichée à part dans le détail des anomalies. À revoir à l'usage. |
+| 2026-11-12 | Vaisseaux des récompenses d'anomalie (remplace la Ruling du scope 13) | Valorisés selon un réglage serveur `anomalyShipRatio` par univers, comme `expeditionShipRatio` (défaut 100 %). Tâche 13.5. |
+| 2026-11-12 | Arrivées de flotte (34) déjà stockées | Rien à faire tant qu'aucun serveur n'est configuré, mais le nettoyage est à prévoir : ignorer à l'ingestion et au `reparse` les types de message non suivis. Tâche 10.3. |
 
 ## Arbitrages pris sans l'utilisateur
 
@@ -195,9 +199,9 @@ Notes pour l'utilisateur :
 
 | Sujet | Décision | Coût si faux |
 |---|---|---|
-| Identité et coordonnées de l'autre joueur | Scope 12 : Ruling : l'événement `transport` ne porte ni identité ni coordonnées du partenaire ; ces données restent dans le brut, en attendant la réponse ToolDev sur les données d'autres joueurs (`docs/pts-captures.md`, section forum). | Une vue par partenaire demandera un `reparse`. |
+| Identité et coordonnées de l'autre joueur | **Remplacée le 2026-11-12 par une décision utilisateur.** Scope 12 : Ruling : l'événement `transport` ne porte ni identité ni coordonnées du partenaire ; ces données restent dans le brut, en attendant la réponse ToolDev sur les données d'autres joueurs (`docs/pts-captures.md`, section forum). | Une vue par partenaire demandera un `reparse`. |
 | Type 34 | Scope 12 : Ruling : plus collecté (arrivées de flotte : retours et mouvements entre ses propres planètes, jamais un échange) ; le brut déjà stocké est conservé. | Aucun. |
-| Arrivées de flotte (34) déjà stockées | Aucune donnée stockée : aucun serveur n'a encore été configuré et aucun client n'est diffusé ; rien n'est fait côté serveur. | Sur une instance qui en aurait stocké, le compteur de non reconnus est gonflé ; corriger alors en ignorant à l'ingestion les types non suivis. |
+| Arrivées de flotte (34) déjà stockées | **Complétée le 2026-11-12 par une décision utilisateur (tâche 10.3).** Aucune donnée stockée : aucun serveur n'a encore été configuré et aucun client n'est diffusé ; rien n'est fait côté serveur. | Sur une instance qui en aurait stocké, le compteur de non reconnus est gonflé ; corriger alors en ignorant à l'ingestion les types non suivis. |
 | Transports internes | Scope 12 : Ruling : les transports entre ses propres planètes sont parsés en événements `internal`, comptés nulle part, et ne gonflent donc plus le nombre de messages non reconnus. | Aucun. |
 
 ## Écart noté
