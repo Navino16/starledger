@@ -142,7 +142,7 @@ function discoveriesText(t: T, stats: StatsResponse): string {
 }
 
 function balanceTable(doc: Document, t: T, stats: StatsResponse) {
-  const { balance, fuel, tiles } = stats.summary;
+  const { balance, fuel, tiles, trades } = stats.summary;
   const ignoreFuel = stats.settings?.ignoreConsumption === true;
   const table = el(doc, 'table', { className: 'starledger-balance' });
   table.append(
@@ -187,6 +187,26 @@ function balanceTable(doc: Document, t: T, stats: StatsResponse) {
       table.append(disc);
     }
   }
+  const tradesRow = el(
+    doc,
+    'tr',
+    {},
+    ...(
+      [
+        [
+          `${t('catTrades')} ${t('tradesCounts', {
+            received: num(trades?.receivedCount),
+            delivered: num(trades?.deliveredCount),
+          })}`,
+        ],
+        resourcesCell(doc, t, trades?.received),
+        resourcesCell(doc, t, trades?.delivered),
+        ['-'],
+      ] as Cell[]
+    ).map(toCell),
+  );
+  tradesRow.dataset.category = 'trades';
+  table.append(tradesRow);
   const net = el(
     doc,
     'tr',
@@ -204,6 +224,26 @@ function balanceTable(doc: Document, t: T, stats: StatsResponse) {
   net.dataset.category = 'net';
   table.append(net);
   return table;
+}
+
+function tradesNetNote(doc: Document, t: T, stats: StatsResponse): HTMLElement | null {
+  const trades = stats.summary.trades;
+  if (!trades?.received || !trades.delivered) return null;
+  const { received: r, delivered: d } = trades;
+  const note = el(
+    doc,
+    'p',
+    { className: 'starledger-note' },
+    `${t('tradesNet')} `,
+    ...resourcesCell(doc, t, {
+      metal: r.metal - d.metal,
+      crystal: r.crystal - d.crystal,
+      deuterium: r.deuterium - d.deuterium,
+    }),
+    ` — ${t(stats.settings?.includeTradesInBalance ? 'tradesIncluded' : 'tradesExcluded')}`,
+  );
+  note.dataset.tradesNet = '';
+  return note;
 }
 
 function renderContent(doc: Document, t: T, stats: StatsResponse): HTMLElement[] {
@@ -225,6 +265,8 @@ function renderContent(doc: Document, t: T, stats: StatsResponse): HTMLElement[]
       textContent: t(stats.settings?.ignoreConsumption ? 'balanceScopeNoFuel' : 'balanceScope'),
     }),
   ];
+  const tradesNet = tradesNetNote(doc, t, stats);
+  if (tradesNet) nodes.push(tradesNet);
   const unrecognized = stats.counts?.unrecognized ?? 0;
   if (unrecognized > 0) {
     nodes.push(

@@ -2,9 +2,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { type MessageObservation, messageObservationSchema } from '../../src/observation';
 
-const dir = join(import.meta.dirname, '../fixtures/messages');
+const syntheticDir = join(import.meta.dirname, '../fixtures/messages');
 
-export function loadFixtures(prefix: string) {
+export function loadFixtures(prefix: string, dir = syntheticDir) {
   return readdirSync(dir)
     .filter((f) => f.startsWith(prefix) && f.endsWith('.json'))
     .map((file) => {

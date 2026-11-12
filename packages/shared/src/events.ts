@@ -89,6 +89,14 @@ export type WreckfieldEvent = {
   shipsRecovered: ShipCounts;
 };
 
+export type TransportDirection = 'received' | 'delivered' | 'internal';
+
+export type TransportEvent = {
+  kind: 'transport';
+  direction: TransportDirection;
+  resources: Resources;
+};
+
 export type FuelEvent = {
   kind: 'fuel';
   source: 'fleetdispatch' | 'minifleet';
@@ -106,6 +114,7 @@ export type ParsedEvent =
   | ShortCombatEvent
   | RecyclingEvent
   | WreckfieldEvent
+  | TransportEvent
   | FuelEvent;
 
 export type ParseResult =

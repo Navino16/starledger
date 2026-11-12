@@ -13,15 +13,34 @@ const t = createT('en');
 const res = (metal: number, crystal: number, deuterium: number) => ({ metal, crystal, deuterium });
 
 const statsOf = (
-  patch: { unrecognized?: number; conflictCount?: number; ignoreConsumption?: boolean } = {},
+  patch: {
+    unrecognized?: number;
+    conflictCount?: number;
+    ignoreConsumption?: boolean;
+    includeTrades?: boolean;
+    noTrades?: boolean;
+  } = {},
 ): StatsResponse =>
   ({
     period: 'day',
     range: null,
     generatedAt: 1,
     counts: { unrecognized: patch.unrecognized ?? 0 },
-    settings: { ignoreConsumption: patch.ignoreConsumption ?? false },
+    settings: {
+      ignoreConsumption: patch.ignoreConsumption ?? false,
+      includeTradesInBalance: patch.includeTrades ?? false,
+    },
     summary: {
+      ...(patch.noTrades
+        ? {}
+        : {
+            trades: {
+              received: res(500, 300, 100),
+              delivered: res(200, 400, 100),
+              receivedCount: 3,
+              deliveredCount: 1,
+            },
+          }),
       tiles: { metal: 990, crystal: 1980, deuterium: 2193, darkMatter: 0, artefacts: 0, msu: 4000 },
       discoveries: { count: 4, xpByLifeform: { '1': 100, '2': 50 }, artefacts: 2 },
       combats: { shipsLost: { '204': 9 } },
@@ -119,6 +138,55 @@ describe('stats details dialog', () => {
     const net = dialog()?.querySelector('[data-category="net"]')?.textContent ?? '';
     expect(net).toContain('M 990');
     expect(net).toContain('MSU 4k');
+  });
+
+  it('shows the trades row with received, delivered and counts', async () => {
+    open();
+    await tick();
+    const row = dialog()?.querySelector('[data-category="trades"]');
+    const cells = row?.querySelectorAll('td');
+    expect(cells?.[0]?.textContent).toBe('Trades (received: 3, delivered: 1)');
+    expect(cells?.[1]?.textContent).toContain('M 500');
+    expect(cells?.[2]?.textContent).toContain('M 200');
+    expect(cells?.[3]?.textContent).toBe('-');
+    const rows = [...(dialog()?.querySelectorAll('.starledger-balance tr') ?? [])];
+    const order = rows.map((r) => (r as HTMLElement).dataset.category);
+    expect(order.indexOf('trades')).toBeGreaterThan(order.indexOf('discoveries'));
+    expect(order.indexOf('net')).toBe(order.indexOf('trades') + 1);
+  });
+
+  it('shows the trades net as excluded by default and included on demand', async () => {
+    open();
+    await tick();
+    const net = dialog()?.querySelector('[data-trades-net]');
+    expect(net?.className).toBe('starledger-note');
+    expect(net?.textContent).toContain('Trades net:');
+    expect(net?.textContent).toContain('M 300');
+    expect(net?.textContent).toContain('C -100');
+    expect(net?.textContent).toContain('D 0');
+    expect(net?.textContent).toContain('not included in the net');
+    dialog()?.remove();
+    gm.respondWith(() => ({
+      status: 200,
+      body: JSON.stringify(statsOf({ includeTrades: true })),
+    }));
+    open();
+    await tick();
+    const on = dialog()?.querySelector('[data-trades-net]')?.textContent ?? '';
+    expect(on).toContain(' — included in the net');
+    expect(on).not.toContain('not included');
+  });
+
+  it('shows dashes and no net paragraph when the server omits trades', async () => {
+    gm.respondWith(() => ({ status: 200, body: JSON.stringify(statsOf({ noTrades: true })) }));
+    open();
+    await tick();
+    const row = dialog()?.querySelector('[data-category="trades"]');
+    const cells = row?.querySelectorAll('td');
+    expect(cells?.[0]?.textContent).toBe('Trades (received: ?, delivered: ?)');
+    expect(cells?.[1]?.textContent).toBe('M ? · C ? · D ?');
+    expect(cells?.[2]?.textContent).toBe('M ? · C ? · D ?');
+    expect(dialog()?.querySelector('[data-trades-net]')).toBeNull();
   });
 
   it('shows unrecognized and conflict lines only when above 0', async () => {

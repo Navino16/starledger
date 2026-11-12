@@ -17,11 +17,11 @@ describe('parseMessage', () => {
   });
 
   it('exposes the parser version and tracked types', () => {
-    expect(PARSER_VERSION).toBe(2);
-    expect(TRACKED_MESSAGE_TYPES).toEqual([25, 32, 33, 34, 41, 48, 54, 61]);
+    expect(PARSER_VERSION).toBe(3);
+    expect(TRACKED_MESSAGE_TYPES).toEqual([25, 32, 33, 41, 48, 54, 61]);
   });
 
-  it.each([33, 34, 99, null])('marks message type %s as unsupported', (messageType) => {
+  it.each([34, 99, null])('marks message type %s as unsupported', (messageType) => {
     const result = parseMessage({ ...recycling, messageType });
     expect(result.status).toBe('unrecognized');
     expect(reasonOf(result)).toContain('unsupported message type');
@@ -29,7 +29,7 @@ describe('parseMessage', () => {
   });
 
   it('keeps occurredAt of an unsupported message when the timestamp is valid', () => {
-    expect(parseMessage({ ...recycling, messageType: 33 })).toMatchObject({
+    expect(parseMessage({ ...recycling, messageType: 34 })).toMatchObject({
       occurredAt: 1790001800000,
     });
   });

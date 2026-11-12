@@ -7,6 +7,7 @@ import type {
   ParsedEvent,
   RecyclingEvent,
   ShortCombatEvent,
+  TransportEvent,
   WreckfieldEvent,
 } from '../src/events';
 import {
@@ -73,6 +74,11 @@ const recycling = (o: Partial<RecyclingEvent> = {}): RecyclingEvent => ({
   isExpedition: false,
   resources: res(),
   ...o,
+});
+const transport = (direction: TransportEvent['direction'], resources = res()): TransportEvent => ({
+  kind: 'transport',
+  direction,
+  resources,
 });
 const wreck = (o: Partial<WreckfieldEvent> = {}): WreckfieldEvent => ({
   kind: 'wreckfield',
@@ -382,5 +388,51 @@ describe('computeStats', () => {
     deepFreeze(settings);
     computeStats(events, settings);
     expect(events).toEqual(snapshot);
+  });
+
+  describe('trades', () => {
+    const trades = [
+      transport('received', res(100, 50, 20)),
+      transport('received', res(10, 0, 0)),
+      transport('delivered', res(30, 20, 10)),
+      transport('internal', res(999, 999, 999)),
+    ];
+
+    it('sums received and delivered with their counts, ignoring internal', () => {
+      expect(run(trades).trades).toEqual({
+        received: res(110, 50, 20),
+        delivered: res(30, 20, 10),
+        receivedCount: 2,
+        deliveredCount: 1,
+      });
+    });
+
+    it('starts at zero', () => {
+      expect(run([]).trades).toEqual({
+        received: res(),
+        delivered: res(),
+        receivedCount: 0,
+        deliveredCount: 0,
+      });
+    });
+
+    it('leaves the tiles and balance unchanged by default', () => {
+      const s = run([expedition({ resources: res(1000) }), ...trades]);
+      expect(s.tiles).toMatchObject({ metal: 1000, crystal: 0, deuterium: 0, msu: 1000 });
+      expect(s.balance).toEqual(run([expedition({ resources: res(1000) })]).balance);
+    });
+
+    it('adds received minus delivered to the tiles when included', () => {
+      const s = run([expedition({ resources: res(1000) }), ...trades], {
+        includeTradesInBalance: true,
+      });
+      expect(s.tiles).toMatchObject({
+        metal: 1080,
+        crystal: 30,
+        deuterium: 10,
+        msu: Math.ceil(1080 + (30 * 3) / 2 + (10 * 3) / 1),
+      });
+      expect(s.balance).toEqual(run([expedition({ resources: res(1000) })]).balance);
+    });
   });
 });
