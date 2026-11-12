@@ -475,11 +475,12 @@ Planet/target type ids: `1` planet, `2` debris field, `3` moon
 ### 6.6 Verified on PTS (2026-11-12)
 
 - `checkTarget`, `sendFleet` and `miniFleet` go through jQuery ajax: the global `ajaxSend` and
-  `ajaxSuccess` events fire for all three. OGLight was installed during the test; the vanilla path
-  without OGLight is still to confirm.
+  `ajaxSuccess` events fire for all three, with OGLight enabled and with OGLight disabled.
 - In `ajaxSend` of `sendFleet`, `fleetDispatcher.getConsumption()` is readable and matched the
   deuterium actually spent (706,760 displayed and deducted from the planet). `currentPage` is
   `fleet2`, `mission` and `speedPercent` are set.
+- During `checkTarget`, `getConsumption()` returns `NaN` and `mission` is `0`: the consumption is
+  only meaningful in the `sendFleet` `ajaxSend`, and a non-finite value must be treated as unknown.
 - Recall: `POST page=ingame&component=movement&action=recallFleet&fleetId=<id>&asJson=1`, response
   `{ components, status, success, message, newAjaxToken }`. **A recall refunds no deuterium**: the
   origin's deuterium was the same after departure, after the recall and after the return.
