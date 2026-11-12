@@ -46,7 +46,8 @@
         "metal": 842550,
         "crystal": 1305321,
         "deuterium": 669129
-      }
+      },
+      "partner": null
     }
   }
 }

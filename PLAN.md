@@ -37,8 +37,8 @@
 | 9 | Userscript : encart et détail | ✅ |
 | 10 | Validation PTS : vraies captures, reparse, audit | ☐ |
 | 11 | Carburant | ☐ (code fait, vérification PTS 11.2 step 5) |
-| 12 | Transports entre joueurs | ☐ (12.3 ajoutée : partenaire) |
-| 13 | Anomalies | ☐ (captures reçues, à détailler) |
+| 12 | Transports entre joueurs | ✅ |
+| 13 | Anomalies | ✅ |
 | 14 | Dossier de tolérance et publication | ☐ |
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
 
@@ -1061,7 +1061,7 @@ Captures reçues le 2026-11-12 : les trois cas sont du type 33 (`docs/ogame-data
 
 - [x] 12.1 parseur et stats
 - [x] 12.2 affichage dans le détail
-- [ ] 12.3 partenaire des transports (décision utilisateur du 2026-11-12, `docs/decisions.md`)
+- [x] 12.3 partenaire des transports (décision utilisateur du 2026-11-12, `docs/decisions.md`)
 
 Travail prévu :
 - un parseur `TransportEvent` `{kind:'transport', direction:'received'|'delivered'|'internal', resources}`, sans identité ni coordonnées du partenaire (`docs/decisions.md`, scope 12) ; les transports internes ne sont comptés nulle part ;

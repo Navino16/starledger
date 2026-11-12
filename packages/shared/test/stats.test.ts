@@ -81,6 +81,7 @@ const transport = (direction: TransportEvent['direction'], resources = res()): T
   kind: 'transport',
   direction,
   resources,
+  partner: null,
 });
 const wreck = (o: Partial<WreckfieldEvent> = {}): WreckfieldEvent => ({
   kind: 'wreckfield',
