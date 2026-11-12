@@ -58,8 +58,8 @@ export function extractMessageObservations(
   return result;
 }
 
-type AjaxSettings = { url?: unknown; data?: unknown };
-type AjaxHandler = (event: unknown, xhr: unknown, settings: AjaxSettings) => void;
+export type AjaxSettings = { url?: unknown; data?: unknown };
+export type AjaxHandler = (event: unknown, xhr: unknown, settings: AjaxSettings) => void;
 
 export type PageWindow = {
   $?: (target: unknown) => { on(event: string, handler: AjaxHandler): unknown };

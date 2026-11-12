@@ -66,6 +66,9 @@ describe('built userscript', () => {
     expect(script).toContain(
       'AGENTS.md §4: passive read of a player-triggered response, no game request',
     );
+    expect(script).toContain(
+      'AGENTS.md §0/§4: observe only, never wrap or replace fleetDispatcher',
+    );
   });
 
   it('is not minified', () => {

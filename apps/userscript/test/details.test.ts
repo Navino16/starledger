@@ -71,6 +71,17 @@ describe('stats details dialog', () => {
     expect(stats()[1]?.url).toContain(`period=week&today=${todayKey(0)}`);
   });
 
+  it('shows the known fuel beside the unknown departures', async () => {
+    const body = statsOf();
+    body.summary.fuel.unknownCount = 2;
+    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
+    open();
+    await tick();
+    expect(dialog()?.querySelector('[data-category="fuel"] td:nth-child(4)')?.textContent).toBe(
+      '777 + ? (2)',
+    );
+  });
+
   it('shows outcome percentages, ships by id and a separate gains/losses/fuel table', async () => {
     open();
     await tick();
