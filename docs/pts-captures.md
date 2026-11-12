@@ -78,7 +78,8 @@ Les types 70, 75, 76 et 77 de l'onglet Divers sont identifiés (compte live, 202
 - [ ] Fenêtre de récupération en antimatière, et une vague non payable faute de lithium : HTML
 - [x] Réponse de `performScan` : aucun coût, estimations par mission, table `shipMeta` (PTS, 2026-11-12)
 - [x] Réponse de `activateMission` : aucun coût ni lithium (PTS, 2026-11-12)
-- [ ] Réponse de `collectRewards`, dont une récupération avec bonus de lithium (`lithiumBonus`)
+- [x] Réponse de `collectRewards` sans bonus : ni coût ni récompense, `lithiumBonus` à `null` (2026-11-12)
+- [ ] Réponse de `collectRewards` avec bonus de lithium (`lithiumBonus` non nul)
 - [ ] Message 76 avec une récompense autre que ressources ou vaisseaux (expérience FdV, artefacts, objet premium)
 - [ ] Activer une mission (« Rechercher ») ne coûte pas de lithium : solde avant et après
 
