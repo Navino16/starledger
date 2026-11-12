@@ -556,5 +556,58 @@ Planet/target type ids: `1` planet, `2` debris field, `3` moon
 4. **Timezone**: no meta tag; only `serverData.xml` `timezone` / `timezoneOffset` (format unknown)
    and page globals `serverTimeZoneOffsetInMinutes` / `localTimeZoneOffsetInMinutes`.
 5. `data-raw-datetime` format, subtab 25 meaning, type 35 meaning.
-6. **Anomaly page**: DOM and requests of the scan, the choice, the reward collection and the
-   lithium refund (3.9 covers the messages only).
+6. **Anomaly page**: the requests are known from the game script (9.2), but not their responses,
+   nor the collect overlay DOM, nor the shape of `lithiumBonus`.
+
+---
+
+## 9. Anomaly page (`component=orion`)
+
+Source: four PTS page dumps (2026-11-12, game 13.1.0) and the game bundle loaded by the page
+(`gf1.geo.gfsrv.net/cdn04/4374488b582302d1e7644cff669d2c.js`, classes `Scanner` and the orion
+missions module). Facts read from the script are marked **(script)**: confirmed in code, not yet
+observed on the network.
+
+### 9.1 Page and tabs
+
+- `page=ingame&component=orion`, `var currentPage = "orion"`, container `#orioncomponent`.
+- Tabs loaded by ajax (`fetchMissions`, `fetchScanner`, `fetchLithiumProduction`,
+  `fetchControlCenter`): mission overview, lithium production, scanner, control center.
+- Page globals: `orionActionUrl` (`...component=orion&asJson=1`), `orionAjaxUrl`,
+  `lithiumProduction` (per hour), `lithiumStorageCapacity`, `token`.
+- Lithium balance (account-wide, all planets): `.orionLithiumBar .orionLithiumAmount[data-value]`
+  and, on the scanner tab, `#lithiumAmount[data-value]` (float). The game itself refreshes it
+  (3 s display tick, `fetchCurrentLithium` sync): the balance moves without any player action.
+
+### 9.2 Actions (all `POST orionActionUrl + '&action=<name>'`, with `token`) (script)
+
+| Action | Trigger | Data | Response fields used by the game |
+|---|---|---|---|
+| `fetchScanCost` | anomaly level or range changed | `anomalyQuantity`, `scannerRange` | `scanCost`, `currentLithium`, `lithiumPerHour` |
+| `performScan` | "Scan" button | `anomalyQuantity` (level), `range`, `force` (0/1) | `status`, `message`, `returnAjaxList` (HTML of the result cards), `errors[0].error` (400002 = not enough free positions, `freeInRange`) |
+| `activateMission` | "Rechercher" on a result card | `anomalyMissionId` | `status`, `message`, `missionsWithoutFleet` |
+| `collectRewards` | "Collect" button or overlay | `spaceObjectId`, optional `darkMatterPrice` | `status`, `message`, `canCollectReward`, `lithiumBonus` `{ title, message }` (optional) |
+| `increaseMaxScanResults`, `increaseAnomalyDiscoveryCapacity` | slot purchase | none | `status`, `slotPurchase`, `maxScanResults`, `anomalyDiscoveryCapacity` |
+| `renameMission` | mission rename | | |
+
+- **The scan response carries no cost.** The game subtracts `$('#scanCostValue').data('value')`,
+  set by `fetchScanCost`; in the dumps `#scanCostValue` only has `data-tooltip-title` (localized,
+  dot-grouped), so the cost must be read from the DOM at the moment of the request.
+- **Collecting can be paid in lithium or in Dark Matter**: the Dark Matter overlay
+  (`.orionCollectRewardsDarkMatter[data-dark-matter-price]`) adds `darkMatterPrice` to the request.
+- Collecting launches a reward-delivery fleet; the reward arrives later as message 76 (3.9).
+- `lithiumBonus` is the only refund-like field found; its amount format is unknown.
+- No request for deleting a mission was found in the script.
+
+### 9.3 DOM read on the page
+
+- Scanner result card `.scannerResultCard`: name `.scannerResultName`, PvP/PvE
+  `.scannerResultTypeIcon.pvp|.pve`, row cells (level, target link `[g:s:p]`, duration, waves,
+  distance, type `delivery`/combat, reward cost in lithium as text + `data-tooltip-title`),
+  estimated rewards `.rewardLine` (`≈` values). No cost shown on the "Rechercher" button.
+- Active mission `.anomalyMission`: reward cost `.rewardCostsValue[data-tooltip-title]`,
+  direct collect `.directCollect[data-space-object-id]`, waves with the NPC fleets.
+- Seen anomaly kinds (fr): "Livraison précieuse", "Livraison : cristal", "Rencontre mineure /
+  intermédiaire d`extraterrestres"; PvP missions give double rewards and can be attacked by
+  other players.
+
