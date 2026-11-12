@@ -1,51 +1,53 @@
-//! AGENTS.md §1.7: normal-flow blocks only, no fixed/absolute positioning, no overlay, no opacity change
+//! AGENTS.md §1.7: the box stays in normal flow; only the player-opened dialog uses a fixed backdrop (see ui/panel.ts)
+// Dialog values copied from the game's own jQuery UI dialog, overlay and .btn_blue rules
 export const UI_CSS = `
-.starledger-box,.starledger-dialog{box-sizing:border-box;max-width:100%;margin:8px 0;padding:6px;font:11px Verdana,Arial,sans-serif;color:#848484;background:#0c1218;border:1px solid #23313f;border-radius:4px}
-.starledger-dialog{padding:10px;overflow-x:auto;color:#c9c9c9}
-.starledger-box strong,.starledger-dialog strong,.starledger-dialog h4{color:#6f9fc8}
-.starledger-dialog h4{margin:10px 0 4px;font-size:11px}
-.starledger-box button,.starledger-box input,.starledger-dialog button{max-width:100%;box-sizing:border-box;font:inherit}
-.starledger-box button:not(.starledger-tiles):not(.starledger-cta),.starledger-dialog button{padding:3px 8px;margin:2px 0;color:#d6dde3;font-weight:bold;background:linear-gradient(#3a5468,#22323f);border:1px solid #000;border-radius:3px;cursor:pointer}
-.starledger-box button:not(.starledger-tiles):not(.starledger-cta):hover,.starledger-dialog button:hover{background:linear-gradient(#4a6a84,#2c4152)}
-.starledger-box input[type=text],.starledger-box input[type=password]{width:100%;padding:3px 4px;color:#d6dde3;background:#0f151b;border:1px solid #23313f;border-radius:3px}
-.starledger-box label{display:block;margin:6px 0;color:#c9c9c9}
-.starledger-box ul{margin:6px 0;padding-left:18px}
-.starledger-warning{color:#e0a030}
-.starledger-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:5px}
-.starledger-head strong{font-weight:bold}
-.starledger-state{display:inline-flex;align-items:center;gap:4px;color:#848484}
+.starledger-box{box-sizing:border-box;width:168px;max-width:100%;margin:10px 0 0;padding:4px;font:11px Verdana,Arial,sans-serif;color:#757ba6;background:#0d131b;border-radius:6px}
+.starledger-box strong{color:#b4c8f7;font-weight:bold}
+.starledger-box button{max-width:100%;box-sizing:border-box;font:inherit}
+.starledger-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px;padding:5px 7px;background:linear-gradient(#2a3240,#181c23);border-radius:5px}
+.starledger-state{display:inline-flex;align-items:center;gap:4px;font-size:10px;white-space:nowrap;color:#757ba6}
 .starledger-dot{display:inline-block;width:7px;height:7px;border-radius:50%}
-.starledger-dot.is-ok{background:#9c0}
+.starledger-dot.is-ok{background:#64a69b}
 .starledger-dot.is-pending{background:#e0a030}
-.starledger-dot.is-error{background:#d9534f}
+.starledger-dot.is-error{background:#e2574c}
 .starledger-stale{color:#e0a030;font-style:normal;margin-left:4px}
 .starledger-status{margin:0}
 div.starledger-status{margin:6px 0}
 .starledger-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:100%;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:center;cursor:pointer}
-.starledger-tile{display:flex;flex-direction:column;align-items:center;min-width:0;padding:4px 2px;background:linear-gradient(#18222c,#0f161d);border:1px solid #1d2a36;border-radius:3px}
-.starledger-tiles:hover .starledger-tile{border-color:#2f4458}
-.starledger-fuel{grid-column:1/-1;flex-direction:row;justify-content:space-between;padding:2px 6px;background:none;border:0}
-.starledger-label{font-size:8px;text-transform:uppercase;color:#5a6b7a}
-.starledger-fuel .starledger-label{font-size:11px;text-transform:none;color:#848484}
-.starledger-value{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:bold;color:#c9c9c9}
-.starledger-tile[data-tile=metal] .starledger-value{color:#c9c9c9}
-.starledger-tile[data-tile=crystal] .starledger-value{color:#79c6e8}
-.starledger-tile[data-tile=deuterium] .starledger-value{color:#6fd29b}
-.starledger-tile[data-tile=darkMatter] .starledger-value{color:#c48bff}
+.starledger-tile{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;padding:5px 2px;background:linear-gradient(#2d3645,#191c25);border-radius:5px}
+.starledger-tiles:hover .starledger-tile{background:linear-gradient(#3a4558,#20242f)}
+.starledger-fuel{grid-column:1/-1;flex-direction:row;justify-content:space-between;padding:4px 7px}
+.starledger-label{font-size:9px;color:#757ba6}
+.starledger-fuel .starledger-label{font-size:11px}
+.starledger-value{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:bold;color:#e7e8eb}
+.starledger-tile[data-tile=metal] .starledger-value,.starledger-dialog .starledger-amount[data-res=metal]{color:#9899be}
+.starledger-tile[data-tile=crystal] .starledger-value,.starledger-dialog .starledger-amount[data-res=crystal]{color:#95c1dd}
+.starledger-tile[data-tile=deuterium] .starledger-value,.starledger-dialog .starledger-amount[data-res=deuterium]{color:#64a69b}
+.starledger-tile[data-tile=darkMatter] .starledger-value{color:#b88ce8}
 .starledger-tile[data-tile=artefacts] .starledger-value{color:#e3b955}
-.starledger-tile[data-tile=msu] .starledger-value{color:#fff}
-.starledger-tile[data-tile=fuel] .starledger-value{color:#c9c9c9}
-.starledger-cta{display:block;width:100%;padding:6px;color:#9c0;font-weight:bold;background:none;border:1px dashed #2b3a4a;border-radius:3px;cursor:pointer}
-.starledger-cta:hover{border-color:#9c0}
-.starledger-dialog .starledger-amount[data-res=metal]{color:#c9c9c9}
-.starledger-dialog .starledger-amount[data-res=crystal]{color:#79c6e8}
-.starledger-dialog .starledger-amount[data-res=deuterium]{color:#6fd29b}
-.starledger-dialog .starledger-amount[data-res=msu]{color:#fff}
+.starledger-tile[data-tile=msu] .starledger-value,.starledger-dialog .starledger-amount[data-res=msu]{color:#e7e8eb}
+.starledger-cta{display:block;width:100%;padding:7px;color:#64a69b;font-weight:bold;background:linear-gradient(#2d3645,#191c25);border:0;border-radius:5px;cursor:pointer}
+.starledger-cta:hover{background:linear-gradient(#3a4558,#20242f);color:#8fd4c7}
+.starledger-warning{color:#e0a030}
+.starledger-backdrop{position:fixed;inset:0;z-index:100000;display:flex;align-items:flex-start;justify-content:center;padding:8vh 8px 8px;box-sizing:border-box;overflow-y:auto;background:rgba(20,26,30,.8)}
+.starledger-dialog{box-sizing:border-box;width:720px;max-width:100%;font:11px/14px Verdana,Arial,Helvetica,sans-serif;color:#848484;box-shadow:5px 8px 15px #000}
+.starledger-dialog-head{position:relative;padding:.4em 2.5em .4em 1em;background:linear-gradient(to bottom,#3d4b5b 0%,#2b343f 49%,#1f262d 50%,#1f2934 100%);border:1px solid #111a22;color:#6f9fc8;font-weight:700}
+.starledger-close{position:absolute;right:.3em;top:50%;width:19px;height:18px;margin:-10px 0 0;padding:1px;min-width:0;background:transparent;border:0;cursor:pointer}
+.starledger-close:hover .ui-icon-closethick{background-position:-208px -18px}
+.starledger-dialog-content{padding:10px;overflow-x:auto;background:#0d1014;border:1px solid #1f2833;border-top:0}
+.starledger-dialog strong,.starledger-dialog label,.starledger-dialog th{color:#6f9fc8;font-weight:700}
+.starledger-dialog h4{margin:12px 0 4px;padding:3px 6px;font-size:11px;color:#6f9fc8;background:linear-gradient(to bottom,#2b343f,#1f262d);border:1px solid #111a22}
+.starledger-dialog label{display:block;margin:10px 0}
+.starledger-dialog label input[type=checkbox]{vertical-align:middle;margin:0 4px 0 0}
+.starledger-dialog input[type=text],.starledger-dialog input[type=password]{display:block;box-sizing:border-box;width:100%;max-width:420px;height:26px;margin-top:4px;font-weight:normal}
+.starledger-dialog ul{margin:6px 0;padding-left:18px;list-style:disc}
+.starledger-dialog li{display:list-item;margin:2px 0}
+.starledger-dialog p{margin:6px 0}
+.starledger-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.starledger-dialog-content button{min-width:70px;margin:0;padding:5px 10px;font:700 11px/16px Verdana,Arial,Helvetica,sans-serif;color:#fff;text-align:center;text-shadow:0 1px 2px #2d4052;cursor:pointer;background:linear-gradient(to bottom,#526e86 0%,#577596 17%,#627f9b 51%,#445b75 53%,#3d5e7e 85%,#607994 100%);border:1px solid #354a5d;border-color:#7088a3 #577696 #546a7e #6282a2;border-radius:3px}
+.starledger-dialog-content button:hover,.starledger-periods [aria-pressed=true]{background:linear-gradient(to bottom,#6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%)}
 .starledger-dialog table{border-collapse:collapse;width:100%}
-.starledger-dialog td,.starledger-dialog th{padding:2px 6px;text-align:left;border-bottom:1px solid #1d2a36}
-.starledger-dialog th{color:#6f9fc8}
+.starledger-dialog td,.starledger-dialog th{padding:3px 6px;text-align:left;border-bottom:1px solid #1f2833}
 .starledger-note{color:#5a6b7a}
-.starledger-periods{margin:6px 0}
-.starledger-periods [aria-pressed=true]{background:linear-gradient(#6f9fc8,#3a6a94);color:#fff}
-@media (min-width:768px){.starledger-tile{padding:5px 4px}}
+.starledger-periods{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px}
 `;

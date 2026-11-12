@@ -6,6 +6,7 @@ import { createT } from '../src/i18n';
 import { saveSettings } from '../src/storage';
 import { createQueue } from '../src/sync/queue';
 import { DETAILS_ID, openDetails } from '../src/ui/details';
+import { BACKDROP_CLASS } from '../src/ui/panel';
 
 const ACCOUNT: AccountRef = { serverId: 808, lang: 'en', playerId: 42, playerName: 'Neo' };
 const t = createT('en');
@@ -124,16 +125,17 @@ describe('stats details dialog', () => {
     expect(dialog()?.textContent).toContain('2 conflicts');
   });
 
-  it('mounts in flow at the top of the content area and leaves the page as before on close', async () => {
+  it('opens in a backdrop at the end of the body and leaves the page as before on close', async () => {
     document.body.innerHTML =
       '<div id="links"></div><div id="contentWrapper"><p>game</p></div><div id="footer"></div>';
     const initial = document.body.innerHTML;
     open();
-    const panel = dialog();
-    expect(panel?.parentElement?.id).toBe('contentWrapper');
-    expect(panel?.parentElement?.firstElementChild).toBe(panel);
-    expect(document.querySelector('.starledger-overlay')).toBeNull();
-    [...(panel?.querySelectorAll('button') ?? [])].find((b) => b.textContent === 'Close')?.click();
+    const backdrop = dialog()?.parentElement;
+    expect(backdrop?.className).toBe(BACKDROP_CLASS);
+    expect(document.body.lastElementChild).toBe(backdrop);
+    [...(dialog()?.querySelectorAll('button') ?? [])]
+      .find((b) => b.textContent === 'Close')
+      ?.click();
     await tick();
     expect(document.body.innerHTML).toBe(initial);
   });
@@ -143,7 +145,7 @@ describe('stats details dialog', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(dialog()).toBeNull();
     open();
-    document.getElementById('footer')?.click();
+    document.querySelector<HTMLElement>(`.${BACKDROP_CLASS}`)?.click();
     expect(dialog()).toBeNull();
     open();
     dialog()?.querySelector('strong')?.click();

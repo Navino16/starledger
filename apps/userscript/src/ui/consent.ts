@@ -1,11 +1,9 @@
 import { loadSettings, saveSettings } from '../storage';
 import { setDestination } from '../sync/destination';
-import { configureBoxContent, el, isHttpUrl, isInsecureUrl, mountBox, type UiContext } from './dom';
+import { el, isHttpUrl, isInsecureUrl, type UiContext } from './dom';
+import { openPanel } from './panel';
 
-export function renderConfigureBox(ctx: UiContext, onConfigure: () => void): void {
-  const { doc, t } = ctx;
-  mountBox(doc, configureBoxContent(doc, t, onConfigure));
-}
+export const SETTINGS_ID = 'starledger-settings';
 
 export function renderConsent(ctx: UiContext, onAccepted: () => void): void {
   const { doc, t, gm, queue } = ctx;
@@ -37,17 +35,17 @@ export function renderConsent(ctx: UiContext, onAccepted: () => void): void {
     saveSettings(gm, { consent: true });
     onAccepted();
   });
-  cancel.addEventListener('click', () =>
-    renderConfigureBox(ctx, () => renderConsent(ctx, onAccepted)),
-  );
 
-  mountBox(
+  const handle = openPanel(
     doc,
-    el(
-      doc,
-      'div',
-      {},
-      el(doc, 'strong', { textContent: t('consentTitle') }),
+    {
+      id: SETTINGS_ID,
+      title: t('consentTitle'),
+      closeLabel: t('close'),
+      closeOnOutside: false,
+      onClose: () => ctx.refreshBox?.(),
+    },
+    [
       el(doc, 'p', { textContent: t('consentIntro') }),
       el(
         doc,
@@ -63,9 +61,8 @@ export function renderConsent(ctx: UiContext, onAccepted: () => void): void {
       el(doc, 'p', { textContent: `${t('consentDestination')} ` }, destination),
       warning,
       error,
-      accept,
-      ' ',
-      cancel,
-    ),
+      el(doc, 'div', { className: 'starledger-actions' }, accept, cancel),
+    ],
   );
+  cancel.addEventListener('click', handle.close);
 }

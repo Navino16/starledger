@@ -70,6 +70,14 @@ describe('without consent', () => {
     expect(gm.menus).toHaveLength(0);
   });
 
+  it('cancel closes the consent dialog and keeps the box', () => {
+    main(gm, document);
+    click('#starledger-box button');
+    byText('Cancel').click();
+    expect(document.getElementById('starledger-settings')).toBeNull();
+    expect(document.querySelectorAll('#starledger-box button')).toHaveLength(1);
+  });
+
   it('accepting consent requires a valid URL and an explicit click, then saves consent', () => {
     main(gm, document);
     click('#starledger-box button');
@@ -170,7 +178,9 @@ describe('with consent', () => {
     gm.menus[0]?.fn();
     byText('Test connection').click();
     await flush();
-    expect(document.querySelector('.starledger-status')?.textContent).toBe("Connected as a$&b$'c");
+    expect(document.querySelector('#starledger-settings .starledger-status')?.textContent).toBe(
+      "Connected as a$&b$'c",
+    );
   });
 
   it('adds then removes the OGLight rule with the checkbox', () => {
@@ -193,7 +203,9 @@ describe('with consent', () => {
     gm.menus[0]?.fn();
     byText('Tester la connexion').click();
     await flush();
-    expect(document.querySelector('.starledger-status')?.textContent).toBe('Clé invalide');
+    expect(document.querySelector('#starledger-settings .starledger-status')?.textContent).toBe(
+      'Clé invalide',
+    );
   });
 
   it('never renders the stored key and keeps it when the field is left empty', () => {
@@ -215,6 +227,26 @@ describe('with consent', () => {
     expect(loadSettings(gm).serverUrl).toBe('https://sl.example.org');
   });
 
+  it('opens the settings in a backdrop that a click beside does not close', () => {
+    main(gm, document);
+    gm.menus[0]?.fn();
+    const backdrop = document.querySelector<HTMLElement>('.starledger-backdrop');
+    expect(backdrop?.firstElementChild?.id).toBe('starledger-settings');
+    backdrop?.click();
+    expect(document.getElementById('starledger-settings')).not.toBeNull();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.querySelector('.starledger-backdrop')).toBeNull();
+  });
+
+  it('refreshes the box behind the settings when the key is removed', () => {
+    main(gm, document);
+    expect(document.querySelector('#starledger-box .starledger-cta')).toBeNull();
+    gm.menus[0]?.fn();
+    byText('Remove key').click();
+    expect(document.querySelector('#starledger-box .starledger-cta')).not.toBeNull();
+    expect(document.getElementById('starledger-settings')).not.toBeNull();
+  });
+
   it('withdrawing consent saves consent:false and empties the queue', () => {
     createQueue(gm).enqueue([{ kind: 'message', clientObservationId: 'a' } as never]);
     main(gm, document);
@@ -232,7 +264,7 @@ describe('options hardening', () => {
     input.value = value;
     input.dispatchEvent(new Event('input'));
   };
-  const text = () => document.querySelector('#starledger-box')?.textContent ?? '';
+  const text = () => document.querySelector('#starledger-settings')?.textContent ?? '';
 
   beforeEach(() => {
     saveSettings(gm, { consent: true, serverUrl: 'https://sl.example.org', apiKey: 'secret' });

@@ -1,10 +1,8 @@
 import type { ApiError, StatsResponse } from '@app/shared';
 import { errorKey, type MessageKey, type T } from '../i18n';
 import type { SyncState } from '../sync/queue';
-import { configureBoxContent, el, mountBox, PANEL_ID } from './dom';
+import { configureBoxContent, el, mountBox } from './dom';
 import { formatAmount, formatTime } from './format';
-
-const STATS_VIEW = 'stats';
 
 export type BoxModel = {
   state: SyncState;
@@ -120,10 +118,7 @@ export function renderBox(container: HTMLElement, model: BoxModel, handlers: Box
 }
 
 export function mountStatsBox(doc: Document, model: BoxModel, handlers: BoxHandlers): void {
-  // Never replace an open settings or consent panel
-  const existing = doc.getElementById(PANEL_ID);
-  if (existing && existing.dataset.view !== STATS_VIEW) return;
   const box = el(doc, 'div');
   renderBox(box, model, handlers);
-  if (mountBox(doc, box)) box.dataset.view = STATS_VIEW;
+  mountBox(doc, box);
 }
