@@ -21,13 +21,13 @@ Les exports contiennent le pseudo et ceux des autres joueurs : ils sont anonymis
 
 ### Expéditions (41)
 
-- [ ] Ressources (métal, cristal ou deutérium)
+- [x] Ressources : métal et cristal reçus (2026-11-12) ; le deutérium seul reste à voir
 - [ ] Antimatière
-- [ ] Vaisseaux trouvés
-- [ ] Rien
-- [ ] Objet
+- [x] Vaisseaux trouvés (2026-11-12)
+- [x] Rien (2026-11-12)
+- [x] Objet (2026-11-12)
 - [ ] Marchand
-- [ ] Retour en avance
+- [x] Retour en avance (2026-11-12)
 - [ ] Retour en retard
 - [ ] Trou noir
 - [ ] **Pirates ou aliens + le rapport de combat en position 16 (25)** : priorité 1, les pertes sont aujourd'hui déduites deux fois
