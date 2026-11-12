@@ -4,7 +4,7 @@ export const UI_CSS = `
 .starledger-box{box-sizing:border-box;width:168px;max-width:100%;margin:10px 0 0;padding:4px;font:11px Verdana,Arial,sans-serif;color:#757ba6;background:#0d131b;border-radius:6px}
 .starledger-box strong{color:#b4c8f7;font-weight:bold}
 .starledger-box button{max-width:100%;box-sizing:border-box;font:inherit}
-.starledger-head{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:4px;padding:5px 7px;background:linear-gradient(#2a3240,#181c23);border-radius:5px}
+.starledger-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 6px;margin-bottom:4px;padding:5px 7px;background:linear-gradient(#2a3240,#181c23);border-radius:5px}
 .starledger-state{display:inline-flex;align-items:center;gap:4px;font-size:10px;white-space:nowrap;color:#757ba6}
 .starledger-dot{display:inline-block;width:7px;height:7px;border-radius:50%}
 .starledger-dot.is-ok{background:#64a69b}
@@ -16,9 +16,9 @@ div.starledger-status{margin:6px 0}
 .starledger-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:100%;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:center;cursor:pointer}
 .starledger-tile{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;padding:5px 2px;background:linear-gradient(#2d3645,#191c25);border-radius:5px}
 .starledger-tiles:hover .starledger-tile{background:linear-gradient(#3a4558,#20242f)}
-.starledger-fuel{grid-column:1/-1;flex-direction:row;justify-content:space-between;padding:4px 7px}
+.starledger-wide{grid-column:1/-1;flex-direction:row;justify-content:space-between;padding:4px 7px}
 .starledger-label{font-size:9px;color:#757ba6}
-.starledger-fuel .starledger-label{font-size:11px}
+.starledger-wide .starledger-label{font-size:11px}
 .starledger-value{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:bold;color:#e7e8eb}
 .starledger-tile[data-tile=metal] .starledger-value,.starledger-dialog .starledger-amount[data-res=metal]{color:#9899be}
 .starledger-tile[data-tile=crystal] .starledger-value,.starledger-dialog .starledger-amount[data-res=crystal]{color:#95c1dd}

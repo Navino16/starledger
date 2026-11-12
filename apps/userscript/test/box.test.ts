@@ -108,16 +108,25 @@ describe('renderBox', () => {
   it('shows ? tiles without stats', () => {
     const { box } = render(model({ stats: null, statsAt: null }));
     expect(tile(box, 'metal')).toBe('?');
-    expect(tile(box, 'fuel')).toBe('?');
+    expect(tile(box, 'msu')).toBe('?');
   });
 
-  it('shows the fuel amount when every departure has a known consumption', () => {
-    expect(tile(render(model()).box, 'fuel')).toBe('12k');
-  });
-
-  it('shows the known fuel beside the unknown departures, never counting them as 0', () => {
-    const { box } = render(model({ stats: statsOf({ recorded: 12000, unknownCount: 2 }) }));
-    expect(tile(box, 'fuel')).toBe('12k + ? (2)');
+  it('has no fuel tile and ends with lithium then the full-width MSU', () => {
+    const { box } = render(model());
+    expect(box.querySelector('[data-tile="fuel"]')).toBeNull();
+    const order = [...box.querySelectorAll<HTMLElement>('[data-tile]')].map((n) => n.dataset.tile);
+    expect(order).toEqual([
+      'metal',
+      'crystal',
+      'deuterium',
+      'darkMatter',
+      'artefacts',
+      'lithium',
+      'msu',
+    ]);
+    expect(box.querySelector('[data-tile="msu"]')?.classList.contains('starledger-wide')).toBe(
+      true,
+    );
   });
 
   it('shows the net lithium, negative included', () => {
@@ -147,9 +156,15 @@ describe('renderBox', () => {
       render(model({ state: state({ status: 'pending', pending: 4 }) })).box.textContent,
     ).toContain('4 pending');
     const synced = state({ lastSyncAt: Date.UTC(2026, 10, 11, 8, 5) });
-    expect(render(model({ state: synced })).box.textContent).toContain(
+    const syncedState = render(model({ state: synced })).box.querySelector('.starledger-state');
+    expect(syncedState?.textContent).toBe(formatTime(synced.lastSyncAt as number));
+    expect(syncedState?.getAttribute('title')).toBe(
       t('statusUpToDate', { time: formatTime(synced.lastSyncAt as number) }),
     );
+    expect(
+      render(model({ state: state({ lastSyncAt: null }) })).box.querySelector('.starledger-state')
+        ?.textContent,
+    ).toBe(t('statusUpToDateNever'));
     const failing = state({ status: 'error', error: 'unreachable' });
     expect(render(model({ state: failing })).box.textContent).toContain('Server unreachable');
   });
