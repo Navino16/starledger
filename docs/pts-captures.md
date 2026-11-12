@@ -77,7 +77,7 @@ Les types 70, 75, 76 et 77 de l'onglet Divers sont identifiés (compte live, 202
 - [x] Fenêtre de récupération des récompenses, version lithium : HTML (compte live, 2026-11-12)
 - [x] Vague non payable faute de lithium : classe `unaffordable`, lithium manquant et son prix en antimatière affichés, seul bouton « Collect all » (PTS, 2026-11-12)
 - [x] Deuxième fenêtre ouverte par « Collect all » : action `collectRewardsWithDarkMatter`, prix dans `data-dark-matter-price` (PTS, 2026-11-12)
-- [ ] Récupération payée en antimatière : solde de lithium et d'antimatière avant et après (le lithium possédé est-il aussi dépensé ?)
+- [x] Récupération payée en antimatière : tout le lithium possédé est dépensé (9 906 → 0) et l'antimatière paie le reste (−590) (PTS, 2026-11-12)
 - [x] Réponse de `performScan` : aucun coût, estimations par mission, table `shipMeta` (PTS, 2026-11-12)
 - [x] Réponse de `activateMission` : aucun coût ni lithium (PTS, 2026-11-12)
 - [x] Réponse de `collectRewards` sans bonus : ni coût ni récompense, `lithiumBonus` à `null` (2026-11-12)
