@@ -670,6 +670,7 @@ Seen on a live account (2026-11-12), lithium version only:
   `.orionCollectDarkMatterConfirm` ("Accepter") and `.orionCollectCancel`.
 - The Dark Matter price follows the *missing* lithium: it dropped from 1,607 in the first overlay
   to 1,399 in the second one opened a bit later, as production filled part of the gap. A Dark
-  Matter collect therefore very likely spends the lithium owned too **(inferred)**: balances
-  before and after still needed.
+  Matter collect spends **all the lithium owned** plus the Dark Matter for the rest: verified on
+  PTS 2026-11-12 (lithium 9,906 → 0 and Dark Matter −590 for a 11,849 cost, consistent with the
+  rate of the first overlay, within production drift).
 
