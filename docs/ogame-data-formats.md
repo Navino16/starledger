@@ -606,8 +606,9 @@ observed on the network.
 - **The scan response carries no cost** (confirmed by the response above).
 - `activateMission` response, verified on PTS 2026-11-12: `status`, `success`, `message`
   (localized "Mission d`anomalie activée"), `missionsWithoutFleet`, `anomalyDiscoveryUsage`,
-  `ipiMenuData`, `newAjaxToken`, `components`. **No cost and no lithium field**: activation looks
-  free (to confirm with the balance before and after). The game subtracts `$('#scanCostValue').data('value')`,
+  `ipiMenuData`, `newAjaxToken`, `components`. **No cost and no lithium field**, and activation is
+  free: the balance rose by the production of a few seconds while the card showed a reward cost of
+  about 48,800 (live, 2026-11-12). The card's reward cost is paid later, wave by wave, at collect. The game subtracts `$('#scanCostValue').data('value')`,
   set by `fetchScanCost`; in the dumps `#scanCostValue` only has `data-tooltip-title` (localized,
   dot-grouped), so the cost must be read from the DOM at the moment of the request.
 - **Collecting can be paid in lithium or in Dark Matter**: the Dark Matter overlay
