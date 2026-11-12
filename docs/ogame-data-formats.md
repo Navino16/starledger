@@ -320,6 +320,15 @@ tower". **None carries a resource attribute in `.rawMessageData`.**
   other reward kinds (lifeform experience, artifacts, premium items, 9.2) whose markup in a 76
   is not captured yet.
 
+**Client-extracted keys.** Since the reward is not in `data-raw-*`, the userscript reads the HTML
+of each message 76 the player opened and stores two extra keys in `raw`; the `x-` prefix marks values
+read from the HTML, not from `data-raw-*`. `x-loot` is a JSON array, one entry per `.loot-item` in
+document order: `{ "type": "resource", "resource", "amount" }`, `{ "type": "ship", "attributes", "amount" }`
+(valueless attribute names, lowercased) or `{ "type": "unknown", "tag", "amount" }`; `amount` is the
+integer after the last `:` of `aria-description`, `null` if unreadable. It is absent when the message
+has no `.loot-item`. `x-anomalycoords` is `"g:s:p"` from the first `a.txt_link` of `.msgContent`. The
+parser treats any unreadable amount, unknown resource, ship or entry kind as unrecognized.
+
 **Anomaly missions also produce combat reports (25)** at the anomaly coordinates: the player is
 the defender, the attacker is `{ "type": "npc", "id": 99999 }` with a localized name, and
 `defenderspaceobject.type` is `"anomaly"` (language-independent discriminator; pirates and aliens

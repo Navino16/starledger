@@ -74,6 +74,55 @@ describe('extractMessageObservations', () => {
   });
 });
 
+const anomalyMsg = (type: number, content: string, body = '') => `
+<div class="msg" data-msg-id="2001">
+  <span class="msgContent"><a class="txt_link" href="#">[3:44:7]</a> text ${body}</span>
+  ${content}
+  <div class="rawMessageData" data-raw-messagetype="${type}" data-raw-timestamp="1789120800" data-raw-coords="1:2:3"></div>
+</div>`;
+const LOOT = `<div class="content-box"><div class="loot-row">
+  <div class="loot-item"><resource-icon class="metal size48" aria-description="Metal: 12500"></resource-icon></div>
+  <div class="loot-item"><technology-icon class="size48" transportersmall="" aria-description="Small Cargo: 3"></technology-icon></div>
+  <div class="loot-item"><foo-icon aria-description="Thing: 2"></foo-icon></div>
+  <div class="loot-item"><resource-icon class="crystal" aria-description="Crystal"></resource-icon></div>
+</div></div>`;
+
+describe('anomaly reward extraction (type 76)', () => {
+  const extract = (html: string) => {
+    const root = document.createElement('div');
+    root.innerHTML = html;
+    return extractMessageObservations(root, ctx);
+  };
+
+  it('adds x-loot and x-anomalycoords from the message HTML', () => {
+    const [obs] = extract(anomalyMsg(76, LOOT));
+    expect(JSON.parse(obs?.raw['x-loot'] ?? 'null')).toEqual([
+      { type: 'resource', resource: 'metal', amount: 12500 },
+      { type: 'ship', attributes: ['transportersmall'], amount: 3 },
+      { type: 'unknown', tag: 'foo-icon', amount: 2 },
+      { type: 'resource', resource: 'crystal', amount: null },
+    ]);
+    expect(obs?.raw['x-anomalycoords']).toBe('3:44:7');
+  });
+
+  it('sets no x-loot without a loot item', () => {
+    const [obs] = extract(anomalyMsg(76, ''));
+    expect(obs?.raw['x-loot']).toBeUndefined();
+    expect(obs?.raw['x-anomalycoords']).toBe('3:44:7');
+  });
+
+  it('omits x-anomalycoords when the link is missing or malformed', () => {
+    const html = anomalyMsg(76, LOOT).replace('[3:44:7]', 'nowhere');
+    expect(extract(html)[0]?.raw['x-anomalycoords']).toBeUndefined();
+  });
+
+  it('adds no x- key to other tracked types', () => {
+    const html = anomalyMsg(41, LOOT);
+    const raw = extract(html)[0]?.raw ?? {};
+    expect(Object.keys(raw).filter((k) => k.startsWith('x-'))).toEqual([]);
+  });
+});
+
 describe('extraction details', () => {
   it('keeps duplicate msgIds of one extraction once', async () => {
     consented();

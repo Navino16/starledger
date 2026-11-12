@@ -213,6 +213,30 @@ describe('computeStats', () => {
     expect(s.tiles.crystal).toBe(-4000);
   });
 
+  it('counts anomaly rewards and values resources and ships at 100 percent', () => {
+    const s = run(
+      [
+        {
+          kind: 'anomaly_reward',
+          anomalyCoords: null,
+          resources: res(1000, 500, 100),
+          ships: { '202': 2 },
+        },
+        { kind: 'anomaly_reward', anomalyCoords: null, resources: res(10), ships: { '202': 1 } },
+      ],
+      { expeditionShipRatio: 50 },
+    );
+    expect(s.anomalies.rewards).toEqual({
+      count: 2,
+      resources: res(1010, 500, 100),
+      ships: { '202': 3 },
+    });
+    expect(s.balance.anomalies.gains).toEqual(res(7010, 6500, 100));
+    expect(s.tiles.metal).toBe(7010);
+    expect(s.tiles.crystal).toBe(6500);
+    expect(s.tiles.deuterium).toBe(100);
+  });
+
   it('counts a stored combat without isAnomaly as a normal combat', () => {
     const { isAnomaly: _omitted, ...stored } = combat({ shipsLost: { '204': 1 } });
     const s = run([stored as CombatEvent]);

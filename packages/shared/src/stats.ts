@@ -62,6 +62,7 @@ export type StatsSummary = {
   };
   anomalies: {
     combats: { count: number; won: number; lost: number; draw: number; shipsLost: ShipCounts };
+    rewards: { count: number; resources: Resources; ships: ShipCounts };
   };
   recycling: { count: number; resources: Resources };
   discoveries: {
@@ -164,7 +165,10 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
       debrisCreated: zeroRes(),
       probeOnly: 0,
     },
-    anomalies: { combats: { count: 0, won: 0, lost: 0, draw: 0, shipsLost: {} } },
+    anomalies: {
+      combats: { count: 0, won: 0, lost: 0, draw: 0, shipsLost: {} },
+      rewards: { count: 0, resources: zeroRes(), ships: {} },
+    },
     recycling: { count: 0, resources: zeroRes() },
     discoveries: {
       count: 0,
@@ -264,6 +268,14 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
           stats.trades.deliveredCount++;
           addRes(stats.trades.delivered, e.resources);
         }
+        break;
+      case 'anomaly_reward':
+        // docs/decisions.md scope 13: anomaly ships are valued at 100 %, not at expeditionShipRatio
+        stats.anomalies.rewards.count++;
+        addRes(stats.anomalies.rewards.resources, e.resources);
+        addShips(stats.anomalies.rewards.ships, e.ships);
+        addRes(balance.anomalies.gains, e.resources);
+        addShipValue(balance.anomalies.gains, e.ships);
         break;
       case 'fuel':
         stats.fuel.departures++;

@@ -27,3 +27,24 @@ export const SHIP_COSTS: Record<string, Resources> = {
   '218': cost(85000, 55000, 20000),
   '219': cost(8000, 15000, 8000),
 };
+
+// docs/ogame-data-formats.md §9.2: lowercased technical name (valueless attribute of <technology-icon>) -> ship id
+export const SHIP_TECH_NAMES: Record<string, string> = {
+  transportersmall: '202',
+  transporterlarge: '203',
+  fighterlight: '204',
+  fighterheavy: '205',
+  cruiser: '206',
+  battleship: '207',
+  colonyship: '208',
+  recycler: '209',
+  espionageprobe: '210',
+  bomber: '211',
+  solarsatellite: '212',
+  destroyer: '213',
+  deathstar: '214',
+  interceptor: '215',
+  resbuggy: '217',
+  reaper: '218',
+  explorer: '219',
+};

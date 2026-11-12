@@ -8,8 +8,8 @@ const dir = join(import.meta.dirname, 'fixtures/messages');
 const files = readdirSync(dir).filter((f) => f.endsWith('.json'));
 
 describe('synthetic message fixtures', () => {
-  it('contains the 20 expected fixtures', () => {
-    expect(files).toHaveLength(20);
+  it('contains the 21 expected fixtures', () => {
+    expect(files).toHaveLength(21);
   });
 
   it.each(files)('%s is a synthetic, valid message observation', (file) => {

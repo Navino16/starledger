@@ -12,13 +12,13 @@ const eventOf = (r: ReturnType<typeof parseMessage>) => (r.status === 'ok' ? r.e
 
 describe('parseMessage', () => {
   it('routes every fixture to the right parser', () => {
-    expect(fixtures).toHaveLength(20);
+    expect(fixtures).toHaveLength(21);
     for (const f of fixtures) expect(parseMessage(f.observation), f.file).toEqual(f.expected);
   });
 
   it('exposes the parser version and tracked types', () => {
-    expect(PARSER_VERSION).toBe(4);
-    expect(TRACKED_MESSAGE_TYPES).toEqual([25, 32, 33, 41, 48, 54, 61]);
+    expect(PARSER_VERSION).toBe(5);
+    expect(TRACKED_MESSAGE_TYPES).toEqual([25, 32, 33, 41, 48, 54, 61, 76]);
   });
 
   it.each([34, 99, null])('marks message type %s as unsupported', (messageType) => {
