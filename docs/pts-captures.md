@@ -37,12 +37,12 @@ En plus des exports PTS, l'utilisateur a fourni 16 pages de messages de son comp
 
 ### Combats
 
-- [x] Combats en défense, perdus avec et sans pertes, et nuls (compte live, 2026-11-12) ; reste un combat en attaque à plusieurs rounds
+- [x] Combats en défense, perdus avec et sans pertes, et nuls (compte live, 2026-11-12), dont des combats de 2 à 6 rounds (deuxième capture du 2026-11-12, 48 rapports tous lus) ; reste un combat en attaque à plusieurs rounds
 - [x] Combat terminé au premier round (48), compte live 2026-11-12
 - [x] Espionnage où les sondes sont détruites (48, `shipslost` = sondes), compte live 2026-11-12
-- [ ] Défense sans réparation de défenses : le jeu omet-il la liste ou écrit-il `[]` ? Réponse partielle (PTS 2026-11-12) : `repairedTechnologies` vaut `[]` dans le rapport d'une attaque de sondes sans combat ; à confirmer sur une vraie défense
+- [x] Défense sans réparation de défenses : le jeu écrit `repairedTechnologies: []`, jamais une liste absente (47 défenses réelles, compte live, 2026-11-12)
 - [x] Attaque de sondes envoyée sur la lune vide d'un inactif, rapport à zéro round (25, `combatrounds` vide, vainqueur attaquant)
-- [ ] Combat sans butin : même question. Réponse partielle (PTS 2026-11-12) : la liste `loot.resources` est présente avec des montants à 0 (et une entrée `food`), `debris.resources` vaut `[]`. Un combat sans butin et sans débris a donc bien des listes écrites `[]` ; reste à confirmer pour un combat avec butin réel
+- [x] Combat sans butin : `loot.resources` est toujours présente (montants à 0, entrée `food` comprise) et `debris.resources` vaut `[]` sans débris ; vérifié aussi sur une planète pillée par un joueur, avec butin réel (compte live, 2026-11-12)
 - [ ] Champ d'épaves récupéré, « vaisseaux récupérés » (54)
 
 ### Découvertes de formes de vie (61)
@@ -72,7 +72,7 @@ Les types 70, 75, 76 et 77 de l'onglet Divers sont identifiés (compte live, 202
 
 
 - [x] Messages reçus en fin de mission d'anomalie : la récompense (type 76) n'est lisible que dans le HTML du message (2026-11-12)
-- [x] Rapport de combat produit par la même mission : oui, type 25 avec `defenderspaceobject.type` = `anomaly`, jamais de butin (2026-11-12)
+- [x] Rapport de combat produit par la même mission : oui, type 25 avec `defenderspaceobject.type` = `anomaly`, jamais de butin (2026-11-12). Le parseur actuel les lit (1 à 6 rounds, gagnés, nuls, perdus) mais les classe en défense de planète : à corriger au scope 13
 - [x] Page des anomalies : HTML des quatre onglets, dont la liste après un scan et les missions actives (PTS, 2026-11-12) ; requêtes lues dans le script du jeu (`docs/ogame-data-formats.md` §9)
 - [x] Fenêtre de récupération des récompenses, version lithium : HTML (compte live, 2026-11-12)
 - [ ] Fenêtre de récupération en antimatière, et une vague non payable faute de lithium : HTML
