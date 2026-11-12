@@ -24,9 +24,9 @@ describe('synthetic message fixtures', () => {
 const realDir = join(import.meta.dirname, 'fixtures/messages-real');
 const realFiles = readdirSync(realDir).filter((f) => f.endsWith('.json'));
 
-describe('real PTS message fixtures', () => {
-  it('contains the 6 expected fixtures', () => {
-    expect(realFiles).toHaveLength(6);
+describe('real message fixtures', () => {
+  it('contains the 24 expected fixtures', () => {
+    expect(realFiles).toHaveLength(24);
   });
 
   it.each(realFiles)('%s is a real, valid observation parsed as expected', (file) => {
