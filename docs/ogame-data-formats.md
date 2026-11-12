@@ -588,7 +588,8 @@ observed on the network.
 | `fetchScanCost` | anomaly level or range changed | `anomalyQuantity`, `scannerRange` | `scanCost`, `currentLithium`, `lithiumPerHour` |
 | `performScan` | "Scan" button | `anomalyQuantity` (level), `range`, `force` (0/1) | `status`, `message`, `returnAjaxList` (HTML of the result cards), `errors[0].error` (400002 = not enough free positions, `freeInRange`) |
 | `activateMission` | "Rechercher" on a result card | `anomalyMissionId` | `status`, `message`, `missionsWithoutFleet` |
-| `collectRewards` | "Collect" button or overlay | `spaceObjectId`, optional `darkMatterPrice` | `status`, `message`, `canCollectReward`, `lithiumBonus` `{ title, message }` (optional) |
+| `collectRewards` | "Collect" button or overlay | `spaceObjectId` | `status`, `message`, `canCollectReward`, `lithiumBonus` `{ title, message }` (optional) |
+| `collectRewardsWithDarkMatter` | "Accepter" in the Dark Matter overlay (9.4) | `spaceObjectId`, `darkMatterPrice` | same as `collectRewards` (script) |
 | `increaseMaxScanResults`, `increaseAnomalyDiscoveryCapacity` | slot purchase | none | `status`, `slotPurchase`, `maxScanResults`, `anomalyDiscoveryCapacity` |
 | `renameMission` | mission rename | | |
 
@@ -611,8 +612,8 @@ observed on the network.
   about 48,800 (live, 2026-11-12). The card's reward cost is paid later, wave by wave, at collect. The game subtracts `$('#scanCostValue').data('value')`,
   set by `fetchScanCost`; in the dumps `#scanCostValue` only has `data-tooltip-title` (localized,
   dot-grouped), so the cost must be read from the DOM at the moment of the request.
-- **Collecting can be paid in lithium or in Dark Matter**: the Dark Matter overlay
-  (`.orionCollectRewardsDarkMatter[data-dark-matter-price]`) adds `darkMatterPrice` to the request.
+- **Collecting can be paid in lithium or in Dark Matter**: the Dark Matter overlay posts to its own
+  `data-collect-rewards-url`, `action=collectRewardsWithDarkMatter`, with `darkMatterPrice`.
 - Collecting launches a reward-delivery fleet; the reward arrives later as message 76 (3.9).
 - The collect overlay is loaded from `page=componentOnly&component=orion&action=fetchCollectRewardsOverlay&ajax=1&spaceObjectId=<id>`
   (9.4); with the "don't show again" preference, `.directCollect` posts without any overlay.
@@ -662,7 +663,13 @@ Seen on a live account (2026-11-12), lithium version only:
   (`.overmark` then `.premium_txt`, localized sentence). There is no "Accepter" button: the only
   action is `a.orionCollectWithDarkMatter` ("Collect all"), which opens a second overlay from
   `page=componentOnly&component=orion&action=fetchCollectRewardsDarkMatterOverlay&spaceObjectId=<id>&ajax=1`.
-- **(gap)** That second overlay (`.orionCollectRewardsDarkMatter[data-dark-matter-price]`) was not
-  captured, and whether a Dark Matter collect also spends the lithium owned (the sentence says the
-  Dark Matter pays the *missing* part) is unknown: lithium balance before and after needed.
+- Second overlay (PTS, 2026-11-12): `div.orionCollectRewards.orionCollectRewardsDarkMatter` with
+  `data-space-object-id`, `data-dark-matter-price` (integer) and `data-collect-rewards-url`
+  (`action=collectRewardsWithDarkMatter`); `.collectRewardsHint` repeats the price in
+  `.premium_txt`; the waves are listed as `affordable` with their lithium cost; buttons
+  `.orionCollectDarkMatterConfirm` ("Accepter") and `.orionCollectCancel`.
+- The Dark Matter price follows the *missing* lithium: it dropped from 1,607 in the first overlay
+  to 1,399 in the second one opened a bit later, as production filled part of the gap. A Dark
+  Matter collect therefore very likely spends the lithium owned too **(inferred)**: balances
+  before and after still needed.
 
