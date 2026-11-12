@@ -37,8 +37,10 @@ function build(obs: MessageObservation): AnomalyRewardEvent {
       if (!isResourceKey(item.resource)) throw new Invalid(`unknown resource ${item.resource}`);
       resources[item.resource] += item.amount;
     } else {
-      const id = item.attributes.map((a) => SHIP_TECH_NAMES[a]).find((v) => v !== undefined);
+      const ids = item.attributes.map((a) => SHIP_TECH_NAMES[a]).filter((v) => v !== undefined);
+      const id = ids[0];
       if (id === undefined) throw new Invalid('unknown ship');
+      if (new Set(ids).size > 1) throw new Invalid('ambiguous ship');
       ships[id] = (ships[id] ?? 0) + item.amount;
     }
   }

@@ -75,6 +75,8 @@ describe('parseAnomalyReward', () => {
     ['unknown resource', obs([res('lithium', 5)])],
     ['unknown ship', obs([ship(['mystery'], 1)])],
     ['ship without attribute', obs([ship([], 1)])],
+    ['ambiguous ship', obs([ship(['fighterlight', 'cruiser'], 1)])],
+    ['icon-less item', obs([res('metal', 1), { type: 'unknown', tag: 'span', amount: null }])],
     ['unknown entry', obs([res('metal', 1), { type: 'unknown', tag: 'x-icon', amount: 2 }])],
   ])('is unrecognized: %s', (_name, o) => {
     const r = parseAnomalyReward(o);

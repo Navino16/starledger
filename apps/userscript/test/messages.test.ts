@@ -105,6 +105,22 @@ describe('anomaly reward extraction (type 76)', () => {
     expect(obs?.raw['x-anomalycoords']).toBe('3:44:7');
   });
 
+  it('keeps an icon-less loot item as an unknown entry', () => {
+    const html = anomalyMsg(
+      76,
+      `<div class="content-box"><div class="loot-row">
+        <div class="loot-item"><resource-icon class="metal" aria-description="Metal: 5"></resource-icon></div>
+        <div class="loot-item"><span class="xp">+10</span></div>
+        <div class="loot-item"></div>
+      </div></div>`,
+    );
+    expect(JSON.parse(extract(html)[0]?.raw['x-loot'] ?? 'null')).toEqual([
+      { type: 'resource', resource: 'metal', amount: 5 },
+      { type: 'unknown', tag: 'span', amount: null },
+      { type: 'unknown', tag: 'loot-item', amount: null },
+    ]);
+  });
+
   it('sets no x-loot without a loot item', () => {
     const [obs] = extract(anomalyMsg(76, ''));
     expect(obs?.raw['x-loot']).toBeUndefined();

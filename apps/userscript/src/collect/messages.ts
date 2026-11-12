@@ -34,9 +34,12 @@ function lootAmount(el: Element): number | null {
   return toInt(description.slice(description.lastIndexOf(':') + 1));
 }
 
-function readLootItem(item: Element): Record<string, unknown> | null {
+function readLootItem(item: Element): Record<string, unknown> {
   const icon = item.querySelector('resource-icon, technology-icon, [aria-description]');
-  if (!icon) return null;
+  if (!icon) {
+    const tag = item.firstElementChild?.tagName.toLowerCase() ?? 'loot-item';
+    return { type: 'unknown', tag, amount: null };
+  }
   const tag = icon.tagName.toLowerCase();
   const amount = lootAmount(icon);
   if (tag === 'resource-icon') {
@@ -53,9 +56,7 @@ function readLootItem(item: Element): Record<string, unknown> | null {
 }
 
 function readAnomalyReward(msg: HTMLElement, raw: Record<string, string>): void {
-  const items = [...msg.querySelectorAll('.content-box .loot-item')]
-    .map(readLootItem)
-    .filter((item) => item !== null);
+  const items = [...msg.querySelectorAll('.content-box .loot-item')].map(readLootItem);
   if (items.length > 0) raw['x-loot'] = JSON.stringify(items);
   const link = msg.querySelector('.msgContent a.txt_link')?.textContent ?? '';
   const coords = /\[(\d+):(\d+):(\d+)\]/.exec(link);
