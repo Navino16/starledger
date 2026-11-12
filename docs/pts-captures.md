@@ -12,6 +12,9 @@ Les exports contiennent le pseudo et ceux des autres joueurs : ils sont anonymis
 
 ## Déjà reçu (2026-11-12)
 
+En plus des exports PTS, l'utilisateur a fourni 16 pages de messages de son compte live (776 messages). Elles servent de référence locale et ne sont jamais commitées sans anonymisation.
+
+
 - [x] Recyclage (32) : cristal seul, lu correctement.
 - [x] Découverte de formes de vie (61), résultat « rien » : le jeu n'envoie alors aucun champ de résultat (12 messages).
 - [x] Découverte de formes de vie (61), artefacts de taille normale (4 messages) : 14, 6, 3 et 10 artefacts, confirmés contre l'affichage du jeu.
@@ -22,19 +25,19 @@ Les exports contiennent le pseudo et ceux des autres joueurs : ils sont anonymis
 ### Expéditions (41)
 
 - [x] Ressources : métal et cristal reçus (2026-11-12) ; le deutérium seul reste à voir
-- [ ] Antimatière
+- [x] Antimatière (compte live, 2026-11-12)
 - [x] Vaisseaux trouvés (2026-11-12)
 - [x] Rien (2026-11-12)
 - [x] Objet (2026-11-12)
 - [ ] Marchand
 - [x] Retour en avance (2026-11-12)
-- [ ] Retour en retard
+- [x] Retour en retard (compte live, 2026-11-12)
 - [ ] Trou noir
-- [ ] **Pirates ou aliens + le rapport de combat en position 16 (25)** : priorité 1, les pertes sont aujourd'hui déduites deux fois
+- [x] Pirates et aliens + leur rapport de combat en position 16 (compte live, 2026-11-12) : le message d'expédition ne porte aucune perte, seules celles du combat sont déduites, donc pas de double comptage
 
 ### Combats
 
-- [ ] Combat normal en plusieurs rounds (25), en attaque ou en défense
+- [x] Combats en défense, perdus avec et sans pertes, et nuls (compte live, 2026-11-12) ; reste un combat en attaque à plusieurs rounds
 - [ ] Combat terminé au premier round (48)
 - [ ] Espionnage où seules les sondes se battent et sont détruites
 - [ ] Défense sans réparation de défenses : le jeu omet-il la liste ou écrit-il `[]` ? Réponse partielle (PTS 2026-11-12) : `repairedTechnologies` vaut `[]` dans le rapport d'une attaque de sondes sans combat ; à confirmer sur une vraie défense
@@ -55,6 +58,9 @@ Les exports contiennent le pseudo et ceux des autres joueurs : ils sont anonymis
 - [ ] Recyclage en position 16, issu d'une expédition
 
 ### Transports (scope 12)
+
+281 messages de transport (type 33) du compte live sont disponibles pour concevoir le parseur ; il faut encore identifier les trois cas ci-dessous parmi eux.
+
 
 - [ ] Ressources reçues d'un autre joueur
 - [ ] Ressources livrées à un autre joueur
