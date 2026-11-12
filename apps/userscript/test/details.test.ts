@@ -61,6 +61,7 @@ const statsOf = (
           collects: 4,
         },
       },
+      ships: { found: { '202': 5 }, lost: { '202': 2, '203': 1 } },
       expeditions: {
         outcomes: { resources: 3, nothing: 1, ships: 0 },
         shipsFound: { '202': 5 },
@@ -121,15 +122,12 @@ describe('stats details dialog', () => {
     open();
     await tick();
     const text = dialog()?.textContent ?? '';
-    expect(text).toContain('Resources: 3 (75%)');
-    expect(text).toContain('Nothing: 1 (25%)');
+    expect(text).toContain('Resources: 3 (75.0%)');
+    expect(text).toContain('Nothing: 1 (25.0%)');
     expect(text).not.toContain('Ships:');
-    const shipRows = [...(dialog()?.querySelectorAll('.starledger-ships tr') ?? [])].map(
-      (r) => r.textContent,
-    );
-    expect(shipRows).toContain('20252');
-    expect(shipRows).toContain('20301');
-    expect(shipRows).toContain('20409');
+    expect(dialog()?.querySelectorAll('[data-ship]').length).toBeGreaterThan(0);
+    expect(dialog()?.querySelector('[data-ship="202"] .starledger-found')?.textContent).toBe('5');
+    expect(dialog()?.querySelector('[data-ship="202"] .starledger-lost')?.textContent).toBe('-2');
     const heads = [...(dialog()?.querySelectorAll('.starledger-balance th') ?? [])].map(
       (h) => h.textContent,
     );

@@ -60,4 +60,17 @@ div.starledger-status{margin:6px 0}
 .starledger-bar{display:block;width:100%;background:#64a69b}
 .is-negative .starledger-bar{background:#e2574c}
 .starledger-daynum{display:block;line-height:11px}
+.starledger-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:0 12px}
+.starledger-donut{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.starledger-donut-wrap{position:relative;width:110px;height:110px;flex:none}
+.starledger-donut-chart{display:block;width:100%;height:100%}
+.starledger-donut-total{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#e7e8eb}
+.starledger-legend{margin:0;padding:0;list-style:none}
+.starledger-dialog .starledger-legend li{display:flex;align-items:center;gap:5px}
+.starledger-swatch{display:inline-block;width:9px;height:9px;border-radius:2px}
+.starledger-shipgrid{display:flex;flex-wrap:wrap;gap:4px}
+.starledger-shiptile{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:40px;padding:2px;background:#11161d;border-radius:3px}
+.starledger-found{color:#e7e8eb}
+.starledger-lost{color:#e2574c}
+@media (max-width:560px){.starledger-split{grid-template-columns:minmax(0,1fr)}}
 `;

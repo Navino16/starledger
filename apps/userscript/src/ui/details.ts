@@ -11,8 +11,11 @@ import { loadSettings } from '../storage';
 import { createApi } from '../sync/api';
 import { CLIENT_VERSION } from '../version';
 import { renderCalendar, shiftMonth } from './details/calendar';
+import { renderDonut } from './details/donut';
+import { renderShips } from './details/ships';
 import { el, type UiContext } from './dom';
 import { formatAmount, formatPartial } from './format';
+import type { IconPage } from './icons';
 import { openPanel } from './panel';
 
 export const DETAILS_ID = 'starledger-details';
@@ -34,20 +37,6 @@ const CATEGORIES: [BalanceCategory, MessageKey][] = [
   ['anomalies', 'catAnomalies'],
   ['fuel', 'catFuel'],
 ];
-
-const OUTCOME_KEYS: Record<string, MessageKey> = {
-  resources: 'outResources',
-  darkmatter: 'outDarkmatter',
-  nothing: 'outNothing',
-  ships: 'outShips',
-  trader: 'outTrader',
-  item: 'outItem',
-  blackhole: 'outBlackhole',
-  early: 'outEarly',
-  late: 'outLate',
-  pirates: 'outPirates',
-  aliens: 'outAliens',
-};
 
 const num = (v: unknown): string => formatAmount(typeof v === 'number' ? v : null);
 
@@ -72,67 +61,6 @@ function resourcesCell(
     ` · ${t('resDeuterium')} `,
     amount(doc, 'deuterium', r?.deuterium),
   ];
-}
-
-function outcomesList(doc: Document, t: T, outcomes: Record<string, number> | undefined) {
-  const entries = Object.entries(outcomes ?? {}).filter(([, n]) => n > 0);
-  const total = entries.reduce((sum, [, n]) => sum + n, 0);
-  const list = el(doc, 'ul', { className: 'starledger-outcomes' });
-  if (total === 0) {
-    list.append(el(doc, 'li', { textContent: t('noData') }));
-    return list;
-  }
-  for (const [key, n] of entries) {
-    const label = OUTCOME_KEYS[key] ? t(OUTCOME_KEYS[key]) : key;
-    list.append(
-      el(doc, 'li', { textContent: `${label}: ${n} (${Math.round((n / total) * 100)}%)` }),
-    );
-  }
-  return list;
-}
-
-function sumShips(...maps: (Record<string, number> | undefined)[]): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const m of maps) for (const [id, n] of Object.entries(m ?? {})) out[id] = (out[id] ?? 0) + n;
-  return out;
-}
-
-function shipsTable(
-  doc: Document,
-  t: T,
-  found: Record<string, number>,
-  lost: Record<string, number>,
-) {
-  const ids = [...new Set([...Object.keys(found), ...Object.keys(lost)])].sort(
-    (a, b) => Number(a) - Number(b),
-  );
-  const table = el(doc, 'table', { className: 'starledger-ships' });
-  table.append(
-    el(
-      doc,
-      'tr',
-      {},
-      ...[t('shipId'), t('shipsFound'), t('shipsLost')].map((h) =>
-        el(doc, 'th', { textContent: h }),
-      ),
-    ),
-  );
-  if (ids.length === 0) {
-    table.append(el(doc, 'tr', {}, el(doc, 'td', { colSpan: 3, textContent: t('noData') })));
-  }
-  for (const id of ids) {
-    table.append(
-      el(
-        doc,
-        'tr',
-        {},
-        ...[id, num(found[id] ?? 0), num(lost[id] ?? 0)].map((c) =>
-          el(doc, 'td', { textContent: c }),
-        ),
-      ),
-    );
-  }
-  return table;
 }
 
 function discoveriesText(t: T, stats: StatsResponse): string {
@@ -281,17 +209,27 @@ function tradesNetNote(doc: Document, t: T, stats: StatsResponse): HTMLElement |
   return note;
 }
 
-function renderContent(doc: Document, t: T, stats: StatsResponse): HTMLElement[] {
+function renderContent(doc: Document, t: T, stats: StatsResponse, win?: IconPage): HTMLElement[] {
   const { summary } = stats;
   const nodes: HTMLElement[] = [
-    el(doc, 'h4', { textContent: t('sectionOutcomes') }),
-    outcomesList(doc, t, summary.expeditions?.outcomes),
-    el(doc, 'h4', { textContent: t('sectionShips') }),
-    shipsTable(
+    el(
       doc,
-      t,
-      sumShips(summary.expeditions?.shipsFound),
-      sumShips(summary.expeditions?.shipsLost, summary.combats?.shipsLost),
+      'div',
+      { className: 'starledger-split' },
+      el(
+        doc,
+        'section',
+        {},
+        el(doc, 'h4', { textContent: t('sectionOutcomes') }),
+        renderDonut(doc, t, summary.expeditions?.outcomes),
+      ),
+      el(
+        doc,
+        'section',
+        {},
+        el(doc, 'h4', { textContent: t('sectionShips') }),
+        renderShips(doc, t, summary.ships, win),
+      ),
     ),
     el(doc, 'h4', { textContent: t('sectionBalance') }),
     balanceTable(doc, t, stats),
@@ -418,7 +356,7 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
           change({ period: 'day', refDay: day }),
         ),
       );
-      body.replaceChildren(...renderContent(doc, t, result.data));
+      body.replaceChildren(...renderContent(doc, t, result.data, ctx.win));
     } catch {
       showError('server_error');
     }
