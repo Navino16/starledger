@@ -1,4 +1,6 @@
+import { detectLang } from '../../i18n';
 import { el } from '../dom';
+import { formatAmount } from '../format';
 
 export type CalendarDay = { day: string; msu: number };
 
@@ -19,6 +21,11 @@ export function renderCalendar(
   const list = days ?? [];
   const max = Math.max(0, ...list.map((d) => Math.abs(d.msu)));
   const cal = el(doc, 'div', { className: 'starledger-calendar' });
+  const dateFormat = new Intl.DateTimeFormat(detectLang(doc), {
+    day: 'numeric',
+    month: 'long',
+    timeZone: 'UTC',
+  });
   for (const { day, msu } of list) {
     const height = max > 0 ? Math.round((Math.abs(msu) / max) * 100) : 0;
     const bar = el(doc, 'span', { className: 'starledger-bar' });
@@ -34,6 +41,10 @@ export function renderCalendar(
       }),
     );
     cell.dataset.day = day;
+    cell.setAttribute(
+      'aria-label',
+      `${dateFormat.format(new Date(`${day}T00:00:00Z`))}: ${formatAmount(msu)}`,
+    );
     cell.setAttribute('aria-pressed', String(day === selected));
     cell.addEventListener('click', () => onSelect(day));
     cal.append(cell);

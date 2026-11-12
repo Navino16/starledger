@@ -42,6 +42,14 @@ describe('resourceIcon', () => {
     expect(e.style.backgroundImage).toContain('.png');
   });
 
+  it('keeps the sprite position for darkMatter and the exact provisional URL for artefacts', () => {
+    const page = defined('resource-icon');
+    expect(resourceIcon(doc, 'darkMatter', 'x', page).style.backgroundPosition).toBe('57% 11%');
+    expect(resourceIcon(doc, 'artefacts', 'x', page).style.backgroundImage).toBe(
+      'url("https://gf1.geo.gfsrv.net/cdn65/596ba85baa74145390e04f7428d93e.png")',
+    );
+  });
+
   it('always uses lithium-icon', () => {
     for (const page of [undefined, defined('lithium-icon')]) {
       const e = resourceIcon(doc, 'lithium', 'Li', page);

@@ -40,6 +40,20 @@ describe('renderCalendar', () => {
     expect(none.querySelectorAll('[data-day]')).toHaveLength(0);
     const zero = renderCalendar(document, [{ day: '2026-02-01', msu: 0 }], '2026-02-01', () => {});
     expect(zero.innerHTML).not.toContain('NaN');
+    const bars = [...zero.querySelectorAll<HTMLElement>('.starledger-bar')];
+    expect(bars.every((b) => b.style.height === '0%')).toBe(true);
+  });
+
+  it('labels each day button with its localized date and amount', () => {
+    document.head.innerHTML = '<meta name="ogame-language" content="en">';
+    const cal = renderCalendar(document, febDays, '2026-02-14', () => {});
+    expect(cal.querySelector('[data-day="2026-02-28"]')?.getAttribute('aria-label')).toBe(
+      'February 28: 280',
+    );
+    expect(cal.querySelector('[data-day="2026-02-03"]')?.getAttribute('aria-label')).toBe(
+      'February 3: -50',
+    );
+    document.head.innerHTML = '';
   });
 });
 

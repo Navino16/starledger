@@ -13,6 +13,7 @@ import { generateApiKey } from '../src/auth/api-keys';
 import type { Config } from '../src/config';
 import { ingestBatch } from '../src/ingest/ingest';
 import { saveValuationSettings } from '../src/settings/settings';
+import { getStats } from '../src/stats/stats-service';
 import { createUser } from '../src/users/users';
 import { startTestDb, type TestDb } from './helpers/db';
 
@@ -299,6 +300,24 @@ describe('GET /api/v1/stats', () => {
         expect(byDay.get('2026-09-12')).toBeLessThan(0);
         expect(res.days.filter((d) => d.msu !== 0)).toHaveLength(2);
       }
+    });
+
+    it('reuses the period events for the month series instead of querying again', async () => {
+      const p = nextPlayerId++;
+      await send(bobId, [expedition(p, noonTs('2026-09-05'))]);
+      const counted = async (period: 'day' | 'month') => {
+        let n = 0;
+        const db = t.db.withPlugin({
+          transformQuery: ({ node }) => node,
+          transformResult: async ({ result }) => {
+            n++;
+            return result;
+          },
+        });
+        await getStats(db, bobId, { serverId: 808, lang: 'en', playerId: p, period, today: TODAY });
+        return n;
+      };
+      expect((await counted('month')) + 1).toBe(await counted('day'));
     });
 
     it('returns zeros for the account of another user', async () => {

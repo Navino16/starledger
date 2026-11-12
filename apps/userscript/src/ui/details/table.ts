@@ -173,23 +173,21 @@ export function renderNotes(doc: Document, t: T, stats: StatsResponse): HTMLElem
   if (settings?.ignoreConsumption) add(t('fuelIgnoredNote'));
 
   const l = summary.anomalies?.lithium;
-  if (l) {
-    const parts: string[] = [];
-    if (l.spent > 0 || l.refunded > 0 || l.spentUnknown > 0 || l.refundUnknown > 0) {
-      parts.push(
-        t('lithiumSummary', {
-          spent: formatPartial(l.spent, l.spentUnknown),
-          refunded: formatPartial(l.refunded, l.refundUnknown),
-          net: formatPartial(l.net, l.spentUnknown + l.refundUnknown),
-        }),
-      );
-    }
-    const counts = anomalyCounts(t, stats);
-    if (counts) parts.push(counts);
-    if (parts.length > 0) add(parts.join(' · '));
-    if (l.darkMatterSpent > 0 || l.darkMatterUnknown > 0) {
-      add(t('anomalyDarkMatter', { n: formatPartial(l.darkMatterSpent, l.darkMatterUnknown) }));
-    }
+  const parts: string[] = [];
+  if (l && (l.spent > 0 || l.refunded > 0 || l.spentUnknown > 0 || l.refundUnknown > 0)) {
+    parts.push(
+      t('lithiumSummary', {
+        spent: formatPartial(l.spent, l.spentUnknown),
+        refunded: formatPartial(l.refunded, l.refundUnknown),
+        net: formatPartial(l.net, l.spentUnknown + l.refundUnknown),
+      }),
+    );
+  }
+  const anomalyLine = anomalyCounts(t, stats);
+  if (anomalyLine) parts.push(anomalyLine);
+  if (parts.length > 0) add(parts.join(' · '));
+  if (l && (l.darkMatterSpent > 0 || l.darkMatterUnknown > 0)) {
+    add(t('anomalyDarkMatter', { n: formatPartial(l.darkMatterSpent, l.darkMatterUnknown) }));
   }
 
   const c = summary.combats;

@@ -142,6 +142,26 @@ describe('computeStats', () => {
     expect(s.combats).toMatchObject({ count: 0, won: 0, lost: 0, draw: 0, probeOnly: 0 });
   });
 
+  it('has no negative zero, a null or zero count per row and empty ship maps when empty', () => {
+    const s = computeStats([], DEFAULT_VALUATION);
+    const numbers: number[] = [];
+    for (const row of Object.values(s.rows)) {
+      expect([0, null]).toContain(row.count);
+      for (const v of [
+        ...Object.values(row.resources ?? {}),
+        row.msu,
+        row.darkMatter,
+        row.artefacts,
+        row.lithium,
+      ]) {
+        if (typeof v === 'number') numbers.push(v);
+      }
+    }
+    expect(numbers.length).toBeGreaterThan(0);
+    for (const v of numbers) expect(Object.is(v, -0)).toBe(false);
+    expect(s.ships).toEqual({ found: {}, lost: {} });
+  });
+
   it('counts an expedition of 1000 metal', () => {
     const s = run([expedition({ resources: res(1000) })]);
     expect(s.tiles.metal).toBe(1000);

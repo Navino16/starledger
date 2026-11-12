@@ -399,4 +399,55 @@ describe('details period navigation', () => {
     await tick();
     expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(31);
   });
+
+  it('shows the month label in French', async () => {
+    document.head.innerHTML = '<meta name="ogame-language" content="fr">';
+    open();
+    await tick();
+    expect(dialog()?.querySelector('.starledger-month')?.textContent).toBe('mars 2026');
+    document.head.innerHTML = '';
+  });
+
+  it('goes back across a year boundary keeping the day', async () => {
+    vi.setSystemTime(new Date('2026-01-15T12:00:00Z'));
+    open();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-nav="prev"]')?.click();
+    await tick();
+    expect(stats().at(-1)?.url).toContain('today=2025-12-15');
+    expect(dialog()?.querySelector('.starledger-month')?.textContent).toBe('December 2025');
+  });
+
+  it('shows 29 bars for February of a leap year', async () => {
+    vi.setSystemTime(new Date('2028-02-10T12:00:00Z'));
+    gm.respondWith(() => ({
+      status: 200,
+      body: JSON.stringify({ ...statsOf(), days: days('2028-02', 29) }),
+    }));
+    open();
+    await tick();
+    expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(29);
+  });
+
+  it('empties the calendar when the request fails', async () => {
+    open();
+    await tick();
+    expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(31);
+    gm.respondWith(() => ({ status: 401, body: '' }));
+    dialog()?.querySelector<HTMLElement>('[data-nav="prev"]')?.click();
+    await tick();
+    expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(0);
+    expect(dialog()?.querySelector('.starledger-error')).not.toBeNull();
+  });
+
+  it('moves focus back to the selected day after a calendar click, not on first open', async () => {
+    open();
+    await tick();
+    expect(dialog()?.contains(document.activeElement)).toBe(true);
+    expect(document.activeElement?.hasAttribute('data-day')).toBe(false);
+    dialog()?.querySelector<HTMLElement>('[data-day="2026-03-10"]')?.click();
+    await tick();
+    const focused = document.activeElement as HTMLElement | null;
+    expect(focused?.dataset.day).toBe('2026-03-10');
+  });
 });

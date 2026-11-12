@@ -61,33 +61,40 @@ export function renderDonut(
   const percent = (ratio: number) => `${decimal.format(ratio * 100)}${lang === 'fr' ? ' %' : '%'}`;
   const root = el(doc, 'div', { className: 'starledger-donut' });
   const svg = doc.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('role', 'img');
   svg.setAttribute('viewBox', '0 0 100 100');
   svg.setAttribute('class', 'starledger-donut-chart');
   svg.append(circle(doc, '#1f2833'));
   const legend = el(doc, 'ul', { className: 'starledger-legend' });
   let offset = 0;
+  const summaries: string[] = [];
   for (const [key, n] of entries) {
     const color = COLORS[key] ?? FALLBACK_COLOR;
     const length = (n / total) * CIRCUMFERENCE;
-    svg.append(
-      circle(doc, color, {
-        'data-outcome': key,
-        'stroke-dasharray': `${length} ${CIRCUMFERENCE - length}`,
-        'stroke-dashoffset': String(-offset),
-        transform: 'rotate(-90 50 50)',
-      }),
-    );
-    offset += length;
     const label = OUTCOME_KEYS[key] ? t(OUTCOME_KEYS[key]) : key;
+    const summary = `${label} ${n} (${percent(n / total)})`;
+    summaries.push(summary);
+    const arc = circle(doc, color, {
+      'data-outcome': key,
+      'stroke-dasharray': `${length} ${CIRCUMFERENCE - length}`,
+      'stroke-dashoffset': String(-offset),
+      transform: 'rotate(-90 50 50)',
+    });
+    const title = doc.createElementNS(SVG_NS, 'title');
+    title.textContent = summary;
+    arc.append(title);
+    svg.append(arc);
+    offset += length;
     const swatch = el(doc, 'span', { className: 'starledger-swatch' });
     swatch.style.background = color;
     const item = el(doc, 'li', {}, swatch, `${label}: ${n} (${percent(n / total)})`);
     item.dataset.legend = key;
     legend.append(item);
   }
+  svg.setAttribute('aria-label', summaries.length > 0 ? summaries.join(', ') : t('noExpedition'));
   const center = el(doc, 'span', {
     className: 'starledger-donut-total',
-    textContent: String(total),
+    textContent: outcomes === undefined ? '?' : String(total),
   });
   root.append(el(doc, 'div', { className: 'starledger-donut-wrap' }, svg, center), legend);
   return root;

@@ -29,7 +29,7 @@ describe('renderDonut', () => {
   });
 
   it('draws an empty circle without percentages or NaN when the total is 0', () => {
-    const cases: (Record<string, number> | undefined)[] = [{}, { resources: 0 }, undefined];
+    const cases: Record<string, number>[] = [{}, { resources: 0 }];
     for (const outcomes of cases) {
       const d = renderDonut(document, createT('en'), outcomes);
       expect(d.textContent).not.toContain('NaN');
@@ -42,5 +42,59 @@ describe('renderDonut', () => {
   it('skips zero outcomes in the legend', () => {
     const d = renderDonut(document, createT('en'), { resources: 2, ships: 0 });
     expect(d.querySelectorAll('[data-legend]')).toHaveLength(1);
+  });
+
+  it('shows ? and no legend when the server sent no outcomes', () => {
+    const d = renderDonut(document, createT('en'), undefined);
+    expect(d.querySelector('.starledger-donut-total')?.textContent).toBe('?');
+    expect(d.querySelectorAll('[data-legend]')).toHaveLength(0);
+    expect(d.querySelectorAll('circle[data-outcome]')).toHaveLength(0);
+  });
+
+  it('keeps 0 in the centre for an empty outcomes object', () => {
+    const d = renderDonut(document, createT('en'), {});
+    expect(d.querySelector('.starledger-donut-total')?.textContent).toBe('0');
+  });
+
+  it('labels the chart for assistive technology and titles each arc', () => {
+    const d = renderDonut(document, createT('en'), { resources: 19, nothing: 13 });
+    const svg = d.querySelector('svg');
+    expect(svg?.getAttribute('role')).toBe('img');
+    expect(svg?.getAttribute('aria-label')).toBe('Resources 19 (59.4%), Nothing 13 (40.6%)');
+    expect(d.querySelector('circle[data-outcome="nothing"] title')?.textContent).toBe(
+      'Nothing 13 (40.6%)',
+    );
+  });
+
+  it('uses the no-expedition text as the label of an empty chart', () => {
+    const t = createT('en');
+    const d = renderDonut(document, t, {});
+    expect(d.querySelector('svg')?.getAttribute('aria-label')).toBe(t('noExpedition'));
+  });
+
+  describe('arc geometry', () => {
+    const CIRC = 2 * Math.PI * 40;
+    const arcs = (d: HTMLElement) =>
+      [...d.querySelectorAll('circle[data-outcome]')].map((c) => ({
+        length: Number.parseFloat((c.getAttribute('stroke-dasharray') ?? '').split(' ')[0] ?? ''),
+        offset: Number.parseFloat(c.getAttribute('stroke-dashoffset') ?? ''),
+      }));
+
+    it('gives a single outcome the full circumference', () => {
+      const [arc] = arcs(renderDonut(document, createT('en'), { resources: 1 }));
+      expect(arc?.length).toBeCloseTo(CIRC, 6);
+    });
+
+    it('sums the arcs to the circumference with cumulative offsets', () => {
+      const list = arcs(
+        renderDonut(document, createT('en'), { resources: 19, nothing: 8, ships: 5 }),
+      );
+      expect(list.reduce((s, a) => s + a.length, 0)).toBeCloseTo(CIRC, 6);
+      let expected = 0;
+      for (const a of list) {
+        expect(-a.offset).toBeCloseTo(expected, 6);
+        expected += a.length;
+      }
+    });
   });
 });

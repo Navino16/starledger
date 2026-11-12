@@ -109,7 +109,7 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
     );
   };
 
-  async function load(before?: Promise<unknown>): Promise<void> {
+  async function load(before?: Promise<unknown>, refocus = false): Promise<void> {
     const mine = ++seq;
     const { period, refDay } = state;
     for (const [p, b] of buttons) b.setAttribute('aria-pressed', String(p === period));
@@ -143,20 +143,21 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
     try {
       calendarBox.replaceChildren(
         renderCalendar(doc, result.data.days, refDay, (day) =>
-          change({ period: 'day', refDay: day }),
+          change({ period: 'day', refDay: day }, true),
         ),
       );
       body.replaceChildren(...renderContent(doc, t, result.data, ctx.win));
+      if (refocus) calendarBox.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus();
     } catch {
       showError('server_error');
     }
   }
 
-  function change(next: Partial<typeof state>): void {
+  function change(next: Partial<typeof state>, refocus = false): void {
     const merged = { ...state, ...next };
     if (merged.period === state.period && merged.refDay === state.refDay) return;
     Object.assign(state, merged);
-    void load();
+    void load(undefined, refocus);
   }
 
   const navButton = (dir: 'prev' | 'next', key: MessageKey, delta: number) => {

@@ -183,6 +183,15 @@ describe('renderTable', () => {
     );
   });
 
+  it('shows the anomaly counts note when rewards or combats exist without lithium', () => {
+    const body = statsOf(undefined, {
+      anomalies: { rewards: { count: 2 }, combats: { count: 1 } },
+    });
+    expect(renderNotes(document, t, body).textContent).toContain(
+      'scans: 0 · collects: 0 · rewards: 2 · combats: 1',
+    );
+  });
+
   it('adds the ships tooltip and the paid Dark Matter on anomalies', () => {
     const body = statsOf(
       { anomalies: row({ count: 1, resources: res(0, 0, 0), msu: 0 }) },
