@@ -36,7 +36,7 @@
 | 8 | Userscript : collecte des messages | ✅ |
 | 9 | Userscript : encart et détail | ✅ |
 | 10 | Validation PTS : vraies captures, reparse, audit | ☐ |
-| 11 | Carburant | ☐ (vérifications PTS en tâche 1) |
+| 11 | Carburant | ☐ (code fait, vérification PTS 11.2 step 5) |
 | 12 | Transports entre joueurs | ⛔ attend les captures (design §9.2) |
 | 13 | Anomalies | ⛔ attend les captures (design §9.1) |
 | 14 | Dossier de tolérance et publication | ☐ |
@@ -1031,18 +1031,18 @@ Branche : `feature/userscript-fuel`.
   - **`miniFleet`** : à `ajaxSend`, on lit les paramètres `mission`, `galaxy`, `system`, `position`, `type` et `shipCount`. À `ajaxSuccess`, si `response.success`, on crée une observation `source: 'minifleet'` avec `consumption: null`. `ships` vaut `{ '210': shipCount }` pour la mission 6, `{ '209': shipCount }` pour la mission 8, et `{}` sinon.
   - Commentaire de conformité : `// AGENTS.md §0/§4: observe only, never wrap or replace fleetDispatcher`.
 
-- [ ] **Step 1 : tests avec un jQuery et un `fleetDispatcher` simulés.**
+- [x] **Step 1 : tests avec un jQuery et un `fleetDispatcher` simulés.**
   - Un envoi réussi donne une observation, avec `consumption` égale à la valeur de l'instantané.
   - `success:false` ne donne rien.
   - Un `ajaxSend` sans `ajaxSuccess` (annulation) ne donne rien.
   - Un `miniFleet` réussi donne `consumption: null`.
   - `fleetDispatcher.submitFleet2` est toujours la même référence après l'installation du collecteur, preuve qu'il n'a pas été remplacé.
-- [ ] **Step 2 : lancer.** Attendu : FAIL.
-- [ ] **Step 3 : implémenter.**
-- [ ] **Step 4 : lancer.** Attendu : PASS.
+- [x] **Step 2 : lancer.** Attendu : FAIL.
+- [x] **Step 3 : implémenter.**
+- [x] **Step 4 : lancer.** Attendu : PASS.
 - [ ] **Step 5 : vérifier sur le PTS.** Une expédition envoyée augmente le carburant de l'encart de la valeur affichée par le jeu. Un envoi refusé ne change rien.
-- [ ] **Step 6 : auto-audit** (`AGENTS.md` §7), noté pour la PR.
-- [ ] **Step 7 : commit.** `git commit -m "Track fuel of confirmed fleet dispatches passively"`
+- [x] **Step 6 : auto-audit** (`AGENTS.md` §7), noté pour la PR.
+- [x] **Step 7 : commit.** `git commit -m "Track fuel of confirmed fleet dispatches passively"`
 
 ---
 
