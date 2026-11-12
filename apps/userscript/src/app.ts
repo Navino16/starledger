@@ -14,6 +14,7 @@ import { renderConsent } from './ui/consent';
 import { openDetails } from './ui/details';
 import type { UiContext } from './ui/dom';
 import { exportQueue } from './ui/export';
+import type { IconPage } from './ui/icons';
 import { setOglightHidden } from './ui/oglight';
 import { renderOptions } from './ui/options';
 import { UI_CSS } from './ui/styles';
@@ -22,7 +23,7 @@ import { CLIENT_VERSION } from './version';
 export function main(
   gm: Gm,
   doc: Document,
-  win?: FleetPageWindow & { serverTime?: unknown },
+  win?: FleetPageWindow & IconPage & { serverTime?: unknown },
   onCollected: () => void = () => {},
 ): void {
   //! AGENTS.md §4: our errors must never break the game's page or its ajax chain
@@ -34,13 +35,13 @@ export function main(
 function bootstrap(
   gm: Gm,
   doc: Document,
-  win?: FleetPageWindow & { serverTime?: unknown },
+  win?: FleetPageWindow & IconPage & { serverTime?: unknown },
   onCollected: () => void = () => {},
 ): void {
   if (!isAllowedUniverse(doc)) return;
 
   const lang = detectLang(doc);
-  const ctx: UiContext = { gm, doc, t: createT(lang), queue: createQueue(gm) };
+  const ctx: UiContext = { gm, doc, t: createT(lang), queue: createQueue(gm), win };
   gm.addStyle(UI_CSS);
 
   const openOptions = () => renderOptions(ctx);

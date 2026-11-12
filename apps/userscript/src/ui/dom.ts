@@ -1,6 +1,7 @@
 import type { Gm } from '../gm';
 import type { T } from '../i18n';
 import type { createQueue } from '../sync/queue';
+import type { IconPage } from './icons';
 
 export type UiContext = {
   gm: Gm;
@@ -8,6 +9,7 @@ export type UiContext = {
   t: T;
   queue: ReturnType<typeof createQueue>;
   refreshBox?: () => void;
+  win?: IconPage;
 };
 
 export function el<K extends keyof HTMLElementTagNameMap>(
