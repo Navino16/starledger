@@ -181,6 +181,14 @@ Notes pour l'utilisateur :
 - Vérifier que le téléchargement de l'export fonctionne dans Tampermonkey (Chrome, Firefox, mobile) à la première capture.
 - Les exports contiennent `playerId` et le nom : les anonymiser avant de les committer comme fixtures (tâche 10.1 étape 1).
 
+### Scope 13 — Anomalies (préparation)
+
+| Sujet | Décision | Coût si faux |
+|---|---|---|
+| Combats d'anomalie | Scope 13 : Ruling : un combat 25 dont `defenderspaceobject.type` vaut `anomaly` est rattaché à la catégorie « anomalies » (ses pertes y sont déduites), pas aux combats ; critère indépendant de la langue, contrairement au nom du PNJ. | Les pertes changent de catégorie ; un `reparse` suffit à corriger. |
+| Récompenses d'anomalie | Scope 13 : Ruling : lues dans le HTML du message 76 (`.loot-item`), lecture passive du DOM de la page ouverte par le joueur (AGENTS.md §4) ; « Récompense reçue » et « Butin » comptent tous deux comme gains d'anomalie. | Si « Butin » n'est pas un gain d'anomalie, il faudra le reclasser. |
+| Types 70, 75, 77 | Scope 13 : Ruling : pas d'événement dans le MVP, ils ne portent aucune quantité ; à reconsidérer pour compter les missions faites ou ratées. | Aucun. |
+
 ## Écart noté
 
 Le design §6.4 prévoit la lecture et l'écriture des réglages par l'API ; le plan ne prévoit que la lecture (dans la réponse de stats). Aucune écriture par l'API dans le MVP.
@@ -188,6 +196,6 @@ Le design §6.4 prévoit la lecture et l'écriture des réglages par l'API ; le 
 ## En attente côté utilisateur
 
 - Réponses ToolDev sur le fil forum (masquage d'OGLight, données d'autres joueurs dans les rapports de combat, fond sombre des fenêtres réglages et détail).
-- Captures PTS pour les anomalies et les transports (scopes 12 et 13).
+- Captures de la page des anomalies (scan, récupération, lithium) et identification des trois cas de transport (scopes 12 et 13).
 - Installer la GitHub App Codecov (facultatif).
 - Réactiver CodeQL dans le ruleset après le premier merge `develop` → `main`.

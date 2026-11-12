@@ -111,6 +111,10 @@ Coordinate parsing: Tracker accepts `g:s:p` with optional surrounding brackets (
 | 48 | One-round combat (no full report) | OGL l.8601 |
 | 54 | Wreckfield / ships recovered | OGL l.8609 |
 | 61 | Lifeform discovery result | TRK `raw/OgameRawMessageType.ts`, OGL l.8740 |
+| 70 | Anomaly: fleet stationed at the anomaly, waiting for opponents (3.9) | Live 2026-11-12 |
+| 75 | Anomaly: a merchant convoy fled without delivering (3.9) | Live 2026-11-12 |
+| 76 | Anomaly: reward delivered to the player's planet (3.9) | Live 2026-11-12 |
+| 77 | Anomaly: the anomaly collapses, fleets return (3.9) | Live 2026-11-12 |
 | (none) | Espionage reports may have no type attribute; detail dialog uses `data-message-type="10"` | TRK `msg/base`, OGL l.8640–8696 |
 
 ---
@@ -187,7 +191,7 @@ Raw attributes (all JSON except `coords`):
 | Attribute | Shape (fields actually read) | Source |
 |---|---|---|
 | `coords` | `"g:s:p"` | OGL l.8832 |
-| `defenderspaceobject` | `{ "owner": { "id": playerId }?, "coordinates": { "galaxy", "system", "position" }, "type": "planet" \| "moon" }` | TRK `msg/combat`, OGL l.8833, l.8841 |
+| `defenderspaceobject` | `{ "owner": { "id": playerId }?, "coordinates": { "galaxy", "system", "position" }, "type": "planet" \| "moon" \| "anomaly" }` | TRK `msg/combat`, OGL l.8833, l.8841; `"anomaly"` live 2026-11-12 (3.9) |
 | `fleets` | array of `{ "fleetId", "side": "attacker" \| "defender", "player": { "id" }?, "combatTechnologies": [ { "technologyId", ... } ] }` | TRK `msg/combat`, OGL l.8834, l.8843–8862 |
 | `combatrounds` | array of rounds; each `{ "fleets": [ { "fleetId", "technologies": [ { "technologyId", "destroyedTotal" } ] } ] }` | TRK `msg/combat`, OGL l.8835, l.8870–8877 |
 | `result` | see below | TRK `msg/combat`, OGL l.8836 |
@@ -279,6 +283,39 @@ Attributes read by OGLight (OGL l.8638–8670): `targetplanetid`, `playername`,
 `fleet` / `defense` / `research` (JSON `{ "<techId>": level_or_count }` or `"-"`),
 `loot` (percent), `fleetvalue`, `defensevalue`, `attacking` (0/1),
 and for counter-espionage: `sourceplayerid`, `sourceplayername`, `sourceplanetcoordinates`.
+
+### 3.9 Anomaly messages (70, 75, 76, 77)
+
+Seen on a live account (2026-11-12, 138 messages), all in subtab 24 (Misc), sender "control
+tower". **None carries a resource attribute in `.rawMessageData`.**
+
+| Type | Title (fr) | Raw attributes | Meaning |
+|---|---|---|---|
+| 70 | Stationnement de la flotte | `coords` (anomaly), `sourceplanet*`, `sourceplayer*`, `targetplanetid`, `targetplayerid` = `99999`; rarely `targetplanettype` = `4` and `targetplanetname` = anomaly kind (e.g. "Petite livraison de ressources") | A fleet reached the anomaly and waits for opponents |
+| 75 | Convoi de marchandises en fuite | `coords` (anomaly), `sourceplanet*`, `sourceplayer*`, `targetplanetid` | A merchant convoy reached the anomaly, saw the stationed warships and fled without its cargo |
+| 76 | Récompense d`anomalie livrée | `coords`, `targetplanet*`, `targetplayer*`: the player's **own planet** receiving the reward | Reward of an anomaly mission delivered |
+| 77 | L`anomalie se résorbe | `coords` (anomaly), `targetplanetid` | The anomaly collapses; fleets return home |
+
+**Rewards (76) are only in the message HTML**, not in the raw attributes:
+
+- The anomaly coordinates are the first `a.txt_link` of `.msgContent` (`[g:s:p]`); `coords` is the
+  receiving planet.
+- `.content-box` holds a `group-title-label` ("Récompense reçue" or "Butin", 34 / 4 messages) and
+  one or more `.loot-row > .loot-item`.
+- Resources: `<resource-icon class="metal|crystal|deuterium ...">` with
+  `aria-description="<localized name>: <integer>"`; `.amount` is the localized, dot-grouped value.
+- Ships: `<technology-icon ... transportersmall="" ...>` (202), `fighterlight=""` (204): the ship
+  is a valueless attribute named after the game's technical name; same `aria-description` format.
+- Seen: 1 to 4 items per message, resources and ships mixed, no lithium.
+
+**Anomaly missions also produce combat reports (25)** at the anomaly coordinates: the player is
+the defender, the attacker is `{ "type": "npc", "id": 99999 }` with a localized name, and
+`defenderspaceobject.type` is `"anomaly"` (language-independent discriminator; pirates and aliens
+at position 16 have `"planet"`). Seen: 54 such reports, never any loot, own losses in 7, debris
+fields at the anomaly position.
+
+**(gap)** Lithium spent (scan, reward collection) and refunded is not in any message: it needs
+captures of the anomaly page and its requests.
 
 ---
 
@@ -519,3 +556,5 @@ Planet/target type ids: `1` planet, `2` debris field, `3` moon
 4. **Timezone**: no meta tag; only `serverData.xml` `timezone` / `timezoneOffset` (format unknown)
    and page globals `serverTimeZoneOffsetInMinutes` / `localTimeZoneOffsetInMinutes`.
 5. `data-raw-datetime` format, subtab 25 meaning, type 35 meaning.
+6. **Anomaly page**: DOM and requests of the scan, the choice, the reward collection and the
+   lithium refund (3.9 covers the messages only).
