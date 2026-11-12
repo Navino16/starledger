@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import type { ParseResult, TransportDirection, TransportEvent } from '../events';
+import { parseCoords } from '../coords';
+import type { ParseResult, TransportDirection, TransportEvent, TransportPartner } from '../events';
 import type { MessageObservation } from '../observation';
 import { Invalid, need, rawInt, rawJson, tryBuild } from './raw';
 
@@ -27,12 +28,27 @@ function directionOf(obs: MessageObservation): TransportDirection {
   throw new Invalid('transport involves no own player');
 }
 
+function partnerOf(obs: MessageObservation, side: 'source' | 'target'): TransportPartner {
+  const id = playerId(obs, `${side}playerid`);
+  const name = obs.raw[`${side}playername`]?.trim();
+  if (!name) throw new Invalid(`missing ${side}playername`);
+  const coords = parseCoords(obs.raw[`${side}planetcoordinates`] ?? '');
+  if (!coords) throw new Invalid(`invalid ${side}planetcoordinates`);
+  const type = need(rawInt(obs.raw, `${side}planettype`), `${side}planettype`);
+  if (type !== 1 && type !== 3) throw new Invalid(`invalid ${side}planettype`);
+  return { playerId: id, playerName: name, coords: { ...coords, type } };
+}
+
 function build(obs: MessageObservation): TransportEvent {
   const direction = directionOf(obs);
   const cargo = need(rawJson(obs.raw, 'cargo', cargoSchema), 'cargo');
   if (cargo === null) throw new Invalid('missing cargo');
-  // docs/decisions.md scope 12: the other player's identity and coordinates stay in the raw only
-  return { kind: 'transport', direction, resources: cargo };
+  // User decision 2026-11-12 (docs/decisions.md): to review before publishing (scope 14, ToolDev answer)
+  const partner =
+    direction === 'internal'
+      ? null
+      : partnerOf(obs, direction === 'delivered' ? 'target' : 'source');
+  return { kind: 'transport', direction, resources: cargo, partner };
 }
 
 export function parseTransport(obs: MessageObservation): ParseResult {

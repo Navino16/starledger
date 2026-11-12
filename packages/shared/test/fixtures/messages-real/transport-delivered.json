@@ -45,6 +45,16 @@
         "metal": 100,
         "crystal": 100,
         "deuterium": 100
+      },
+      "partner": {
+        "playerId": 200001,
+        "playerName": "Other1",
+        "coords": {
+          "galaxy": 3,
+          "system": 77,
+          "position": 9,
+          "type": 3
+        }
       }
     }
   }

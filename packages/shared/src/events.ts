@@ -92,10 +92,17 @@ export type WreckfieldEvent = {
 
 export type TransportDirection = 'received' | 'delivered' | 'internal';
 
+export type TransportPartner = {
+  playerId: number;
+  playerName: string;
+  coords: Coords & { type: 1 | 3 };
+};
+
 export type TransportEvent = {
   kind: 'transport';
   direction: TransportDirection;
   resources: Resources;
+  partner: TransportPartner | null;
 };
 
 export type FuelEvent = {
