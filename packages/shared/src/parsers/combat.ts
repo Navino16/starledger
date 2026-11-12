@@ -8,7 +8,8 @@ import { coordsOf, Invalid, need, rawJson, tryBuild } from './raw';
 
 const id = z.number().int();
 const amount = z.number().nonnegative();
-const resource = z.enum(['metal', 'crystal', 'deuterium']);
+// Any resource name: the game also lists `food` (docs/ogame-data-formats.md §3.3)
+const resource = z.string();
 
 const defenderSchema = z.object({ owner: z.object({ id }).optional() });
 const fleetsSchema = z.array(
@@ -19,18 +20,16 @@ const fleetsSchema = z.array(
     combatTechnologies: z.array(z.object({ technologyId: id })),
   }),
 );
-const roundsSchema = z
-  .array(
-    z.object({
-      fleets: z.array(
-        z.object({
-          fleetId: id,
-          technologies: z.array(z.object({ technologyId: id, destroyedTotal: amount })),
-        }),
-      ),
-    }),
-  )
-  .min(1);
+const roundsSchema = z.array(
+  z.object({
+    fleets: z.array(
+      z.object({
+        fleetId: id,
+        technologies: z.array(z.object({ technologyId: id, destroyedTotal: amount })),
+      }),
+    ),
+  }),
+);
 const resultSchema = z.object({
   winner: z.enum(['attacker', 'defender', 'none']),
   loot: z.object({ resources: z.array(z.object({ resource, amount })) }).optional(),
@@ -45,9 +44,11 @@ function required<T>(value: T | null, attr: string): T {
   return value;
 }
 
-function sumResources(entries: { resource: keyof Resources; value: number }[]): Resources {
+function sumResources(entries: { resource: string; value: number }[]): Resources {
   const total: Resources = { metal: 0, crystal: 0, deuterium: 0 };
-  for (const { resource: r, value } of entries) total[r] += value;
+  for (const { resource: r, value } of entries) {
+    if (r === 'metal' || r === 'crystal' || r === 'deuterium') total[r] += value;
+  }
   return total;
 }
 
@@ -90,7 +91,7 @@ function build(obs: MessageObservation): CombatEvent {
     else if (ownPlanetDefended && result.winner === 'attacker') lootSign = -1;
   }
 
-  // The game likely omits empty lists; to verify on PTS (scope 10)
+  // The game writes empty lists as `[]` (docs/ogame-data-formats.md §3.3); fallback kept by decision
   const loot = result.loot ?? { resources: [] };
   const debris = result.debris ?? { resources: [] };
 

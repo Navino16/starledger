@@ -1,0 +1,59 @@
+{
+  "synthetic": false,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000101",
+    "account": {
+      "serverId": 808,
+      "lang": "en",
+      "playerId": 100001,
+      "playerName": "Tester"
+    },
+    "observedAt": 1794477932410,
+    "serverUtcOffsetMinutes": 0,
+    "msgId": 4752888,
+    "messageType": 25,
+    "subtabId": 21,
+    "raw": {
+      "messagetype": "25",
+      "timestamp": "1794477920",
+      "date": "2026-11-12T10:05:20.000Z",
+      "hashcode": "cr-en-808-0000000000000000000000000000000000000000",
+      "coords": "3:100:14",
+      "defenderspaceobject": "{\"id\":1001,\"type\":\"moon\",\"name\":\"Moon A\",\"coordinates\":{\"galaxy\":3,\"system\":100,\"position\":14},\"owner\":{\"type\":\"player\",\"id\":200001,\"name\":\"Other1\",\"alliance\":null,\"rankId\":null,\"status\":[\"inactive\"],\"classId\":1}}",
+      "fleets": "[{\"side\":\"defender\",\"fleetId\":-1,\"player\":{\"type\":\"player\",\"id\":200001,\"name\":\"Other1\",\"alliance\":null,\"rankId\":null,\"status\":[\"inactive\"],\"classId\":1},\"spaceObject\":{\"id\":1001,\"name\":\"Moon A\",\"type\":\"moon\",\"coordinates\":{\"galaxy\":3,\"system\":100,\"position\":14}},\"combatResearchPercentage\":[{\"id\":109,\"percentage\":240},{\"id\":110,\"percentage\":220},{\"id\":111,\"percentage\":190}],\"combatTechnologies\":[]},{\"side\":\"attacker\",\"fleetId\":2,\"player\":{\"type\":\"player\",\"id\":100001,\"name\":\"Tester\",\"alliance\":null,\"rankId\":null,\"status\":[],\"classId\":3},\"spaceObject\":{\"id\":1002,\"name\":\"Moon B\",\"type\":\"moon\",\"coordinates\":{\"galaxy\":3,\"system\":100,\"position\":15}},\"combatResearchPercentage\":[{\"id\":109,\"percentage\":160},{\"id\":110,\"percentage\":160},{\"id\":111,\"percentage\":190}],\"combatTechnologies\":[{\"technologyId\":210,\"amount\":10}]}]",
+      "combatrounds": "[]",
+      "result": "{\"winner\":\"attacker\",\"loot\":{\"percentage\":75,\"resources\":[{\"resource\":\"metal\",\"amount\":0},{\"resource\":\"crystal\",\"amount\":0},{\"resource\":\"deuterium\",\"amount\":0},{\"resource\":\"food\",\"amount\":0}]},\"debris\":{\"resources\":[],\"requiredShips\":[],\"shipsUsedForRecycling\":[],\"totalRequiredShips\":[]},\"totalValueOfUnitsLost\":[{\"side\":\"defender\",\"value\":0},{\"side\":\"attacker\",\"value\":0}],\"deathStarDestroyed\":false,\"repairedTechnologies\":[],\"moonCreation\":null,\"honor\":null,\"tacticalRetreat\":{\"by\":\"none\",\"supremacy\":1}}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:4752888",
+    "occurredAt": 1794477920000,
+    "event": {
+      "kind": "combat",
+      "coords": {
+        "galaxy": 3,
+        "system": 100,
+        "position": 14
+      },
+      "isExpedition": false,
+      "isProbeOnly": true,
+      "ownSide": "attacker",
+      "ownPlanetDefended": false,
+      "outcome": "won",
+      "loot": {
+        "metal": 0,
+        "crystal": 0,
+        "deuterium": 0
+      },
+      "lootSign": 1,
+      "debrisCreated": {
+        "metal": 0,
+        "crystal": 0,
+        "deuterium": 0
+      },
+      "shipsLost": {}
+    }
+  }
+}

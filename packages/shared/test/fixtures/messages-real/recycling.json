@@ -1,0 +1,49 @@
+{
+  "synthetic": false,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000106",
+    "account": {
+      "serverId": 808,
+      "lang": "en",
+      "playerId": 100001,
+      "playerName": "Tester"
+    },
+    "observedAt": 1794479420173,
+    "serverUtcOffsetMinutes": 0,
+    "msgId": 4752624,
+    "messageType": 32,
+    "subtabId": 24,
+    "raw": {
+      "messagetype": "32",
+      "timestamp": "1794477568",
+      "date": "2026-11-12T09:59:28.000Z",
+      "hashcode": "rr-en-808-0000000000000000000000000000000000000000",
+      "coords": "3:100:15",
+      "recycleramount": "2",
+      "totalcapacity": "72000",
+      "targetcoordinates": "3:100:15",
+      "debrisresources": "{\"metal\":0,\"crystal\":54502,\"deuterium\":0}",
+      "recycledresources": "{\"metal\":0,\"crystal\":54502,\"deuterium\":0}"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:4752624",
+    "occurredAt": 1794477568000,
+    "event": {
+      "kind": "recycling",
+      "coords": {
+        "galaxy": 3,
+        "system": 100,
+        "position": 15
+      },
+      "isExpedition": false,
+      "resources": {
+        "metal": 0,
+        "crystal": 54502,
+        "deuterium": 0
+      }
+    }
+  }
+}

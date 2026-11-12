@@ -7,7 +7,7 @@ import { occurredAtOf, unrecognized } from './raw';
 import { parseRecycling } from './recycling';
 import { parseWreckfield } from './wreckfield';
 
-export const PARSER_VERSION = 1;
+export const PARSER_VERSION = 2;
 
 // Types 33/34 are tracked but have no parser yet; they are kept raw for reparsing (scope 12).
 export const TRACKED_MESSAGE_TYPES = [25, 32, 33, 34, 41, 48, 54, 61] as const;

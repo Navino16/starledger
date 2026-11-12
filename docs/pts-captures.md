@@ -37,15 +37,16 @@ Les exports contiennent le pseudo et ceux des autres joueurs : ils sont anonymis
 - [ ] Combat normal en plusieurs rounds (25), en attaque ou en défense
 - [ ] Combat terminé au premier round (48)
 - [ ] Espionnage où seules les sondes se battent et sont détruites
-- [ ] Défense sans réparation de défenses : le jeu omet-il la liste ou écrit-il `[]` ?
-- [ ] Combat sans butin : même question
+- [ ] Défense sans réparation de défenses : le jeu omet-il la liste ou écrit-il `[]` ? Réponse partielle (PTS 2026-11-12) : `repairedTechnologies` vaut `[]` sur une attaque reçue sans combat ; à confirmer sur une vraie défense
+- [x] Attaque de sondes à zéro round reçue sur une lune inactive (25, `combatrounds` vide, vainqueur attaquant)
+- [ ] Combat sans butin : même question. Réponse partielle (PTS 2026-11-12) : la liste `loot.resources` est présente avec des montants à 0 (et une entrée `food`), `debris.resources` vaut `[]`. Un combat sans butin et sans débris a donc bien des listes écrites `[]` ; reste à confirmer pour un combat avec butin réel
 - [ ] Champ d'épaves récupéré, « vaisseaux récupérés » (54)
 
 ### Découvertes de formes de vie (61)
 
-- [ ] Expérience de forme de vie gagnée
+- [x] Expérience de forme de vie gagnée
 - [ ] Forme de vie trouvée
-- [ ] Vaisseau perdu
+- [x] Vaisseau perdu
 
 ### Recyclage (32)
 
