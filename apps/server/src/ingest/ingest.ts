@@ -4,11 +4,11 @@ import {
   dayKey,
   type Observation,
   type ObservationBatch,
+  observationExternalKey,
   observationSchema,
   PARSER_VERSION,
   type ParseResult,
-  parseFleetDispatch,
-  parseMessage,
+  parseObservation,
 } from '@app/shared';
 import { type Kysely, sql, type Transaction } from 'kysely';
 import type { Database } from '../db/schema';
@@ -97,14 +97,13 @@ async function ingestOne(
 
 function interpret(obs: Observation, log?: IngestLogger): ParseResult {
   try {
-    return obs.kind === 'message' ? parseMessage(obs) : parseFleetDispatch(obs);
+    return parseObservation(obs);
   } catch (error) {
     log?.warn(
       { clientObservationId: obs.clientObservationId, error: String(error) },
       'parser threw; observation treated as unrecognized',
     );
-    const externalKey =
-      obs.kind === 'message' ? `msg:${obs.msgId}` : `fuel:${obs.clientObservationId}`;
+    const externalKey = observationExternalKey(obs);
     return { status: 'unrecognized', externalKey, occurredAt: null, reason: 'parser error' };
   }
 }

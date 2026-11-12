@@ -115,6 +115,14 @@ export type AnomalyRewardEvent = {
   ships: ShipCounts;
 };
 
+export type AnomalyActionEvent = {
+  kind: 'anomaly_action';
+  action: 'scan' | 'collect' | 'collect_dm';
+  lithium: number | null;
+  darkMatter: number | null;
+  lithiumBonus: number | null;
+};
+
 export type ParsedEvent =
   | ExpeditionEvent
   | LifeformDiscoveryEvent
@@ -124,7 +132,8 @@ export type ParsedEvent =
   | WreckfieldEvent
   | TransportEvent
   | FuelEvent
-  | AnomalyRewardEvent;
+  | AnomalyRewardEvent
+  | AnomalyActionEvent;
 
 export type ParseResult =
   | { status: 'ok'; externalKey: string; occurredAt: number; event: ParsedEvent }

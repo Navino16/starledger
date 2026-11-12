@@ -100,7 +100,10 @@ export type AjaxSettings = { url?: unknown; data?: unknown };
 export type AjaxHandler = (event: unknown, xhr: unknown, settings: AjaxSettings) => void;
 
 export type PageWindow = {
-  $?: (target: unknown) => { on(event: string, handler: AjaxHandler): unknown };
+  $?: (target: unknown) => {
+    on(event: string, handler: AjaxHandler): unknown;
+    data?(key: string): unknown;
+  };
   ogame?: { messages?: { content?: unknown } };
 };
 

@@ -4,7 +4,14 @@ export * from './coords';
 export * from './domain';
 export * from './events';
 export * from './observation';
-export { PARSER_VERSION, parseMessage, TRACKED_MESSAGE_TYPES } from './parsers';
+export {
+  observationExternalKey,
+  PARSER_VERSION,
+  parseMessage,
+  parseObservation,
+  TRACKED_MESSAGE_TYPES,
+} from './parsers';
+export * from './parsers/anomaly-action';
 export * from './parsers/combat';
 export * from './parsers/expedition';
 export * from './parsers/fuel';

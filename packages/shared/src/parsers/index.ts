@@ -1,8 +1,10 @@
 import type { ParseResult } from '../events';
-import type { MessageObservation } from '../observation';
+import type { MessageObservation, Observation } from '../observation';
 import { parseAnomalyReward } from './anomaly';
+import { parseAnomalyAction } from './anomaly-action';
 import { parseCombat, parseShortCombat } from './combat';
 import { parseExpedition } from './expedition';
+import { parseFleetDispatch } from './fuel';
 import { parseLifeformDiscovery } from './lifeform';
 import { occurredAtOf, unrecognized } from './raw';
 import { parseRecycling } from './recycling';
@@ -31,4 +33,34 @@ export function parseMessage(obs: MessageObservation): ParseResult {
     return unrecognized(obs, `unsupported message type ${obs.messageType}`, occurredAtOf(obs.raw));
   }
   return parser(obs);
+}
+
+export function parseObservation(obs: Observation): ParseResult {
+  switch (obs.kind) {
+    case 'message':
+      return parseMessage(obs);
+    case 'fleet_dispatch':
+      return parseFleetDispatch(obs);
+    case 'anomaly_action':
+      return parseAnomalyAction(obs);
+    default: {
+      const unreachable: never = obs;
+      return unreachable;
+    }
+  }
+}
+
+export function observationExternalKey(obs: Observation): string {
+  switch (obs.kind) {
+    case 'message':
+      return `msg:${obs.msgId}`;
+    case 'fleet_dispatch':
+      return `fuel:${obs.clientObservationId}`;
+    case 'anomaly_action':
+      return `anomaly:${obs.clientObservationId}`;
+    default: {
+      const unreachable: never = obs;
+      return unreachable;
+    }
+  }
 }

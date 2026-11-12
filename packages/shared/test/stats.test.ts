@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type {
+  AnomalyActionEvent,
   CombatEvent,
   ExpeditionEvent,
   FuelEvent,
@@ -235,6 +236,35 @@ describe('computeStats', () => {
     expect(s.tiles.metal).toBe(7010);
     expect(s.tiles.crystal).toBe(6500);
     expect(s.tiles.deuterium).toBe(100);
+  });
+
+  it('totals lithium spent, refunded and unknown over anomaly actions without touching tiles', () => {
+    const act = (o: Partial<AnomalyActionEvent>): AnomalyActionEvent => ({
+      kind: 'anomaly_action',
+      action: 'scan',
+      lithium: 0,
+      darkMatter: null,
+      lithiumBonus: 0,
+      ...o,
+    });
+    const s = run([
+      act({ lithium: 1000 }),
+      act({ action: 'collect', lithium: 500, lithiumBonus: 120 }),
+      act({ action: 'collect', lithium: null, lithiumBonus: null }),
+      act({ action: 'collect_dm', lithium: 300, darkMatter: 590 }),
+      act({ action: 'collect_dm', lithium: 200, darkMatter: null }),
+    ]);
+    expect(s.anomalies.lithium).toEqual({
+      spent: 2000,
+      refunded: 120,
+      net: -1880,
+      unknownCount: 3,
+      darkMatterSpent: 590,
+      scans: 1,
+      collects: 4,
+    });
+    expect(s.balance.anomalies).toEqual({ gains: res(), losses: res() });
+    expect(s.tiles).toEqual(run([]).tiles);
   });
 
   it('counts a stored combat without isAnomaly as a normal combat', () => {

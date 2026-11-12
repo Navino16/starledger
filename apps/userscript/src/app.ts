@@ -1,4 +1,5 @@
 import type { AccountRef, ApiError, Observation } from '@app/shared';
+import { installAnomalyCollector } from './collect/anomalies';
 import { type FleetPageWindow, installFleetCollector } from './collect/fleet';
 import { installMessageCollector } from './collect/messages';
 import { readAccount, readServerUtcOffset, todayKey } from './env/page';
@@ -156,6 +157,7 @@ function bootstrap(
     const collectorDeps = { doc, ctx: { account, serverUtcOffsetMinutes }, onObservations };
     installMessageCollector(win, collectorDeps);
     installFleetCollector(win, collectorDeps);
+    installAnomalyCollector(win, collectorDeps);
   }
 
   if (settings.serverUrl && settings.apiKey) {

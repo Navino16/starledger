@@ -11,7 +11,7 @@ import { startTestDb, type TestDb } from './helpers/db';
 
 vi.mock('@app/shared', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@app/shared')>();
-  return { ...actual, parseMessage: vi.fn(actual.parseMessage) };
+  return { ...actual, parseObservation: vi.fn(actual.parseObservation) };
 });
 
 let t: TestDb;
@@ -78,7 +78,7 @@ const setVersion = (obs: MessageObservation, v: number) =>
 // Makes the real parser fail for one ingest only, leaving an unrecognized event.
 async function ingestUnrecognized(userId: string): Promise<MessageObservation> {
   const obs = expedition();
-  vi.mocked(shared.parseMessage).mockImplementationOnce(() => ({
+  vi.mocked(shared.parseObservation).mockImplementationOnce(() => ({
     status: 'unrecognized',
     externalKey: `msg:${obs.msgId}`,
     occurredAt: null,
@@ -110,7 +110,7 @@ afterAll(async () => {
 });
 
 const unrecognizedOnce = (obs: MessageObservation) =>
-  vi.mocked(shared.parseMessage).mockImplementationOnce(() => ({
+  vi.mocked(shared.parseObservation).mockImplementationOnce(() => ({
     status: 'unrecognized',
     externalKey: `msg:${obs.msgId}`,
     occurredAt: null,
@@ -119,8 +119,8 @@ const unrecognizedOnce = (obs: MessageObservation) =>
 
 async function differentReadingOnce() {
   const actual = await vi.importActual<typeof import('@app/shared')>('@app/shared');
-  vi.mocked(shared.parseMessage).mockImplementationOnce((o) => {
-    const res = actual.parseMessage(o);
+  vi.mocked(shared.parseObservation).mockImplementationOnce((o) => {
+    const res = actual.parseObservation(o);
     if (res.status !== 'ok') return res;
     return { ...res, event: { ...res.event, size: 99 } as typeof res.event };
   });
@@ -206,7 +206,7 @@ describe('reparseEvents', () => {
     const a = await ingestUnrecognized(u.id);
     const b = await ingestUnrecognized(u.id);
     unrecognizedOnce(a);
-    vi.mocked(shared.parseMessage).mockImplementationOnce(() => {
+    vi.mocked(shared.parseObservation).mockImplementationOnce(() => {
       throw new Error('boom');
     });
     const warn = vi.fn();
@@ -233,7 +233,7 @@ describe('reparseEvents', () => {
     const u = await freshUser();
     const bad = await ingestUnrecognized(u.id);
     const good = await ingestUnrecognized(u.id);
-    vi.mocked(shared.parseMessage).mockImplementationOnce(() => {
+    vi.mocked(shared.parseObservation).mockImplementationOnce(() => {
       return {
         status: 'ok',
         externalKey: `msg:${bad.msgId}`,

@@ -40,6 +40,21 @@ const dispatch = (over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
+const anomalyAction = (over: Record<string, unknown> = {}) => ({
+  kind: 'anomaly_action',
+  clientObservationId: uuid,
+  account,
+  observedAt: 1_700_000_000_000,
+  serverUtcOffsetMinutes: 60,
+  action: 'collect',
+  lithium: 500,
+  darkMatter: null,
+  lithiumBonus: 0,
+  lithiumBonusRaw: null,
+  actedAt: 1_700_000_000_000,
+  ...over,
+});
+
 const batch = (observations: unknown[]) => ({
   clientVersion: '0.1.0',
   deviceId: '5b1f0c3e-7a4d-4e21-9d6a-0c8f3b2a1e11',
@@ -53,6 +68,13 @@ describe('observationSchema', () => {
 
   it('accepts a fleet_dispatch with null consumption', () => {
     expect(observationSchema.safeParse(dispatch()).success).toBe(true);
+  });
+
+  it('accepts an anomaly_action and rejects a bad action or a negative lithium', () => {
+    expect(observationSchema.safeParse(anomalyAction()).success).toBe(true);
+    expect(observationSchema.safeParse(anomalyAction({ lithium: null })).success).toBe(true);
+    expect(observationSchema.safeParse(anomalyAction({ action: 'buy' })).success).toBe(false);
+    expect(observationSchema.safeParse(anomalyAction({ lithium: -1 })).success).toBe(false);
   });
 
   it('rejects a negative consumption', () => {

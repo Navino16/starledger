@@ -692,3 +692,21 @@ Seen on a live account (2026-11-12), lithium version only:
   PTS 2026-11-12 (lithium 9,906 → 0 and Dark Matter −590 for a 11,849 cost, consistent with the
   rate of the first overlay, within production drift).
 
+### 9.5 What the client records
+
+The userscript observes the player's own `performScan`, `collectRewards` and
+`collectRewardsWithDarkMatter` requests (`component=orion`) at `ajaxSend` / `ajaxSuccess` and emits
+one `anomaly_action` observation per successful response (`status === "success"`). It never calls
+`fetchScanCost` or `fetchCurrentLithium`. Values are snapshotted at `ajaxSend`, before the overlay
+can close.
+
+| Field | Source |
+|---|---|
+| `action` | `scan`, `collect`, `collect_dm` from the request's `action` parameter |
+| `lithium` (scan) | `#scanCostValue` `data('value')`, else its `data-tooltip-title` with non-digits removed, else `null` |
+| `lithium` (collect) | `.collectTotalValue` of the open `div.orionCollectRewards` (not Dark Matter) whose `data-space-object-id` equals the request's `spaceObjectId`; `null` without overlay (direct collect) |
+| `lithium` (collect_dm) | `.orionLithiumAmount[data-value]` at click time, floored (a Dark Matter collect spends all lithium owned) |
+| `darkMatter` | `darkMatterPrice` request parameter, else `data-dark-matter-price` of the open Dark Matter overlay; `null` unless `collect_dm` |
+| `lithiumBonus` | `0` if the response says `lithiumBonus: null` (always for `scan`); `null` (unknown) if a bonus is present |
+| `lithiumBonusRaw` | `JSON.stringify` of a non-null `lithiumBonus`, kept for a later reparse; else `null` |
+| `actedAt` | `Date.now()` at `ajaxSuccess` |

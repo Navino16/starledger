@@ -63,6 +63,15 @@ export type StatsSummary = {
   anomalies: {
     combats: { count: number; won: number; lost: number; draw: number; shipsLost: ShipCounts };
     rewards: { count: number; resources: Resources; ships: ShipCounts };
+    lithium: {
+      spent: number;
+      refunded: number;
+      net: number;
+      unknownCount: number;
+      darkMatterSpent: number;
+      scans: number;
+      collects: number;
+    };
   };
   recycling: { count: number; resources: Resources };
   discoveries: {
@@ -168,6 +177,15 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
     anomalies: {
       combats: { count: 0, won: 0, lost: 0, draw: 0, shipsLost: {} },
       rewards: { count: 0, resources: zeroRes(), ships: {} },
+      lithium: {
+        spent: 0,
+        refunded: 0,
+        net: 0,
+        unknownCount: 0,
+        darkMatterSpent: 0,
+        scans: 0,
+        collects: 0,
+      },
     },
     recycling: { count: 0, resources: zeroRes() },
     discoveries: {
@@ -277,6 +295,22 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         addRes(balance.anomalies.gains, e.resources);
         addShipValue(balance.anomalies.gains, e.ships);
         break;
+      case 'anomaly_action': {
+        // docs/decisions.md scope 13: lithium and the Dark Matter paid stay out of balance and tiles
+        const l = stats.anomalies.lithium;
+        if (e.action === 'scan') l.scans++;
+        else l.collects++;
+        if (e.lithium === null) l.unknownCount++;
+        else l.spent += e.lithium;
+        if (e.lithiumBonus === null) l.unknownCount++;
+        else l.refunded += e.lithiumBonus;
+        if (e.action === 'collect_dm') {
+          if (e.darkMatter === null) l.unknownCount++;
+          else l.darkMatterSpent += e.darkMatter;
+        }
+        l.net = l.refunded - l.spent;
+        break;
+      }
       case 'fuel':
         stats.fuel.departures++;
         if (e.consumption === null) stats.fuel.unknownCount++;
