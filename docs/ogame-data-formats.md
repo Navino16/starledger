@@ -379,7 +379,7 @@ POST to `fleetDispatcher.sendFleetUrl` (OGL l.5403–5466). Body:
 
 | Param | Value | Source |
 |---|---|---|
-| token / ship / target / cargo / priority params | filled by the five `append*Params` helpers; exact key names **(gap)** (not visible in OGLight) | OGL l.5427–5431 |
+| token / ship / target / cargo / priority params | `token`, `am<shipId>=<count>` per ship, `galaxy`, `system`, `position`, `type`, `metal`, `crystal`, `deuterium`, `food`, `prioMetal`, `prioCrystal`, `prioDeuterium`, `prioFood` | PTS 2026-11-12 |
 | `mission` | int | OGL l.5433 |
 | `speed` | `speedPercent` | OGL l.5434 |
 | `retreatAfterDefenderRetreat` | 0/1 | OGL l.5435 |
@@ -399,7 +399,8 @@ Response: a JSON **string** (parsed with `JSON.parse`) with:
 | `newAjaxToken` | new CSRF token, on failure | OGL l.5455, l.5460 |
 | `responseArray.limitReached`, `responseArray.force` | bash-limit warning flow | OGL l.5454 |
 
-**No fleet id is read from the response (gap).** After success OGLight only records what it sent
+**No fleet id in the response** (verified on PTS 2026-11-12: only `redirectUrl`, `message`,
+`success`, `status`, `newAjaxToken`, `components`, `acsValues`). After success OGLight only records what it sent
 (`shipsToSend`, `targetPlanet`, `mission`, cargo, `getConsumption()`) (OGL l.5887–5906).
 To link a dispatch to a fleet, the fleet must be found afterwards in the event list / movement
 page (see 6.5).
@@ -423,7 +424,11 @@ Response JSON (OGL l.871–918):
 | `response.probes`, `response.recyclers`, `response.missiles` | remaining counts on planet |
 | `error.message` / `response.message` | error text on failure |
 
-**Consumption is not present** in what OGLight reads from `miniFleet` (gap); no fleet id either.
+**No consumption and no fleet id** (verified on PTS 2026-11-12). The full response is
+`{ components, acsValues, response: { message, type, slots, probes, recyclers, explorers,
+missiles, shipsSent, coordinates { galaxy, system, position }, planetType, success }, status,
+success, message, newAjaxToken }`. `fleetDispatcher` does not exist on the galaxy page, so the
+consumption of a galaxy dispatch is unknown.
 OGLight skips its handling for `mission=15` (OGL l.869).
 
 Related: `action=sendDiscoveryFleet` / `action=sendSystemDiscoveryFleet` respond with
@@ -467,15 +472,27 @@ Related: `action=sendDiscoveryFleet` / `action=sendSystemDiscoveryFleet` respond
 Planet/target type ids: `1` planet, `2` debris field, `3` moon
 (TRK `shared/models/ogame/common/PlanetType.ts`, OGL l.907, l.5279).
 
+### 6.6 Verified on PTS (2026-11-12)
+
+- `checkTarget`, `sendFleet` and `miniFleet` go through jQuery ajax: the global `ajaxSend` and
+  `ajaxSuccess` events fire for all three, with OGLight enabled and with OGLight disabled.
+- In `ajaxSend` of `sendFleet`, `fleetDispatcher.getConsumption()` is readable and matched the
+  deuterium actually spent (706,760 displayed and deducted from the planet). `currentPage` is
+  `fleet2`, `mission` and `speedPercent` are set.
+- During `checkTarget`, `getConsumption()` returns `NaN` and `mission` is `0`: the consumption is
+  only meaningful in the `sendFleet` `ajaxSend`, and a non-finite value must be treated as unknown.
+- Recall: `POST page=ingame&component=movement&action=recallFleet&fleetId=<id>&asJson=1`, response
+  `{ components, status, success, message, newAjaxToken }`. **A recall refunds no deuterium**: the
+  origin's deuterium was the same after departure, after the recall and after the return.
+
 ---
 
 ## 8. Main gaps to capture on the PTS
 
 1. **Transport / resources delivered**: numeric type of the message, presence of sender and
    receiver player ids and planet ids, exact keys of `data-raw-cargo`. Types 33/34 are only named.
-2. **Fleet id in `sendFleet` response**: not observed; check the raw response and whether
-   `redirectUrl` or a later event-list row exposes it.
-3. **`miniFleet` consumption**: not observed in the response.
+2. ~~Fleet id in `sendFleet` response~~: absent (6.3). Only the movement page exposes it (6.5).
+3. ~~`miniFleet` consumption~~: absent (6.4); galaxy dispatches have an unknown consumption.
 4. **Timezone**: no meta tag; only `serverData.xml` `timezone` / `timezoneOffset` (format unknown)
    and page globals `serverTimeZoneOffsetInMinutes` / `localTimeZoneOffsetInMinutes`.
-5. `data-raw-datetime` format, subtab 25 meaning, type 35 meaning, `append*Params` key names.
+5. `data-raw-datetime` format, subtab 25 meaning, type 35 meaning.

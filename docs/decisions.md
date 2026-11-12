@@ -177,7 +177,7 @@ Le scope reste ouvert (☐) : il dépend des captures PTS de l'utilisateur. Cett
 
 Notes pour l'utilisateur :
 
-- Pour capturer, donner le consentement en laissant l'URL du serveur vide (sinon le vidage au chargement de page vide la file avant l'export).
+- Pour capturer, donner le consentement avec une URL qui ne mène nulle part (`https://starledger.invalid`) et ne saisir aucune clé API : sans clé, rien n'est envoyé et la file reste disponible pour l'export. L'écran de consentement refuse une URL vide.
 - Vérifier que le téléchargement de l'export fonctionne dans Tampermonkey (Chrome, Firefox, mobile) à la première capture.
 - Les exports contiennent `playerId` et le nom : les anonymiser avant de les committer comme fixtures (tâche 10.1 étape 1).
 
