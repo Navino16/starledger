@@ -55,7 +55,7 @@ En plus des exports PTS, l'utilisateur a fourni 16 pages de messages de son comp
 
 - [x] Champ avec du métal **et** du cristal, et même du deutérium, récolté en partie : les trois ressources de `recycledresources` sont comptées (PTS, 2026-11-12)
 - [x] Champ plus gros que la capacité des recycleurs (il en reste) : `recycledresources` est plafonné à `totalcapacity` et c'est lui qui est compté, pas `debrisresources` (compte live, 2026-11-12)
-- [ ] Recyclage en position 16, issu d'une expédition
+- [x] Recyclage en position 16, issu d'une expédition : lu avec `isExpedition: true` (débris d'expédition, design §5.6), mêmes attributs qu'ailleurs (compte live, 2026-11-12)
 
 ### Transports (scope 12)
 
