@@ -36,9 +36,10 @@ describe('resourceIcon', () => {
     expect(e.title).toBe('Metal');
   });
 
-  it('uses the dark matter component class', () => {
-    const e = resourceIcon(doc, 'darkMatter', 'DM', defined('resource-icon'));
-    expect(e.classList.contains('darkmatter')).toBe(true);
+  it.each(['darkMatter', 'artefacts'] as const)('keeps the static image for %s', (kind) => {
+    const e = resourceIcon(doc, kind, 'x', defined('resource-icon'));
+    expect(e.tagName.toLowerCase()).toBe('span');
+    expect(e.style.backgroundImage).toContain('.png');
   });
 
   it('always uses lithium-icon', () => {
@@ -63,6 +64,15 @@ describe('shipIcon', () => {
     expect(e.tagName.toLowerCase()).toBe('technology-icon');
     expect(e.hasAttribute('transportersmall')).toBe(true);
     expect(e.title).toBe('Small cargo');
+  });
+
+  it.each([undefined, defined('technology-icon')])('ignores inherited keys (%#)', (page) => {
+    for (const id of ['constructor', 'toString']) {
+      const e = shipIcon(doc, id, 'Mystery', page);
+      expect(e.tagName.toLowerCase()).toBe('span');
+      expect(e.title).toBe('Mystery');
+      expect(e.style.backgroundImage).toBe('');
+    }
   });
 
   it('returns an empty thumbnail for an unknown id', () => {
