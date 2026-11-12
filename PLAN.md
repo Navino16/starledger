@@ -40,7 +40,7 @@
 | 12 | Transports entre joueurs | ⛔ attend les captures (design §9.2) |
 | 13 | Anomalies | ⛔ attend les captures (design §9.1) |
 | 14 | Dossier de tolérance et publication | ☐ |
-| 15 | Renovate | ☐ (après création du remote) |
+| 15 | Renovate | ✅ (config ; installer l’app Renovate) |
 
 ## Global Constraints
 
