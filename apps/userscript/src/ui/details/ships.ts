@@ -1,5 +1,4 @@
 import { SHIP_TECH_NAMES, type ShipCounts } from '@app/shared';
-import type { T } from '../../i18n';
 import { el } from '../dom';
 import { formatAmount } from '../format';
 import { type IconPage, shipIcon } from '../icons';
@@ -10,7 +9,6 @@ const SHIPS = Object.entries(SHIP_TECH_NAMES)
 
 export function renderShips(
   doc: Document,
-  _t: T,
   ships: { found: ShipCounts; lost: ShipCounts } | undefined,
   page?: IconPage,
 ): HTMLElement {

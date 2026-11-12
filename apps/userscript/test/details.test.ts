@@ -141,7 +141,7 @@ describe('stats details dialog', () => {
     expect(dialog()?.querySelector('[data-ship="202"] .starledger-lost')?.textContent).toBe('-2');
     expect(dialog()?.querySelectorAll('.starledger-balance tr[data-category]')).toHaveLength(9);
     expect(dialog()?.querySelector('[data-category="total"] [data-col="msu"]')?.textContent).toBe(
-      '4k',
+      '4k + ? (2)',
     );
     expect(
       dialog()?.querySelector('[data-category="fuel"] [data-col="deuterium"]')?.textContent,

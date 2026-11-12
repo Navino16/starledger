@@ -42,7 +42,7 @@ function renderContent(doc: Document, t: T, stats: StatsResponse, win?: IconPage
         'section',
         {},
         el(doc, 'h4', { textContent: t('sectionShips') }),
-        renderShips(doc, t, summary.ships, win),
+        renderShips(doc, summary.ships, win),
       ),
     ),
     el(doc, 'h4', { textContent: t('sectionBalance') }),
@@ -78,6 +78,7 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
   let seq = 0;
 
   const showError = (error: ApiError) => {
+    calendarBox.replaceChildren();
     body.replaceChildren(
       el(doc, 'p', {
         className: 'starledger-error',

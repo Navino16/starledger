@@ -92,6 +92,7 @@ const en = {
   catAnomalies: 'Anomalies',
   lithiumSummary: 'Lithium: spent {spent}, refunded {refunded}, net {net}',
   anomalyDarkMatter: 'Dark Matter paid: {n}',
+  anomalyCounts: 'scans: {scans} · collects: {collects} · rewards: {rewards} · combats: {combats}',
   colCount: 'Events',
   catTotal: 'Total',
   shipsValueIncluded: 'Ship value included',
@@ -100,7 +101,7 @@ const en = {
   combatOutcomes: 'Combats: won {won}, lost {lost}, draw {draw}',
   discoveriesXp: 'Discoveries: XP {n}',
   tradesNotIncluded:
-    'Trades not included in the balance — received: {received}; sent: {sent}; net: {net}',
+    'Trades not included in the balance — received: {received}; sent: {sent}; net: {net} ({receivedCount} received, {deliveredCount} delivered)',
   'error.invalid_key': 'Invalid key',
   'error.invalid_payload': 'The server rejected the request',
   'error.client_outdated': 'Client version too old, update the script',
@@ -169,7 +170,7 @@ const fr: Record<MessageKey, string> = {
   periodDay: 'Jour',
   periodWeek: 'Semaine',
   periodMonth: 'Mois',
-  periodAll: 'Total',
+  periodAll: 'Tout',
   prevMonth: 'Mois précédent',
   nextMonth: 'Mois suivant',
   detailsTitle: 'Détail Starledger',
@@ -207,6 +208,8 @@ const fr: Record<MessageKey, string> = {
   catAnomalies: 'Anomalies',
   lithiumSummary: 'Lithium : dépensé {spent}, remboursé {refunded}, net {net}',
   anomalyDarkMatter: 'AM payée : {n}',
+  anomalyCounts:
+    'scans : {scans} · collectes : {collects} · récompenses : {rewards} · combats : {combats}',
   colCount: 'Événements',
   catTotal: 'Total',
   shipsValueIncluded: 'Valeur des vaisseaux incluse',
@@ -215,7 +218,7 @@ const fr: Record<MessageKey, string> = {
   combatOutcomes: 'Combats : gagnés {won}, perdus {lost}, nuls {draw}',
   discoveriesXp: 'Découvertes : XP {n}',
   tradesNotIncluded:
-    'Échanges non inclus dans le bilan — reçus : {received} ; envoyés : {sent} ; net : {net}',
+    'Échanges non inclus dans le bilan — reçus : {received} ; envoyés : {sent} ; net : {net} ({receivedCount} reçus, {deliveredCount} envoyés)',
   'error.invalid_key': 'Clé invalide',
   'error.invalid_payload': 'Requête refusée par le serveur',
   'error.client_outdated': 'Version du client trop ancienne, mettez le script à jour',

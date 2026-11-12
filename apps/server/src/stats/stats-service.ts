@@ -26,7 +26,11 @@ function dailyMsu(
 ): { day: string; msu: number }[] {
   if (!month) return [];
   const byDay = new Map<string, StoredEvent[]>();
-  for (const e of events) byDay.set(e.day, [...(byDay.get(e.day) ?? []), e]);
+  for (const e of events) {
+    const list = byDay.get(e.day);
+    if (list) list.push(e);
+    else byDay.set(e.day, [e]);
+  }
   const days: { day: string; msu: number }[] = [];
   const last = Number(month.to.slice(8));
   for (let d = 1; d <= last; d++) {

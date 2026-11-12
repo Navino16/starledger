@@ -130,14 +130,57 @@ describe('renderTable', () => {
     expect(cell(root, 'fuel', 'metal')?.textContent).toBe('0');
     expect(cell(root, 'anomalies', 'lithium')?.textContent).toBe('-1k + ? (1)');
     expect(cell(root, 'anomalies', 'msu')?.textContent).toBe('3');
-    expect(cell(root, 'total', 'msu')?.textContent).toBe('4.2k + ? (3)');
   });
 
-  it('makes the total MSU equal to the tile', () => {
-    const body = typical();
+  it('marks Total deuterium and MSU for fuel unknowns only', () => {
+    const body = statsOf({
+      fuel: row({ count: 3, resources: res(0, 0, -777), msu: -777, unknown: 2 }),
+      total: row({ count: 4, resources: res(1, 2, 3), msu: 4242, lithium: -1000, unknown: 2 }),
+    });
     const root = renderTable(document, t, body);
+    expect(cell(root, 'total', 'msu')?.textContent).toBe('4.2k + ? (2)');
+    expect(cell(root, 'total', 'deuterium')?.textContent).toBe('3 + ? (2)');
+    expect(cell(root, 'total', 'lithium')?.textContent).toBe('-1k');
+  });
+
+  it('marks Total lithium for anomaly unknowns only', () => {
+    const body = statsOf({
+      anomalies: row({ count: 1, resources: res(1, 1, 1), msu: 3, lithium: -1000, unknown: 1 }),
+      total: row({ count: 4, resources: res(1, 2, 3), msu: 4242, lithium: -1000, unknown: 1 }),
+    });
+    const root = renderTable(document, t, body);
+    expect(cell(root, 'total', 'lithium')?.textContent).toBe('-1k + ? (1)');
     expect(cell(root, 'total', 'msu')?.textContent).toBe('4.2k');
-    expect(body.summary.tiles.msu).toBe(4242);
+    expect(cell(root, 'total', 'deuterium')?.textContent).toBe('3');
+  });
+
+  it('shows no fuel marker anywhere when fuel is ignored', () => {
+    const body = statsOf({
+      fuel: row({ count: 3, resources: null, msu: 0, unknown: 2 }),
+      total: row({ count: 4, resources: res(1, 2, 3), msu: 4242, unknown: 2 }),
+    });
+    const root = renderTable(document, t, body);
+    expect(cell(root, 'fuel', 'deuterium')?.textContent).toBe('-');
+    expect(cell(root, 'fuel', 'msu')?.textContent).toBe('-');
+    expect(cell(root, 'total', 'msu')?.textContent).toBe('4.2k');
+    expect(cell(root, 'total', 'deuterium')?.textContent).toBe('3');
+    expect(root.textContent).not.toContain('?');
+  });
+
+  it('lists the anomaly action counts in the row tooltip', () => {
+    const body = statsOf(
+      { anomalies: row({ count: 1, resources: res(0, 0, 0), msu: 0 }) },
+      {
+        anomalies: {
+          lithium: { scans: 4, collects: 3, darkMatterSpent: 0, darkMatterUnknown: 0 },
+          rewards: { count: 2 },
+          combats: { count: 1 },
+        },
+      },
+    );
+    expect(rowEl(renderTable(document, t, body), 'anomalies')?.title).toContain(
+      'scans: 4 · collects: 3 · rewards: 2 · combats: 1',
+    );
   });
 
   it('adds the ships tooltip and the paid Dark Matter on anomalies', () => {
@@ -193,7 +236,11 @@ describe('renderNotes', () => {
             refundUnknown: 0,
             darkMatterSpent: 50,
             darkMatterUnknown: 0,
+            scans: 4,
+            collects: 3,
           },
+          rewards: { count: 2 },
+          combats: { count: 1 },
         },
         trades: {
           received: res(500, 300, 100),
@@ -211,6 +258,8 @@ describe('renderNotes', () => {
     expect(text).toContain('Fuel is ignored');
     expect(text).toContain('spent 1.2k + ? (1), refunded 200, net -1k + ? (1)');
     expect(text).toContain('Dark Matter paid: 50');
+    expect(text).toContain('scans: 4 · collects: 3 · rewards: 2 · combats: 1');
+    expect(text).toContain('(3 received, 1 delivered)');
     expect(text).toContain('won 3, lost 1, draw 2');
     expect(text).toContain('XP 150');
     expect(text).toContain('received: M 500 · C 300 · D 100');

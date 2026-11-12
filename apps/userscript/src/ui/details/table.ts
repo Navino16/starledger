@@ -55,27 +55,40 @@ function cellValue(row: DetailRow | undefined, id: string): number | null | unde
   }
 }
 
-function unknownColumns(key: DetailRowKey): string[] {
-  if (key === 'fuel') return ['deuterium', 'msu'];
-  if (key === 'anomalies') return ['lithium'];
-  if (key === 'total') return ['msu', 'lithium'];
-  return [];
+function unknownFor(
+  key: DetailRowKey,
+  col: string,
+  rows: StatsResponse['summary']['rows'],
+): number {
+  if (!rows) return 0;
+  const fuelCounted = rows.fuel.resources !== null;
+  const fuelUnknown = fuelCounted ? rows.fuel.unknown : 0;
+  if (key === 'fuel') return col === 'deuterium' || col === 'msu' ? fuelUnknown : 0;
+  if (key === 'anomalies') return col === 'lithium' ? rows.anomalies.unknown : 0;
+  if (key === 'total') {
+    if (col === 'deuterium' || col === 'msu') return fuelUnknown;
+    if (col === 'lithium') return rows.anomalies.unknown;
+  }
+  return 0;
 }
 
 function dataCell(
   doc: Document,
   key: DetailRowKey,
-  row: DetailRow | undefined,
+  rows: StatsResponse['summary']['rows'],
   col: Column,
 ): HTMLElement {
+  const row = rows?.[key];
   const td = el(doc, 'td', {});
   td.dataset.col = col.id;
-  const value = cellValue(row, col.id);
+  const fuelIgnored = key === 'fuel' && row?.resources === null;
+  const value =
+    fuelIgnored && (col.id === 'deuterium' || col.id === 'msu') ? null : cellValue(row, col.id);
   if (value === null) {
     td.textContent = '-';
     return td;
   }
-  const unknown = row && unknownColumns(key).includes(col.id) ? row.unknown : 0;
+  const unknown = unknownFor(key, col.id, rows);
   const text = value === undefined ? '?' : formatPartial(value, unknown);
   if (col.id === 'count') {
     td.textContent = text;
@@ -86,6 +99,24 @@ function dataCell(
   td.append(span);
   if (text.startsWith('-')) td.classList.add('is-negative');
   return td;
+}
+
+function anomalyCounts(t: T, stats: StatsResponse): string | null {
+  const a = stats.summary.anomalies;
+  if (!a) return null;
+  const n = {
+    scans: a.lithium?.scans ?? 0,
+    collects: a.lithium?.collects ?? 0,
+    rewards: a.rewards?.count ?? 0,
+    combats: a.combats?.count ?? 0,
+  };
+  if (n.scans + n.collects + n.rewards + n.combats === 0) return null;
+  return t('anomalyCounts', {
+    scans: formatAmount(n.scans),
+    collects: formatAmount(n.collects),
+    rewards: formatAmount(n.rewards),
+    combats: formatAmount(n.combats),
+  });
 }
 
 export function renderTable(
@@ -119,8 +150,10 @@ export function renderTable(
         t('anomalyDarkMatter', { n: formatPartial(paid.darkMatterSpent, paid.darkMatterUnknown) }),
       );
     }
+    const counts = key === 'anomalies' ? anomalyCounts(t, stats) : null;
+    if (counts) hints.push(counts);
     if (hints.length > 0) tr.title = hints.join(' · ');
-    for (const col of COLUMNS) tr.append(dataCell(doc, key, row, col));
+    for (const col of COLUMNS) tr.append(dataCell(doc, key, rows, col));
     table.append(tr);
   }
   return el(doc, 'div', { className: 'starledger-tablewrap' }, table);
@@ -141,8 +174,9 @@ export function renderNotes(doc: Document, t: T, stats: StatsResponse): HTMLElem
 
   const l = summary.anomalies?.lithium;
   if (l) {
+    const parts: string[] = [];
     if (l.spent > 0 || l.refunded > 0 || l.spentUnknown > 0 || l.refundUnknown > 0) {
-      add(
+      parts.push(
         t('lithiumSummary', {
           spent: formatPartial(l.spent, l.spentUnknown),
           refunded: formatPartial(l.refunded, l.refundUnknown),
@@ -150,6 +184,9 @@ export function renderNotes(doc: Document, t: T, stats: StatsResponse): HTMLElem
         }),
       );
     }
+    const counts = anomalyCounts(t, stats);
+    if (counts) parts.push(counts);
+    if (parts.length > 0) add(parts.join(' · '));
     if (l.darkMatterSpent > 0 || l.darkMatterUnknown > 0) {
       add(t('anomalyDarkMatter', { n: formatPartial(l.darkMatterSpent, l.darkMatterUnknown) }));
     }
@@ -187,6 +224,8 @@ export function renderNotes(doc: Document, t: T, stats: StatsResponse): HTMLElem
           crystal: r.crystal - d.crystal,
           deuterium: r.deuterium - d.deuterium,
         }),
+        receivedCount: formatAmount(trades.receivedCount),
+        deliveredCount: formatAmount(trades.deliveredCount),
       }),
     );
   }
