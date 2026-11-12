@@ -12,7 +12,7 @@ Les exports contiennent le pseudo et ceux des autres joueurs : ils sont anonymis
 
 ## Déjà reçu (2026-11-12)
 
-- [x] Recyclage (32) : cristal seul, 6:4:15, lu correctement.
+- [x] Recyclage (32) : cristal seul, lu correctement.
 - [x] Découverte de formes de vie (61), résultat « rien » : le jeu n'envoie alors aucun champ de résultat (12 messages).
 - [x] Découverte de formes de vie (61), artefacts de taille normale (4 messages) : 14, 6, 3 et 10 artefacts, confirmés contre l'affichage du jeu.
 - [x] Retour de flotte (34) : non lu, volontairement ; le retour des recycleurs porte la cargaison, seul le rapport de recyclage compte.
