@@ -56,7 +56,7 @@ div.starledger-status{margin:6px 0}
 #starledger-details .starledger-toolbar button{min-width:0;height:28px;padding:0 8px;font:11px/26px Verdana,Arial,Helvetica,sans-serif;color:#c9cdd6;text-shadow:none;background:#1b212b;border:1px solid #2a3240;border-radius:4px;transition:background-color .15s,border-color .15s}
 #starledger-details .starledger-toolbar button:hover{background:#252d3a}
 #starledger-details .starledger-toolbar button[aria-pressed=true]{background:#252d3a;border-color:#e3b955;color:#fff}
-.starledger-calendar{display:grid;grid-auto-columns:minmax(0,1fr);gap:2px;margin:12px 0 0;padding:8px;overflow-x:auto;background:#161b23;border-radius:8px}
+.starledger-calendar{display:grid;grid-auto-columns:minmax(0,1fr);gap:2px;margin:12px 0 0;padding:8px;overflow-x:auto;background:#161b23;border-radius:8px;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 #starledger-details .starledger-calendar button{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;padding:0;font:8px/12px Verdana,Arial,Helvetica,sans-serif;color:#858b98;text-shadow:none;background:none;border:0;border-radius:0}
 .starledger-slot{position:relative;display:block;width:100%;height:40px;overflow:hidden;background:#232a35;border-radius:2px;transition:background-color .15s}
 #starledger-details .starledger-calendar button:hover .starledger-slot{background:#2c3442}

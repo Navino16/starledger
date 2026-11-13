@@ -1,3 +1,4 @@
+import type { DayRange } from '@app/shared';
 import { detectLang } from '../../i18n';
 import { el } from '../dom';
 import { formatAmount } from '../format';
@@ -27,6 +28,7 @@ export function renderCalendar(
   selected: string,
   onSelect: (day: string) => void,
   period?: CalendarPeriod,
+  onRange?: (range: DayRange) => void,
 ): HTMLElement {
   const list = days ?? [];
   const max = Math.max(0, ...list.map((d) => Math.abs(d.msu)));
@@ -36,6 +38,7 @@ export function renderCalendar(
     month: 'long',
     timeZone: 'UTC',
   });
+  const cells: HTMLElement[] = [];
   const covered: number[] = [];
   for (const [index, { day, msu }] of list.entries()) {
     const height = max > 0 ? Math.round((Math.abs(msu) / max) * 100) : 0;
@@ -54,24 +57,97 @@ export function renderCalendar(
     cell.dataset.day = day;
     // Explicit cells so the period box can overlap them in the same grid row
     cell.style.gridArea = `1 / ${index + 1}`;
-    if (inPeriod(day, selected, period)) {
-      cell.classList.add('is-in-period');
-      covered.push(index);
-    }
+    if (inPeriod(day, selected, period)) covered.push(index);
     cell.setAttribute(
       'aria-label',
       `${dateFormat.format(new Date(`${day}T00:00:00Z`))}: ${formatAmount(msu)}`,
     );
     cell.setAttribute('aria-pressed', String(day === selected));
     cell.addEventListener('click', () => onSelect(day));
+    cells.push(cell);
     cal.append(cell);
   }
-  const first = covered[0];
-  const last = covered.at(-1);
-  if (first !== undefined && last !== undefined) {
-    const box = el(doc, 'span', { className: 'starledger-period' });
+
+  const box = el(doc, 'span', { className: 'starledger-period' });
+  const paint = (first?: number, last?: number) => {
+    for (const [index, cell] of cells.entries()) {
+      cell.classList.toggle(
+        'is-in-period',
+        first !== undefined && last !== undefined && index >= first && index <= last,
+      );
+    }
+    if (first === undefined || last === undefined) {
+      box.remove();
+      return;
+    }
     box.style.gridArea = `1 / ${first + 1} / 2 / ${last + 2}`;
     cal.append(box);
-  }
+  };
+  const shown = (): [number?, number?] => [covered[0], covered.at(-1)];
+  paint(...shown());
+
+  if (onRange) enableDrag(doc, cal, cells, paint, shown, onRange);
   return cal;
+}
+
+// Spec 2026-11-13 "Drag": touch keeps targeting the pressed element, so the hovered day comes from the point
+function enableDrag(
+  doc: Document,
+  cal: HTMLElement,
+  cells: HTMLElement[],
+  paint: (first?: number, last?: number) => void,
+  shown: () => [number?, number?],
+  onRange: (range: DayRange) => void,
+): void {
+  let start: number | undefined;
+  let current = 0;
+  let swallowClick = false;
+
+  const indexAt = (e: PointerEvent): number | undefined => {
+    const hit = doc.elementFromPoint?.(e.clientX, e.clientY)?.closest<HTMLElement>('[data-day]');
+    const index = hit ? cells.indexOf(hit) : -1;
+    return index >= 0 ? index : undefined;
+  };
+  const span = (a: number, b: number): [number, number] => [Math.min(a, b), Math.max(a, b)];
+
+  cal.addEventListener('pointerdown', (e) => {
+    swallowClick = false;
+    if (!e.isPrimary || e.button !== 0) return;
+    const cell = (e.target as Element | null)?.closest<HTMLElement>('[data-day]');
+    const index = cell ? cells.indexOf(cell) : -1;
+    if (index < 0) return;
+    start = current = index;
+    cal.setPointerCapture?.(e.pointerId);
+  });
+  cal.addEventListener('pointermove', (e) => {
+    if (start === undefined) return;
+    const index = indexAt(e);
+    if (index === undefined || index === current) return;
+    current = index;
+    paint(...span(start, current));
+  });
+  cal.addEventListener('pointerup', (e) => {
+    if (start === undefined) return;
+    const end = indexAt(e) ?? current;
+    const first = start;
+    start = undefined;
+    if (end === first) return;
+    swallowClick = true;
+    const [from, to] = span(first, end);
+    onRange({ from: cells[from]?.dataset.day ?? '', to: cells[to]?.dataset.day ?? '' });
+  });
+  cal.addEventListener('pointercancel', () => {
+    start = undefined;
+    paint(...shown());
+  });
+  // A mouse drag ends with a click on the release day; keyboard clicks (detail 0) always go through
+  cal.addEventListener(
+    'click',
+    (e) => {
+      if (!swallowClick || e.detail === 0) return;
+      swallowClick = false;
+      e.stopPropagation();
+    },
+    true,
+  );
 }
