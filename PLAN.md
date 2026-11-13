@@ -41,8 +41,8 @@
 | 13 | Anomalies | ✅ |
 | 14 | Dossier de tolérance et publication | ☐ |
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
-| 16 | Détail façon OGLight | ☐ |
-| 17 | Période personnalisée | ☐ (code fait, vérification PTS 17.4) |
+| 16 | Détail façon OGLight | ✅ |
+| 17 | Période personnalisée | ✅ |
 
 ## Global Constraints
 
@@ -1287,8 +1287,8 @@ Branche : `feature/details-dashboard`. **Spec** : `docs/superpowers/specs/2026-1
 
 ### Tâche 16.7 : Vérification sur le PTS (utilisateur)
 
-- [ ] L'utilisateur installe le script de la branche sur le PTS, ouvre le détail sur PC et sur téléphone, et vérifie : icônes (ressources, vaisseaux, lithium, artefacts), lisibilité, navigation J/S/M/Tout et mois, chiffres du Total égaux aux tuiles de l'encart.
-- [ ] Ajustements éventuels dans la même branche (icône des artefacts notamment), avant le merge.
+- [x] L'utilisateur installe le script de la branche sur le PTS, ouvre le détail sur PC et sur téléphone, et vérifie : icônes (ressources, vaisseaux, lithium, artefacts), lisibilité, navigation J/S/M/Tout et mois, chiffres du Total égaux aux tuiles de l'encart.
+- [x] Ajustements éventuels dans la même branche (icône des artefacts notamment), avant le merge.
 
 ## Scope 17 — Période personnalisée
 
@@ -1362,5 +1362,5 @@ Branche : `feature/custom-period`, partie de `feature/details-dashboard` (PR #47
 
 ### Tâche 17.4 : Vérification sur le PTS (utilisateur)
 
-- [ ] Sur PC et sur téléphone : glisser sur plusieurs jours, clic simple, défilement vertical de la page avec le doigt posé sur le calendrier, flèches de mois depuis une plage.
+- [x] Sur PC et sur téléphone : glisser sur plusieurs jours, clic simple, défilement vertical de la page avec le doigt posé sur le calendrier, flèches de mois depuis une plage.
 
