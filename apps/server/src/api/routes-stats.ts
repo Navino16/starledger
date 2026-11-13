@@ -23,13 +23,29 @@ const integerParam = (schema: z.ZodNumber) =>
     .transform(Number)
     .pipe(schema);
 
-const statsQuerySchema = z.object({
-  serverId: integerParam(accountRefSchema.shape.serverId),
-  lang: z.string().regex(LANG_PATTERN),
-  playerId: integerParam(z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)),
-  period: z.enum(['day', 'week', 'month', 'all']),
-  today: z.string().refine(isRealDay, 'today must be a real YYYY-MM-DD date'),
-});
+const realDay = (name: string) =>
+  z.string().refine(isRealDay, `${name} must be a real YYYY-MM-DD date`);
+
+const statsQuerySchema = z
+  .object({
+    serverId: integerParam(accountRefSchema.shape.serverId),
+    lang: z.string().regex(LANG_PATTERN),
+    playerId: integerParam(z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)),
+    period: z.enum(['day', 'week', 'month', 'all', 'custom']),
+    today: realDay('today'),
+    from: z.string().optional(),
+    to: z.string().optional(),
+  })
+  .refine(
+    (q) =>
+      q.period !== 'custom' ||
+      (q.from !== undefined &&
+        q.to !== undefined &&
+        isRealDay(q.from) &&
+        isRealDay(q.to) &&
+        q.from <= q.to),
+    'custom needs real days with from <= to',
+  );
 
 export async function statsRoutes(app: FastifyInstance, opts: { db: Kysely<Database> }) {
   app.get('/stats', async (request, reply) => {
@@ -38,6 +54,8 @@ export async function statsRoutes(app: FastifyInstance, opts: { db: Kysely<Datab
       return sendError(reply, 400, 'invalid_payload', query.error.message);
     }
     const { userId } = requireApiUser(request);
-    return getStats(opts.db, userId, query.data);
+    const { from, to, ...rest } = query.data;
+    const custom = rest.period === 'custom' && from && to ? { from, to } : undefined;
+    return getStats(opts.db, userId, { ...rest, custom });
   });
 }

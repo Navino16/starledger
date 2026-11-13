@@ -368,6 +368,99 @@ describe('details period navigation', () => {
     expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(28);
   });
 
+  describe('custom period', () => {
+    const cal = () => dialog()?.querySelector<HTMLElement>('.starledger-calendar');
+    const cell = (day: string) => dialog()?.querySelector(`[data-day="${day}"]`) ?? null;
+    const pointer = (type: string, under: Element | null) => {
+      document.elementFromPoint = () => under;
+      (type === 'pointerdown' ? under : cal())?.dispatchEvent(
+        new PointerEvent(type, { bubbles: true, isPrimary: true, button: 0, pointerId: 1 }),
+      );
+    };
+    const drag = (from: string, to: string) => {
+      pointer('pointerdown', cell(from));
+      pointer('pointermove', cell(to));
+      pointer('pointerup', cell(to));
+    };
+
+    beforeEach(() => {
+      gm.respondWith((req) => {
+        const params = new URL(req.url).searchParams;
+        const from = params.get('from');
+        const to = params.get('to');
+        return {
+          status: 200,
+          body: JSON.stringify({
+            ...statsOf(),
+            period: params.get('period'),
+            range: from && to ? { from, to } : null,
+            days: days('2026-03', 31),
+          }),
+        };
+      });
+    });
+
+    afterEach(() => Reflect.deleteProperty(document, 'elementFromPoint'));
+
+    it('requests the dragged span once and labels it', async () => {
+      open();
+      await tick();
+      drag('2026-03-04', '2026-03-11');
+      await tick();
+      expect(stats()).toHaveLength(2);
+      expect(stats()[1]?.url).toContain(
+        'period=custom&today=2026-03-31&from=2026-03-04&to=2026-03-11',
+      );
+      const label = new Intl.DateTimeFormat('en', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        timeZone: 'UTC',
+      }).formatRange(new Date('2026-03-04T00:00:00Z'), new Date('2026-03-11T00:00:00Z'));
+      expect(dialog()?.querySelector('.starledger-dateline')?.textContent).toBe(label);
+      expect(dialog()?.querySelector('.starledger-periods [aria-pressed="true"]')).toBeNull();
+      expect(dialog()?.querySelectorAll('.is-in-period')).toHaveLength(8);
+    });
+
+    it('does not request again for the same span', async () => {
+      open();
+      await tick();
+      drag('2026-03-04', '2026-03-11');
+      await tick();
+      drag('2026-03-11', '2026-03-04');
+      await tick();
+      expect(stats()).toHaveLength(2);
+    });
+
+    it('switches to the whole month with the arrows and to a day on click', async () => {
+      open();
+      await tick();
+      drag('2026-03-04', '2026-03-11');
+      await tick();
+      dialog()?.querySelector<HTMLElement>('[data-nav="prev"]')?.click();
+      await tick();
+      expect(stats()[2]?.url).toContain('period=month&today=2026-02-28');
+      expect(stats()[2]?.url).not.toContain('from=');
+      drag('2026-03-04', '2026-03-11');
+      await tick();
+      dialog()?.querySelector<HTMLElement>('[data-day="2026-03-06"]')?.click();
+      await tick();
+      expect(stats().at(-1)?.url).toContain('period=day&today=2026-03-06');
+      expect(stats().at(-1)?.url).not.toContain('from=');
+    });
+
+    it('asks to update a server that rejects custom periods', async () => {
+      open();
+      await tick();
+      gm.respondWith(() => ({ status: 400, body: '{"error":"invalid_payload"}' }));
+      drag('2026-03-04', '2026-03-11');
+      await tick();
+      expect(dialog()?.querySelector('.starledger-error')?.textContent).toBe(
+        'Update your Starledger server to use custom periods',
+      );
+    });
+  });
+
   it('shows the localized month label', async () => {
     open();
     await tick();

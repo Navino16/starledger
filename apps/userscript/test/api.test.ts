@@ -121,6 +121,16 @@ describe('createApi', () => {
     expect(gm.requests[0]?.method).toBe('GET');
   });
 
+  it('adds the bounds of a custom period and omits them otherwise', async () => {
+    const { gm, api } = setup();
+    gm.respondWith(() => ({ status: 200, body: '{}' }));
+    const base = { serverId: 7, lang: 'en', playerId: 42, today: '2026-11-13' } as const;
+    await api.getStats({ ...base, period: 'day' });
+    await api.getStats({ ...base, period: 'custom', from: '2026-11-04', to: '2026-11-11' });
+    expect(gm.requests[0]?.url).not.toContain('from=');
+    expect(gm.requests[1]?.url).toContain('period=custom&from=2026-11-04&to=2026-11-11');
+  });
+
   it('url-encodes query values', async () => {
     const { gm, api } = setup();
     gm.respondWith(() => ({ status: 200, body: '{}' }));

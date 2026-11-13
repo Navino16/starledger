@@ -10,6 +10,8 @@ export type StatsQuery = {
   playerId: number;
   period: StatsPeriod;
   today: string;
+  from?: string;
+  to?: string;
 };
 
 export type PingData = { ok: boolean; username: string; apiVersion: number };
@@ -74,6 +76,7 @@ export function createApi(gm: Gm, settings: ClientSettings, clientVersion: strin
     sendBatch: (batch: ObservationBatch) => call<BatchAck>('POST', '/api/v1/observations', batch),
     getStats: (q: StatsQuery) => {
       const query = Object.entries(q)
+        .filter(([, v]) => v !== undefined)
         .map(([k, v]) => `${k}=${encodeURIComponent(String(v))}`)
         .join('&');
       return call<StatsResponse>('GET', `/api/v1/stats?${query}`);

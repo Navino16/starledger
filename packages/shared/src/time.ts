@@ -1,4 +1,6 @@
-export type Period = 'day' | 'week' | 'month' | 'all';
+export type Period = 'day' | 'week' | 'month' | 'all' | 'custom';
+
+export type DayRange = { from: string; to: string };
 
 const MINUTE_MS = 60_000;
 const DAY_MS = 86_400_000;
@@ -27,8 +29,12 @@ export function computeServerUtcOffsetMinutes(
   return Math.round(gapMinutes / 15) * 15 + browserUtcOffsetMinutes;
 }
 
-export function periodRange(period: Period, today: string): { from: string; to: string } | null {
+export function periodRange(period: Period, today: string, custom?: DayRange): DayRange | null {
   if (period === 'all') return null;
+  if (period === 'custom') {
+    if (!custom) throw new Error('custom period needs bounds');
+    return custom;
+  }
   const base = parseDayKey(today);
   if (period === 'day') return { from: today, to: today };
   if (period === 'week') {

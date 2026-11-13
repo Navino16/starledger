@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { renderCalendar, shiftMonth } from '../src/ui/details/calendar';
 
 const febDays = Array.from({ length: 28 }, (_, i) => ({
@@ -22,6 +22,23 @@ describe('renderCalendar', () => {
     );
     const bar = cal.querySelector<HTMLElement>('[data-day="2026-02-28"] .starledger-bar');
     expect(bar?.style.height).toBe('100%');
+  });
+
+  it('keeps a 4px bar for any non-zero day, however small against the month', () => {
+    const days = [
+      { day: '2026-11-01', msu: -8e9 },
+      { day: '2026-11-02', msu: -180e3 },
+      { day: '2026-11-03', msu: 6e6 },
+      { day: '2026-11-04', msu: 0 },
+    ];
+    const bar = (day: string) =>
+      renderCalendar(document, days, '2026-11-01', () => {}).querySelector<HTMLElement>(
+        `[data-day="${day}"] .starledger-bar`,
+      );
+    expect(bar('2026-11-02')?.style.height).toBe('0%');
+    expect(bar('2026-11-02')?.style.minHeight).toBe('4px');
+    expect(bar('2026-11-03')?.style.minHeight).toBe('4px');
+    expect(bar('2026-11-04')?.style.minHeight).toBe('');
   });
 
   it('flags the selected day and reports clicks', () => {
@@ -97,6 +114,118 @@ describe('renderCalendar', () => {
       'February 3: -50',
     );
     document.head.innerHTML = '';
+  });
+});
+
+describe('drag', () => {
+  const cellOf = (cal: HTMLElement, day: number) =>
+    cal.querySelector<HTMLElement>(`[data-day="2026-02-${String(day).padStart(2, '0')}"]`);
+
+  // jsdom has no layout: the element under the pointer is whatever the test says
+  const pointer = (
+    cal: HTMLElement,
+    type: string,
+    under: Element | null,
+    init: PointerEventInit = {},
+  ) => {
+    document.elementFromPoint = () => under;
+    const target = type === 'pointerdown' && under ? under : cal;
+    target.dispatchEvent(
+      new PointerEvent(type, { bubbles: true, isPrimary: true, button: 0, pointerId: 1, ...init }),
+    );
+  };
+
+  const mouseClick = (target: Element | null) =>
+    target?.dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+
+  const setup = () => {
+    const onSelect = vi.fn();
+    const onRange = vi.fn();
+    const cal = renderCalendar(document, febDays, '2026-02-14', onSelect, undefined, onRange);
+    document.body.append(cal);
+    return { cal, onSelect, onRange };
+  };
+
+  afterEach(() => {
+    document.body.replaceChildren();
+    Reflect.deleteProperty(document, 'elementFromPoint');
+  });
+
+  it('reports the dragged span once and swallows the click that follows', () => {
+    const { cal, onSelect, onRange } = setup();
+    pointer(cal, 'pointerdown', cellOf(cal, 4));
+    pointer(cal, 'pointermove', cellOf(cal, 8));
+    pointer(cal, 'pointermove', cellOf(cal, 11));
+    expect(cal.querySelector<HTMLElement>('.starledger-period')?.style.gridArea).toBe(
+      '1 / 4 / 2 / 12',
+    );
+    pointer(cal, 'pointerup', cellOf(cal, 11));
+    mouseClick(cellOf(cal, 11));
+    expect(onRange).toHaveBeenCalledTimes(1);
+    expect(onRange).toHaveBeenCalledWith({ from: '2026-02-04', to: '2026-02-11' });
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('sorts the bounds of a right to left drag', () => {
+    const { cal, onRange } = setup();
+    pointer(cal, 'pointerdown', cellOf(cal, 11));
+    pointer(cal, 'pointermove', cellOf(cal, 4));
+    pointer(cal, 'pointerup', cellOf(cal, 4));
+    expect(onRange).toHaveBeenCalledWith({ from: '2026-02-04', to: '2026-02-11' });
+  });
+
+  it('ends on the last hovered day when released outside the calendar', () => {
+    const { cal, onRange } = setup();
+    pointer(cal, 'pointerdown', cellOf(cal, 4));
+    pointer(cal, 'pointermove', cellOf(cal, 9));
+    pointer(cal, 'pointermove', document.body);
+    pointer(cal, 'pointerup', document.body);
+    expect(onRange).toHaveBeenCalledWith({ from: '2026-02-04', to: '2026-02-09' });
+  });
+
+  it('restores the shown period on pointercancel', () => {
+    const { cal, onSelect, onRange } = setup();
+    pointer(cal, 'pointerdown', cellOf(cal, 4));
+    pointer(cal, 'pointermove', cellOf(cal, 9));
+    pointer(cal, 'pointercancel', null);
+    pointer(cal, 'pointerup', cellOf(cal, 9));
+    expect(onRange).not.toHaveBeenCalled();
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(cal.querySelector<HTMLElement>('.starledger-period')?.style.gridArea).toBe(
+      '1 / 14 / 2 / 15',
+    );
+    expect(
+      [...cal.querySelectorAll<HTMLElement>('.is-in-period')].map((c) => c.dataset.day),
+    ).toEqual(['2026-02-14']);
+  });
+
+  it('restores the shown period when a drag comes back to its first day', () => {
+    const { cal, onRange } = setup();
+    pointer(cal, 'pointerdown', cellOf(cal, 4));
+    pointer(cal, 'pointermove', cellOf(cal, 9));
+    pointer(cal, 'pointermove', cellOf(cal, 4));
+    pointer(cal, 'pointerup', cellOf(cal, 4));
+    expect(onRange).not.toHaveBeenCalled();
+    expect(
+      [...cal.querySelectorAll<HTMLElement>('.is-in-period')].map((c) => c.dataset.day),
+    ).toEqual(['2026-02-14']);
+  });
+
+  it('keeps a press and release on one day as a plain day click', () => {
+    const { cal, onSelect, onRange } = setup();
+    pointer(cal, 'pointerdown', cellOf(cal, 6));
+    pointer(cal, 'pointerup', cellOf(cal, 6));
+    mouseClick(cellOf(cal, 6));
+    expect(onRange).not.toHaveBeenCalled();
+    expect(onSelect).toHaveBeenCalledWith('2026-02-06');
+  });
+
+  it('ignores the secondary button', () => {
+    const { cal, onRange } = setup();
+    pointer(cal, 'pointerdown', cellOf(cal, 4), { button: 2 });
+    pointer(cal, 'pointermove', cellOf(cal, 9));
+    pointer(cal, 'pointerup', cellOf(cal, 9));
+    expect(onRange).not.toHaveBeenCalled();
   });
 });
 

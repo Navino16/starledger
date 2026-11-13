@@ -74,4 +74,13 @@ describe('periodRange', () => {
   it('returns null for all', () => {
     expect(periodRange('all', '2026-11-11')).toBeNull();
   });
+
+  it('returns the given bounds for a custom period', () => {
+    const span = { from: '2026-11-04', to: '2026-11-11' };
+    expect(periodRange('custom', '2026-11-13', span)).toEqual(span);
+  });
+
+  it('throws for a custom period without bounds', () => {
+    expect(() => periodRange('custom', '2026-11-13')).toThrow('custom period needs bounds');
+  });
 });
