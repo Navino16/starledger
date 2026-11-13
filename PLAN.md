@@ -43,7 +43,7 @@
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
 | 16 | Détail façon OGLight | ✅ |
 | 17 | Période personnalisée | ✅ |
-| 18 | XP et artefacts des récompenses d'anomalie | ☐ (code fait, vérification PTS 18.4) |
+| 18 | XP et artefacts des récompenses d'anomalie | ☐ (vérifié sur le PTS, à merger après #47 et #48) |
 
 ## Global Constraints
 
@@ -1427,5 +1427,5 @@ Branche : `feature/anomaly-xp-artefacts`, partie de `feature/custom-period` (cha
 
 ### Tâche 18.4 : Vérification sur le PTS (utilisateur)
 
-- [ ] `node dist/cli.js reparse` (PARSER_VERSION 7), puis rouvrir sur le PTS un message 76 avec XP et artefacts : l'événement est complété (artefacts et XP par forme de vie), sans conflit ; l'info-bulle de la ligne Anomalies montre l'XP.
+- [x] `node dist/cli.js reparse` (PARSER_VERSION 7), puis rouvrir sur le PTS un message 76 avec XP et artefacts : l'événement est complété (artefacts et XP par forme de vie), sans conflit ; l'info-bulle de la ligne Anomalies montre l'XP.
 
