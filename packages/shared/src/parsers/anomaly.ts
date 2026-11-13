@@ -32,7 +32,8 @@ function readXp(obs: MessageObservation): Record<string, number> | null {
   if (rows === null) return null;
   const xp: Record<string, number> = {};
   for (const { lifeform, amount: gain } of rows) {
-    if (lifeform === null || gain === null) throw new Invalid('unreadable experience');
+    // An unreadable line makes the experience unknown, not the whole reward
+    if (lifeform === null || gain === null) return null;
     const key = String(lifeform);
     xp[key] = (xp[key] ?? 0) + gain;
   }

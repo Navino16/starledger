@@ -1379,9 +1379,10 @@ Branche : `feature/anomaly-xp-artefacts`, partie de `feature/custom-period` (cha
 
 **Review Focus du scope :**
 1. Gain d'XP écrit `+4,444` (anglais) ou `+4.444` (français) : 4444 dans les deux cas (test en 18.1).
-2. Gain illisible ou forme de vie absente : entrée `amount: null` / `lifeform: null`, message non reconnu (tests en 18.1 et 18.2).
+2. Gain illisible ou forme de vie absente : entrée `amount: null` / `lifeform: null`, XP inconnue, ressources et vaisseaux gardés (tests en 18.1 et 18.2).
 3. Événement stocké avant ce scope (sans `artefacts` ni `xpByLifeform`) : stats sans `NaN`, XP comptée inconnue (test en 18.3).
 4. Récompense sans XP (aucune `.technology-row`) : `x-xp` vaut `[]`, XP connue et nulle (test en 18.1).
+5. Événement déjà stocké relu par le nouveau collecteur : complété (valeurs inconnues renseignées), pas de conflit ; une lecture plus pauvre le laisse intact (test serveur `ingest.test.ts`).
 
 ### Tâche 18.1 : Collecte de l'XP
 
@@ -1402,7 +1403,7 @@ Branche : `feature/anomaly-xp-artefacts`, partie de `feature/custom-period` (cha
 
 **Interfaces :**
 - Produit : `AnomalyRewardEvent` gagne `artefacts: number` (somme des `resource: "artifact"`, 0 sans) et `xpByLifeform: Record<string, number> | null` (clé `String(lifeform)`, sommée ; `null` si `x-xp` absent).
-- Non reconnu : `x-xp` JSON invalide ou mal formé, entrée à `amount` ou `lifeform` `null`.
+- Non reconnu : `x-xp` JSON invalide ou mal formé ; une entrée à `amount` ou `lifeform` `null` rend `xpByLifeform` `null`.
 
 - [x] **Step 1 : tests** : `artifact` 117 + métal → `artefacts: 117` ; `x-xp` à deux entrées → `xpByLifeform: { '1': 4444, '3': 1250 }` ; `x-xp` `[]` → `{}` ; sans `x-xp` → `null` ; cas non reconnus ci-dessus ; `speciesExperience` dans `x-loot` reste non reconnu.
 - [x] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/parsers/anomaly.test.ts` → FAIL.
@@ -1426,5 +1427,5 @@ Branche : `feature/anomaly-xp-artefacts`, partie de `feature/custom-period` (cha
 
 ### Tâche 18.4 : Vérification sur le PTS (utilisateur)
 
-- [ ] Rouvrir sur le PTS un message 76 avec XP et artefacts **avant** tout `reparse` : l'événement non reconnu est remplacé par la lecture complète. Puis `node dist/cli.js reparse` pour les autres 76.
+- [ ] `node dist/cli.js reparse` (PARSER_VERSION 7), puis rouvrir sur le PTS un message 76 avec XP et artefacts : l'événement est complété (artefacts et XP par forme de vie), sans conflit ; l'info-bulle de la ligne Anomalies montre l'XP.
 

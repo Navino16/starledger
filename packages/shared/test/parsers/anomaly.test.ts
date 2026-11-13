@@ -93,6 +93,16 @@ describe('parseAnomalyReward', () => {
     });
   });
 
+  it('keeps the reward with an unknown experience when a line is unreadable', () => {
+    for (const line of [xp(1, null), xp(null, 10)]) {
+      const r = parseAnomalyReward(obs([res('metal', 7)], '3:44:7', [xp(2, 5), line]));
+      expect(eventOf(r)).toMatchObject({
+        resources: { metal: 7, crystal: 0, deuterium: 0 },
+        xpByLifeform: null,
+      });
+    }
+  });
+
   it.each([
     ['missing x-loot', withRaw(base, { messagetype: '76' })],
     ['invalid json', obs('{')],
@@ -109,8 +119,6 @@ describe('parseAnomalyReward', () => {
     ['experience as a loot resource', obs([res('speciesExperience', 10)])],
     ['invalid x-xp json', obs([res('metal', 1)], '3:44:7', '[')],
     ['wrong x-xp shape', obs([res('metal', 1)], '3:44:7', { a: 1 })],
-    ['unreadable experience', obs([res('metal', 1)], '3:44:7', [xp(1, null)])],
-    ['experience without lifeform', obs([res('metal', 1)], '3:44:7', [xp(null, 10)])],
   ])('is unrecognized: %s', (_name, o) => {
     const r = parseAnomalyReward(o);
     expect(r.status).toBe('unrecognized');
