@@ -14,7 +14,9 @@ import type {
 import {
   computeStats,
   DEFAULT_VALUATION,
+  type DetailRowKey,
   type StoredEvent,
+  toMsu,
   type ValuationSettings,
 } from '../src/stats';
 
@@ -138,6 +140,26 @@ describe('computeStats', () => {
     expect(s.expeditions.outcomes.aliens).toBe(0);
     expect(s.discoveries.outcomes.lifeform_found).toBe(0);
     expect(s.combats).toMatchObject({ count: 0, won: 0, lost: 0, draw: 0, probeOnly: 0 });
+  });
+
+  it('has no negative zero, a null or zero count per row and empty ship maps when empty', () => {
+    const s = computeStats([], DEFAULT_VALUATION);
+    const numbers: number[] = [];
+    for (const row of Object.values(s.rows)) {
+      expect([0, null]).toContain(row.count);
+      for (const v of [
+        ...Object.values(row.resources ?? {}),
+        row.msu,
+        row.darkMatter,
+        row.artefacts,
+        row.lithium,
+      ]) {
+        if (typeof v === 'number') numbers.push(v);
+      }
+    }
+    expect(numbers.length).toBeGreaterThan(0);
+    for (const v of numbers) expect(Object.is(v, -0)).toBe(false);
+    expect(s.ships).toEqual({ found: {}, lost: {} });
   });
 
   it('counts an expedition of 1000 metal', () => {
@@ -544,5 +566,132 @@ describe('computeStats', () => {
       });
       expect(s.balance).toEqual(run([expedition({ resources: res(1000) })]).balance);
     });
+  });
+});
+
+describe('detail rows', () => {
+  const anomalyReward = (): ParsedEvent => ({
+    kind: 'anomaly_reward',
+    anomalyCoords: null,
+    resources: res(10, 0, 0),
+    ships: { '202': 1 },
+  });
+  const anomalyAction = (o: Partial<AnomalyActionEvent> = {}): AnomalyActionEvent => ({
+    kind: 'anomaly_action',
+    action: 'scan',
+    lithium: 5,
+    darkMatter: null,
+    lithiumBonus: 0,
+    ...o,
+  });
+  const events = (): ParsedEvent[] => [
+    expedition({
+      resources: res(100, 50, 20),
+      darkMatter: 30,
+      artifacts: 2,
+      shipsFound: { '202': 2 },
+      shipsLost: { '203': 1 },
+    }),
+    combat({
+      ownSide: 'defender',
+      outcome: 'lost',
+      loot: res(10, 0, 0),
+      lootSign: 1,
+      shipsLost: { '204': 10 },
+    }),
+    recycling({ resources: res(0, 40, 0) }),
+    wreck({ shipsRecovered: { '205': 3 } }),
+    anomalyReward(),
+    anomalyAction({ action: 'collect_dm', lithium: 4, darkMatter: 7, lithiumBonus: 1 }),
+    anomalyAction({ lithium: null, lithiumBonus: 0 }),
+    combat({ isAnomaly: true, outcome: 'lost', shipsLost: { '206': 1 } }),
+    discovery({ result: 'artifacts', artifacts: 3 }),
+    fuel(100),
+    fuel(null),
+  ];
+
+  it('splits the tiles into rows and totals them', () => {
+    const s = run(events());
+    const { rows, tiles } = s;
+    expect(rows.total.resources).toEqual({
+      metal: tiles.metal,
+      crystal: tiles.crystal,
+      deuterium: tiles.deuterium,
+    });
+    expect(rows.total.msu).toBe(tiles.msu);
+    expect(rows.total.darkMatter).toBe(tiles.darkMatter);
+    expect(rows.total.artefacts).toBe(tiles.artefacts);
+    expect(rows.total.lithium).toBe(s.anomalies.lithium.net);
+    expect(rows.expeditions.count).toBe(1);
+    expect(rows.expeditions.darkMatter).toBe(30);
+    expect(rows.expeditions.artefacts).toBe(2);
+    expect(s.expeditions.artefacts).toBe(2);
+    expect(rows.recycling.resources).toEqual(res(0, 40, 0));
+    expect(rows.recycling.msu).toBe(toMsu(res(0, 40, 0), [3, 2, 1]));
+    expect(rows.total.count).toBe(1 + 1 + 1 + 1 + 2 + 1 + 2);
+  });
+
+  it('shows no expedition artefacts when none were found', () => {
+    const { rows } = run([expedition({ artifacts: null })]);
+    expect(rows.expeditions.artefacts).toBeNull();
+  });
+
+  it('keeps negative combat nets and dark matter out of anomalies', () => {
+    const { rows, tiles } = run(events());
+    expect(rows.combats.resources?.metal).toBeLessThan(0);
+    expect(rows.combats.count).toBe(1);
+    expect(rows.anomalies.count).toBe(2);
+    expect(rows.anomalies.darkMatter).toBeNull();
+    expect(rows.anomalies.artefacts).toBeNull();
+    expect(rows.anomalies.lithium).toBe(-3);
+    expect(rows.anomalies.unknown).toBe(1);
+    expect(rows.total.darkMatter).toBe(tiles.darkMatter);
+  });
+
+  it('shows discoveries artefacts without resources', () => {
+    const { rows } = run(events());
+    expect(rows.discoveries.resources).toBeNull();
+    expect(rows.discoveries.msu).toBeNull();
+    expect(rows.discoveries.artefacts).toBe(3);
+    expect(rows.discoveries.count).toBe(1);
+  });
+
+  it('reports fuel as negative deuterium, or null when consumption is ignored', () => {
+    const { rows } = run(events());
+    expect(rows.fuel.count).toBe(2);
+    expect(rows.fuel.unknown).toBe(1);
+    expect(rows.fuel.resources).toEqual(res(0, 0, -100));
+    expect(rows.total.unknown).toBe(2);
+    expect(run(events(), { ignoreConsumption: true }).rows.fuel.resources).toBeNull();
+  });
+
+  it('fills the trades row only when trades are in the balance', () => {
+    const ev = [transport('received', res(10)), transport('delivered', res(0, 4))];
+    const off = run(ev).rows.trades;
+    expect(off).toMatchObject({ count: null, resources: null, msu: null });
+    const on = run(ev, { includeTradesInBalance: true });
+    expect(on.rows.trades.count).toBe(2);
+    expect(on.rows.trades.resources).toEqual(res(10, -4, 0));
+    expect(on.rows.total.msu).toBe(on.tiles.msu);
+  });
+
+  it('sums ships found and lost over every source', () => {
+    const { ships } = run(events());
+    expect(ships.found).toEqual({ '202': 3, '205': 3 });
+    expect(ships.lost).toEqual({ '203': 1, '204': 10, '206': 1 });
+    const ignored = run(events(), { ignoreExpeShipsLoss: true }).ships;
+    expect(ignored.lost).toEqual({ '203': 1, '204': 10, '206': 1 });
+  });
+
+  it('is all zeros or null without events, never -0', () => {
+    const { rows } = computeStats([], DEFAULT_VALUATION);
+    const keys = Object.keys(rows) as DetailRowKey[];
+    expect(keys).toHaveLength(9);
+    expect(rows.trades.count).toBeNull();
+    expect(rows.discoveries.resources).toBeNull();
+    expect(rows.total.msu).toBe(0);
+    expect(Object.is(rows.total.msu, -0)).toBe(false);
+    expect(Object.is(toMsu(res(0, 0, 0), [3, 2, 1]), -0)).toBe(false);
+    expect(Object.is(toMsu(res(-0.4, 0, 0), [3, 2, 1]), -0)).toBe(false);
   });
 });

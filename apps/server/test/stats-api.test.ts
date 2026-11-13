@@ -13,6 +13,7 @@ import { generateApiKey } from '../src/auth/api-keys';
 import type { Config } from '../src/config';
 import { ingestBatch } from '../src/ingest/ingest';
 import { saveValuationSettings } from '../src/settings/settings';
+import { getStats } from '../src/stats/stats-service';
 import { createUser } from '../src/users/users';
 import { startTestDb, type TestDb } from './helpers/db';
 
@@ -233,7 +234,7 @@ describe('GET /api/v1/stats', () => {
     const res = await get(q(999_999_999));
     expect(res.statusCode).toBe(200);
     const body = res.json<StatsResponse>();
-    expect(body.summary).toEqual(computeStats([], DEFAULT_VALUATION));
+    expect(body.summary).toEqual(computeStats([], body.settings));
     expect(body.counts.unrecognized).toBe(0);
   });
 
@@ -258,5 +259,73 @@ describe('GET /api/v1/stats', () => {
     const res = await get(rest);
     expect(res.statusCode).toBe(400);
     expect(res.json().error).toBe('invalid_payload');
+  });
+
+  describe('per-day series', () => {
+    const noonTs = (isoDay: string) => Date.parse(`${isoDay}T12:00:00Z`) / 1000;
+    const fuelOnly = (playerId: number, isoDay: string): Observation => ({
+      kind: 'fleet_dispatch',
+      clientObservationId: randomUUID(),
+      account: account(playerId),
+      observedAt: noonTs(isoDay) * 1000,
+      serverUtcOffsetMinutes: 60,
+      source: 'fleetdispatch',
+      mission: 15,
+      origin: null,
+      target: { galaxy: 1, system: 2, position: 16, type: 1 },
+      ships: { '203': 5 },
+      consumption: 10,
+      sentAt: noonTs(isoDay) * 1000,
+    });
+
+    it.each([
+      ['2026-02-10', 28, '2026-02-28'],
+      ['2028-02-10', 29, '2028-02-29'],
+    ])('covers the whole month of %s', async (today, length, last) => {
+      const res = (await get(q(999_999_998, { today }), bobKey)).json<StatsResponse>();
+      expect(res.days).toHaveLength(length);
+      expect(res.days[0]).toEqual({ day: `${today.slice(0, 8)}01`, msu: 0 });
+      expect(res.days[length - 1]?.day).toBe(last);
+      expect(res.days.every((d) => d.msu === 0)).toBe(true);
+    });
+
+    it('gives each day its own MSU, whatever the requested period', async () => {
+      const p = nextPlayerId++;
+      await send(bobId, [expedition(p, noonTs('2026-09-05')), fuelOnly(p, '2026-09-12')]);
+      for (const period of ['day', 'month', 'all']) {
+        const res = (await get(q(p, { period }), bobKey)).json<StatsResponse>();
+        expect(res.days).toHaveLength(30);
+        const byDay = new Map(res.days.map((d) => [d.day, d.msu]));
+        expect(byDay.get('2026-09-05')).toBeGreaterThan(0);
+        expect(byDay.get('2026-09-12')).toBeLessThan(0);
+        expect(res.days.filter((d) => d.msu !== 0)).toHaveLength(2);
+      }
+    });
+
+    it('reuses the period events for the month series instead of querying again', async () => {
+      const p = nextPlayerId++;
+      await send(bobId, [expedition(p, noonTs('2026-09-05'))]);
+      const counted = async (period: 'day' | 'month') => {
+        let n = 0;
+        const db = t.db.withPlugin({
+          transformQuery: ({ node }) => node,
+          transformResult: async ({ result }) => {
+            n++;
+            return result;
+          },
+        });
+        await getStats(db, bobId, { serverId: 808, lang: 'en', playerId: p, period, today: TODAY });
+        return n;
+      };
+      expect((await counted('month')) + 1).toBe(await counted('day'));
+    });
+
+    it('returns zeros for the account of another user', async () => {
+      const p = nextPlayerId++;
+      await send(aliceId, [expedition(p, noonTs('2026-09-05'))]);
+      const res = (await get(q(p), bobKey)).json<StatsResponse>();
+      expect(res.days).toHaveLength(30);
+      expect(res.days.every((d) => d.msu === 0)).toBe(true);
+    });
   });
 });

@@ -31,6 +31,7 @@ export type StatsResponse = {
   range: { from: string; to: string } | null;
   generatedAt: number;
   summary: StatsSummary;
+  days: { day: string; msu: number }[];
   counts: { unrecognized: number };
   settings: ValuationSettings;
 };

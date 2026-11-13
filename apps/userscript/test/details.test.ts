@@ -1,5 +1,5 @@
 import type { AccountRef, StatsResponse } from '@app/shared';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { todayKey } from '../src/env/page';
 import { type MemoryGm, memoryGm } from '../src/gm';
 import { createT } from '../src/i18n';
@@ -41,6 +41,30 @@ const statsOf = (
               deliveredCount: 1,
             },
           }),
+      rows: Object.fromEntries(
+        [
+          'expeditions',
+          'combats',
+          'recycling',
+          'wreckfields',
+          'anomalies',
+          'discoveries',
+          'fuel',
+          'trades',
+          'total',
+        ].map((k) => [
+          k,
+          {
+            count: 1,
+            resources: res(1, 1, k === 'fuel' ? -777 : 1),
+            msu: k === 'total' ? 4000 : 1,
+            darkMatter: null,
+            artefacts: null,
+            lithium: null,
+            unknown: k === 'fuel' ? 2 : 0,
+          },
+        ]),
+      ),
       tiles: { metal: 990, crystal: 1980, deuterium: 2193, darkMatter: 0, artefacts: 0, msu: 4000 },
       discoveries: { count: 4, xpByLifeform: { '1': 100, '2': 50 }, artefacts: 2 },
       combats: { shipsLost: { '204': 9 } },
@@ -61,6 +85,7 @@ const statsOf = (
           collects: 4,
         },
       },
+      ships: { found: { '202': 5 }, lost: { '202': 2, '203': 1 } },
       expeditions: {
         outcomes: { resources: 3, nothing: 1, ships: 0 },
         shipsFound: { '202': 5 },
@@ -86,6 +111,10 @@ describe('stats details dialog', () => {
       { account: ACCOUNT, serverUtcOffsetMinutes: 0 },
     );
   const dialog = () => document.getElementById(DETAILS_ID);
+  const hints = () =>
+    [...(dialog()?.querySelectorAll<HTMLElement>('tr[data-category]') ?? [])]
+      .map((tr) => tr.title)
+      .join('\n');
   const stats = () => gm.requests.filter((r) => r.url.includes('/api/v1/stats'));
 
   beforeEach(() => {
@@ -106,197 +135,60 @@ describe('stats details dialog', () => {
     expect(stats()[1]?.url).toContain(`period=week&today=${todayKey(0)}`);
   });
 
-  it('shows the known fuel beside the unknown departures', async () => {
-    const body = statsOf();
-    body.summary.fuel.unknownCount = 2;
-    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
+  it('shows outcome percentages, ships by id and the balance table with its notes', async () => {
     open();
     await tick();
-    expect(dialog()?.querySelector('[data-category="fuel"] td:nth-child(4)')?.textContent).toBe(
-      '777 + ? (2)',
-    );
-  });
-
-  it('shows outcome percentages, ships by id and a separate gains/losses/fuel table', async () => {
-    open();
-    await tick();
-    const text = dialog()?.textContent ?? '';
-    expect(text).toContain('Resources: 3 (75%)');
-    expect(text).toContain('Nothing: 1 (25%)');
-    expect(text).not.toContain('Ships:');
-    const shipRows = [...(dialog()?.querySelectorAll('.starledger-ships tr') ?? [])].map(
-      (r) => r.textContent,
-    );
-    expect(shipRows).toContain('20252');
-    expect(shipRows).toContain('20301');
-    expect(shipRows).toContain('20409');
-    const heads = [...(dialog()?.querySelectorAll('.starledger-balance th') ?? [])].map(
-      (h) => h.textContent,
-    );
-    expect(heads).toEqual(['Category', 'Gains', 'Losses', 'Fuel']);
-    const exp = dialog()?.querySelectorAll('[data-category="expeditions"] td');
-    expect(exp?.[1]?.textContent).toContain('M 1k');
-    expect(exp?.[2]?.textContent).toContain('M 10');
-    const amounts = [...(exp?.[1]?.querySelectorAll('.starledger-amount') ?? [])];
-    expect(amounts.map((a) => (a as HTMLElement).dataset.res)).toEqual([
-      'metal',
-      'crystal',
-      'deuterium',
-    ]);
-    expect(dialog()?.querySelector('[data-category="net"] [data-res="msu"]')).not.toBeNull();
-    expect(dialog()?.querySelector('[data-category="fuel"] td:nth-child(4)')?.textContent).toBe(
-      '777',
-    );
-    expect(text).toContain(t('balanceScope'));
-    const disc = dialog()?.querySelector('[data-category="discoveries"]');
-    expect(disc?.textContent).toContain('4 discoveries · XP 150 · Artefacts 2');
-    expect(disc?.querySelectorAll('td')[2]?.textContent).toBe('-');
-    const net = dialog()?.querySelector('[data-category="net"]')?.textContent ?? '';
-    expect(net).toContain('M 990');
-    expect(net).toContain('MSU 4k');
-  });
-
-  it('shows the anomalies row with gains and losses before fuel', async () => {
-    open();
-    await tick();
-    const cells = dialog()?.querySelectorAll('[data-category="anomalies"] td');
-    expect(cells?.[0]?.textContent).toBe('Anomalies');
-    expect(cells?.[1]?.textContent).toContain('M 40');
-    expect(cells?.[2]?.textContent).toContain('M 5');
-    const order = [...(dialog()?.querySelectorAll('.starledger-balance tr') ?? [])].map(
-      (r) => (r as HTMLElement).dataset.category,
-    );
-    expect(order.slice(order.indexOf('wreckfields'), order.indexOf('fuel') + 1)).toEqual([
-      'wreckfields',
-      'discoveries',
-      'anomalies',
-      'anomalies-lithium',
-      'fuel',
-    ]);
-  });
-
-  it('shows lithium spent, refunded, net and the counts', async () => {
-    open();
-    await tick();
-    const row = dialog()?.querySelector('[data-category="anomalies-lithium"]');
-    const cells = row?.querySelectorAll('td');
-    expect(cells?.[0]?.textContent).toBe('Anomalies: lithium');
-    expect(cells?.[1]?.textContent).toBe(
-      'Lithium: spent 1.2k, refunded 200, net -1k (scans: 6 · collects: 4 · rewards: 3 · combats: 2)',
-    );
-    expect(cells?.[2]?.textContent).toBe('-');
-    expect(cells?.[3]?.textContent).toBe('-');
-  });
-
-  it('shows unknown lithium and paid Dark Matter only when present', async () => {
-    const body = statsOf();
-    const lithium = body.summary.anomalies.lithium;
-    lithium.spentUnknown = 2;
-    lithium.refundUnknown = 1;
-    lithium.darkMatterUnknown = 3;
-    lithium.darkMatterSpent = 50;
-    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
-    open();
-    await tick();
-    const text = dialog()?.querySelector(
-      '[data-category="anomalies-lithium"] td:nth-child(2)',
-    )?.textContent;
-    expect(text).toContain('spent 1.2k + ? (2), refunded 200 + ? (1), net -1k + ? (3)');
-    expect(text).toContain(' · Dark Matter paid: 50 + ? (3)');
-  });
-
-  it('marks each lithium figure only with its own unknowns', async () => {
-    const body = statsOf();
-    body.summary.anomalies.lithium.refundUnknown = 1;
-    body.summary.anomalies.lithium.darkMatterUnknown = 2;
-    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
-    open();
-    await tick();
-    const text = dialog()?.querySelector(
-      '[data-category="anomalies-lithium"] td:nth-child(2)',
-    )?.textContent;
-    expect(text).toContain('spent 1.2k, refunded 200 + ? (1), net -1k + ? (1)');
-    expect(text).toContain('Dark Matter paid: 0 + ? (2)');
-  });
-
-  it('renders without anomalies in the summary', async () => {
-    const body = statsOf();
-    delete (body.summary as Partial<typeof body.summary>).anomalies;
-    delete (body.summary.balance as Partial<typeof body.summary.balance>).anomalies;
-    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
-    open();
-    await tick();
-    const row = dialog()?.querySelector('[data-category="anomalies-lithium"]');
-    expect(row?.querySelector('td:nth-child(2)')?.textContent).toBe(
-      'Lithium: spent ?, refunded ?, net ? (scans: ? · collects: ? · rewards: ? · combats: ?)',
+    const legend = (key: string) => dialog()?.querySelector(`[data-legend="${key}"]`)?.textContent;
+    expect(legend('resources')).toBe('Resources375.0%');
+    expect(legend('nothing')).toBe('Nothing125.0%');
+    const longDate = new Intl.DateTimeFormat('en', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(new Date(`${todayKey(0)}T00:00:00Z`));
+    expect(dialog()?.querySelector('.starledger-dateline')?.textContent).toBe(longDate);
+    expect(dialog()?.querySelector('[data-ship="202"] .starledger-found')?.textContent).toBe('5');
+    expect(dialog()?.querySelector('[data-ship="202"] .starledger-lost')?.textContent).toBe('-2');
+    expect(dialog()?.querySelectorAll('.starledger-balance tr[data-category]')).toHaveLength(9);
+    expect(dialog()?.querySelector('[data-category="total"] [data-col="msu"]')?.textContent).toBe(
+      '4.0k + ? (2)',
     );
     expect(
-      dialog()?.querySelector('[data-category="anomalies"] td:nth-child(2)')?.textContent,
-    ).toContain('M ?');
+      dialog()?.querySelector('[data-category="fuel"] [data-col="deuterium"]')?.textContent,
+    ).toBe('-777 + ? (2)');
+    expect(dialog()?.querySelector<HTMLElement>('[data-category="discoveries"]')?.title).toContain(
+      'XP 150',
+    );
+    expect(dialog()?.querySelector('.starledger-notes')).toBeNull();
   });
 
-  it('shows the trades row with received, delivered and counts', async () => {
+  it('shows ? cells when an older server sends no rows', async () => {
+    const body = statsOf();
+    delete (body.summary as Partial<typeof body.summary>).rows;
+    gm.respondWith(() => ({ status: 200, body: JSON.stringify(body) }));
     open();
     await tick();
-    const row = dialog()?.querySelector('[data-category="trades"]');
-    const cells = row?.querySelectorAll('td');
-    expect(cells?.[0]?.textContent).toBe('Trades (received: 3, delivered: 1)');
-    expect(cells?.[1]?.textContent).toContain('M 500');
-    expect(cells?.[2]?.textContent).toContain('M 200');
-    expect(cells?.[3]?.textContent).toBe('-');
-    const rows = [...(dialog()?.querySelectorAll('.starledger-balance tr') ?? [])];
-    const order = rows.map((r) => (r as HTMLElement).dataset.category);
-    expect(order.indexOf('trades')).toBeGreaterThan(order.indexOf('discoveries'));
-    expect(order.indexOf('net')).toBe(order.indexOf('trades') + 1);
+    expect(
+      dialog()?.querySelector('[data-category="expeditions"] [data-col="metal"]')?.textContent,
+    ).toBe('?');
   });
 
-  it('shows the trades net as excluded by default and included on demand', async () => {
+  it('puts unrecognized and conflict counts in the total row tooltip only when above 0', async () => {
     open();
     await tick();
-    const net = dialog()?.querySelector('[data-trades-net]');
-    expect(net?.className).toBe('starledger-note');
-    expect(net?.textContent).toContain('Trades net:');
-    expect(net?.textContent).toContain('M 300');
-    expect(net?.textContent).toContain('C -100');
-    expect(net?.textContent).toContain('D 0');
-    expect(net?.textContent).toContain('not included in the net');
-    dialog()?.remove();
-    gm.respondWith(() => ({
-      status: 200,
-      body: JSON.stringify(statsOf({ includeTrades: true })),
-    }));
-    open();
-    await tick();
-    const on = dialog()?.querySelector('[data-trades-net]')?.textContent ?? '';
-    expect(on).toContain(' — included in the net');
-    expect(on).not.toContain('not included');
-  });
-
-  it('shows dashes and no net paragraph when the server omits trades', async () => {
-    gm.respondWith(() => ({ status: 200, body: JSON.stringify(statsOf({ noTrades: true })) }));
-    open();
-    await tick();
-    const row = dialog()?.querySelector('[data-category="trades"]');
-    const cells = row?.querySelectorAll('td');
-    expect(cells?.[0]?.textContent).toBe('Trades (received: ?, delivered: ?)');
-    expect(cells?.[1]?.textContent).toBe('M ? · C ? · D ?');
-    expect(cells?.[2]?.textContent).toBe('M ? · C ? · D ?');
-    expect(dialog()?.querySelector('[data-trades-net]')).toBeNull();
-  });
-
-  it('shows unrecognized and conflict lines only when above 0', async () => {
-    open();
-    await tick();
-    expect(dialog()?.textContent).not.toContain('unrecognized');
-    expect(dialog()?.textContent).not.toContain('conflicts');
+    expect(hints()).not.toContain('unrecognized');
+    expect(hints()).not.toContain('conflicts');
     gm.respondWith(() => ({
       status: 200,
       body: JSON.stringify(statsOf({ unrecognized: 3, conflictCount: 2 })),
     }));
     dialog()?.querySelector<HTMLElement>('[data-period="all"]')?.click();
     await tick();
-    expect(dialog()?.textContent).toContain('3 unrecognized reports');
-    expect(dialog()?.textContent).toContain('2 conflicts');
+    const total = dialog()?.querySelector<HTMLElement>('[data-category="total"]')?.title;
+    expect(total).toContain('3 unrecognized reports');
+    expect(total).toContain('2 conflicts');
+    expect(dialog()?.textContent).not.toContain('unrecognized');
   });
 
   it('opens in a backdrop at the end of the body and leaves the page as before on close', async () => {
@@ -371,20 +263,21 @@ describe('stats details dialog', () => {
     expect(kinds.indexOf('GET')).toBeGreaterThan(kinds.indexOf('POST'));
   });
 
-  it('uses singular forms and notes ignored consumption', async () => {
+  it('uses singular forms and hints ignored consumption on the fuel row', async () => {
     gm.respondWith(() => ({
       status: 200,
       body: JSON.stringify(statsOf({ unrecognized: 1, conflictCount: 1, ignoreConsumption: true })),
     }));
     open();
     await tick();
-    const text = dialog()?.textContent ?? '';
+    const text = hints();
     expect(text).toContain('1 unrecognized report');
     expect(text).not.toContain('1 unrecognized reports');
     expect(text).toContain('1 conflict');
     expect(text).not.toContain('1 conflicts');
-    expect(text).toContain('777 (ignored)');
-    expect(text).toContain(t('balanceScopeNoFuel'));
+    expect(dialog()?.querySelector<HTMLElement>('[data-category="fuel"]')?.title).toContain(
+      t('fuelIgnoredNote'),
+    );
   });
 
   it('shows nothing from a response that arrives after consent was withdrawn', async () => {
@@ -395,7 +288,7 @@ describe('stats details dialog', () => {
     saveSettings(gm, { consent: false });
     pending[0]?.({ status: 200, body: JSON.stringify(statsOf({ unrecognized: 5 })) });
     await tick();
-    expect(dialog()?.textContent).not.toContain('5 unrecognized');
+    expect(hints()).not.toContain('5 unrecognized');
   });
 
   it('shows the translated error and handles a missing configuration without requesting', async () => {
@@ -422,9 +315,157 @@ describe('stats details dialog', () => {
     await tick();
     pending[0]?.({ status: 200, body: JSON.stringify(statsOf({ unrecognized: 1 })) });
     await tick();
-    expect(dialog()?.textContent).toContain('7 unrecognized');
-    expect(dialog()?.textContent).not.toContain('1 unrecognized');
+    expect(hints()).toContain('7 unrecognized');
+    expect(hints()).not.toContain('1 unrecognized');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(dialog()).toBeNull();
+  });
+});
+
+describe('details period navigation', () => {
+  let gm: MemoryGm;
+  const tick = () => new Promise((r) => setTimeout(r, 0));
+  const dialog = () => document.getElementById(DETAILS_ID);
+  const stats = () => gm.requests.filter((r) => r.url.includes('/api/v1/stats'));
+  const open = () =>
+    openDetails(
+      { gm, doc: document, t, queue: createQueue(gm) },
+      { account: ACCOUNT, serverUtcOffsetMinutes: 0 },
+    );
+  const days = (month: string, n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      day: `${month}-${String(i + 1).padStart(2, '0')}`,
+      msu: 1,
+    }));
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-03-31T12:00:00Z'));
+    gm = memoryGm();
+    document.body.innerHTML = '<div id="links"></div><div id="footer"></div>';
+    saveSettings(gm, { consent: true, serverUrl: 'https://sl.example.org', apiKey: 'k' });
+    gm.respondWith((req) => ({
+      status: 200,
+      body: JSON.stringify({
+        ...statsOf(),
+        days: days(
+          req.url.includes('today=2026-02') ? '2026-02' : '2026-03',
+          req.url.includes('today=2026-02') ? 28 : 31,
+        ),
+      }),
+    }));
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it('sends the previous month clamped to its last day', async () => {
+    open();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-nav="prev"]')?.click();
+    await tick();
+    expect(stats()).toHaveLength(2);
+    expect(stats()[1]?.url).toContain('today=2026-02-28');
+    expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(28);
+  });
+
+  it('shows the localized month label', async () => {
+    open();
+    await tick();
+    expect(dialog()?.querySelector('.starledger-month')?.textContent).toBe('March 2026');
+  });
+
+  it('selects a day from the calendar', async () => {
+    open();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-period="month"]')?.click();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-day="2026-03-10"]')?.click();
+    await tick();
+    const url = stats().at(-1)?.url ?? '';
+    expect(url).toContain('period=day');
+    expect(url).toContain('today=2026-03-10');
+  });
+
+  it('does not request again for the active period', async () => {
+    open();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-period="day"]')?.click();
+    await tick();
+    expect(stats()).toHaveLength(1);
+  });
+
+  it('shows only the last response after two quick clicks', async () => {
+    const pending: ((v: { status: number; body: string }) => void)[] = [];
+    open();
+    await tick();
+    gm.respondWith(
+      (req) =>
+        new Promise((resolve) => {
+          pending.push((v) => resolve(v));
+          void req;
+        }) as never,
+    );
+    dialog()?.querySelector<HTMLElement>('[data-nav="prev"]')?.click();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-nav="prev"]')?.click();
+    await tick();
+    expect(pending).toHaveLength(2);
+    const body = (n: number) => JSON.stringify({ ...statsOf(), days: days('2026-01', n) });
+    pending[1]?.({ status: 200, body: body(31) });
+    await tick();
+    pending[0]?.({ status: 200, body: body(5) });
+    await tick();
+    expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(31);
+  });
+
+  it('shows the month label in French', async () => {
+    document.head.innerHTML = '<meta name="ogame-language" content="fr">';
+    open();
+    await tick();
+    expect(dialog()?.querySelector('.starledger-month')?.textContent).toBe('mars 2026');
+    document.head.innerHTML = '';
+  });
+
+  it('goes back across a year boundary keeping the day', async () => {
+    vi.setSystemTime(new Date('2026-01-15T12:00:00Z'));
+    open();
+    await tick();
+    dialog()?.querySelector<HTMLElement>('[data-nav="prev"]')?.click();
+    await tick();
+    expect(stats().at(-1)?.url).toContain('today=2025-12-15');
+    expect(dialog()?.querySelector('.starledger-month')?.textContent).toBe('December 2025');
+  });
+
+  it('shows 29 bars for February of a leap year', async () => {
+    vi.setSystemTime(new Date('2028-02-10T12:00:00Z'));
+    gm.respondWith(() => ({
+      status: 200,
+      body: JSON.stringify({ ...statsOf(), days: days('2028-02', 29) }),
+    }));
+    open();
+    await tick();
+    expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(29);
+  });
+
+  it('empties the calendar when the request fails', async () => {
+    open();
+    await tick();
+    expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(31);
+    gm.respondWith(() => ({ status: 401, body: '' }));
+    dialog()?.querySelector<HTMLElement>('[data-nav="prev"]')?.click();
+    await tick();
+    expect(dialog()?.querySelectorAll('[data-day]')).toHaveLength(0);
+    expect(dialog()?.querySelector('.starledger-error')).not.toBeNull();
+  });
+
+  it('moves focus back to the selected day after a calendar click, not on first open', async () => {
+    open();
+    await tick();
+    expect(dialog()?.contains(document.activeElement)).toBe(true);
+    expect(document.activeElement?.hasAttribute('data-day')).toBe(false);
+    dialog()?.querySelector<HTMLElement>('[data-day="2026-03-10"]')?.click();
+    await tick();
+    const focused = document.activeElement as HTMLElement | null;
+    expect(focused?.dataset.day).toBe('2026-03-10');
   });
 });

@@ -41,6 +41,7 @@
 | 13 | Anomalies | ✅ |
 | 14 | Dossier de tolérance et publication | ☐ |
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
+| 16 | Détail façon OGLight | ☐ |
 
 ## Global Constraints
 
@@ -1141,3 +1142,150 @@ Travail prévu : `.github/renovate.json`, repris de la convention des projets pe
   - github-actions : mineur, correctif, `digest` et `pinDigest` ;
   - dockerfile : mineur, correctif et `digest` ;
 - `@types/node` avec `allowedVersions: "<=26"`.
+
+## Scope 16 — Détail façon OGLight
+
+Branche : `feature/details-dashboard`. **Spec** : `docs/superpowers/specs/2026-11-12-details-dashboard-design.md` (fait foi ; ses « Choix de l'assistant » sont à appliquer tels quels).
+
+**Contraintes propres au scope** (en plus des Global Constraints) :
+- Le client ne calcule aucune stat : tout chiffre affiché (lignes, MSU par ligne, vaisseaux, série par jour) vient du serveur ; le client ne fait que la mise en forme et les pourcentages du donut.
+- Icônes : composants du jeu s'ils sont définis sur la page, sinon images statiques du CDN de Gameforge (aucune requête au serveur du jeu, aucune activité). Commentaire de conformité sur ce choix.
+- Une case inconnue garde `+ ? (n)` ; une case sans objet affiche `-`.
+- Mobile : la fenêtre tient dans la largeur ; le tableau défile horizontalement avec la première colonne fixe ; donut et vaisseaux l'un sous l'autre sous 560 px.
+
+**Review Focus du scope :**
+1. Compte sans aucun événement sur la période : tout à 0 ou `-`, donut vide sans division par zéro (pas de `NaN %`).
+2. Serveur ancien sans `rows`, `ships` ni `days` : le détail affiche `?` sans planter (tests en 16.4 à 16.6).
+3. Mois de 28, 29, 30 et 31 jours, et changement de mois depuis le 31 (31 janvier → février) : le calendrier a le bon nombre de jours et la date de référence reste valide (tests en 16.4).
+4. Valeurs négatives (combats, carburant, lithium) : signe et couleur de perte, jamais `-0` (tests en 16.5 et 16.6).
+5. Clics rapides sur les jours ou les mois : seule la dernière réponse s'affiche (le compteur `seq` existant, test en 16.4).
+
+### Tâche 16.1 : Lignes du détail et vaisseaux dans `StatsSummary`
+
+**Files :** Modify `packages/shared/src/stats.ts` ; Test `packages/shared/test/stats.test.ts`.
+
+**Interfaces :**
+- Produit :
+  - `export type DetailRowKey = 'expeditions' | 'combats' | 'recycling' | 'wreckfields' | 'anomalies' | 'discoveries' | 'fuel' | 'trades' | 'total'` ;
+  - `export type DetailRow = { count: number | null; resources: Resources | null; msu: number | null; darkMatter: number | null; artefacts: number | null; lithium: number | null; unknown: number }` (`null` = sans objet, affiché `-` ; `unknown` = nombre de valeurs inconnues de la ligne) ;
+  - `StatsSummary.rows: Record<DetailRowKey, DetailRow>` et `StatsSummary.ships: { found: ShipCounts; lost: ShipCounts }` ;
+  - `export function toMsu(res: Resources, ratio: [number, number, number]): number`, la formule des Global Constraints (`ceil`, `+ 0` contre `-0`), réutilisée par la tuile MSU.
+- Règles (spec, « Choix de l'assistant » et option A) :
+  - `resources` d'une catégorie = `balance[cat].gains − balance[cat].losses` (vaisseaux convertis compris) ; `msu = toMsu(resources)` ;
+  - `count` : nombre d'événements de la catégorie ; anomalies = combats d'anomalie + récompenses ; fuel = `fuel.departures` ; trades = reçus + envoyés ; total = somme des lignes affichées ;
+  - `darkMatter` : expéditions seulement (`expeditions.darkMatter`), total = `tiles.darkMatter` ; l'AM payée des anomalies n'y entre pas (elle reste dans `anomalies.lithium.darkMatterSpent`) ;
+  - `artefacts` : expéditions (nouveau compteur `expeditions.artefacts`) et découvertes (`discoveries.artefacts`), total = `tiles.artefacts` ;
+  - `lithium` : anomalies et total = `anomalies.lithium.net` ; `unknown` des anomalies et du total inclut `spentUnknown + refundUnknown` ;
+  - fuel : `resources = { metal: 0, crystal: 0, deuterium: −recorded }` sauf si `ignoreConsumption` (alors `null`) ; `unknown = fuel.unknownCount` ;
+  - discoveries : `resources` et `msu` à `null` ;
+  - trades : ligne remplie seulement si `includeTradesInBalance`, sinon toutes les valeurs à `null` et `count` à `null` ;
+  - total : `resources` = tuiles métal/cristal/deut, `msu = tiles.msu`, `unknown` = somme des `unknown` ;
+  - `ships.found` = trouvés en expédition + récompenses d'anomalie + récupérés sur champs d'épaves ; `ships.lost` = pertes d'expédition + combats (`shipsLost` et `expeditionShipsLost`) + combats d'anomalie, indépendamment de `ignoreExpeShipsLoss`.
+
+- [ ] **Step 1 : tests** (`describe('detail rows')`) : un jeu d'événements mêlant expédition avec vaisseaux trouvés et AM, combat perdu en défense, recyclage, champ d'épaves, récompense d'anomalie, action d'anomalie, découverte avec artefacts, départ de carburant connu et inconnu ; asserts :
+  - `rows.total.resources` égal à `{ metal: tiles.metal, crystal: tiles.crystal, deuterium: tiles.deuterium }` et `rows.total.msu === tiles.msu` ;
+  - `rows.combats.resources.metal < 0` quand les pertes dépassent le butin ;
+  - `rows.discoveries.resources === null`, `rows.discoveries.artefacts` égal aux artefacts trouvés ;
+  - `rows.fuel.unknown === 1`, `rows.fuel.resources.deuterium === −recorded`, et `rows.fuel.resources === null` avec `ignoreConsumption` ;
+  - `rows.anomalies.darkMatter === null` et `rows.total.darkMatter === tiles.darkMatter` malgré une récupération en AM ;
+  - `rows.trades.count === null` sans `includeTradesInBalance`, rempli avec ;
+  - `ships.found` et `ships.lost` sommés sur toutes les sources ;
+  - aucun événement : toutes les lignes à 0 ou `null`, `toMsu` ne renvoie jamais `-0`.
+- [ ] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/stats.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter dans `computeStats` (et `toMsu`).
+- [ ] **Step 4 :** même commande → PASS ; `pnpm test:coverage` depuis la racine → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add detail rows and ship totals to the stats summary"`
+
+### Tâche 16.2 : Série par jour du mois
+
+**Files :** Modify `packages/shared/src/api.ts`, `apps/server/src/stats/stats-service.ts` ; Test `apps/server/test/stats-api.test.ts`.
+
+**Interfaces :**
+- Consomme : `computeStats`, `periodRange('month', today)`.
+- Produit : `StatsResponse.days: { day: string; msu: number }[]`, un élément par jour du mois qui contient `today`, dans l'ordre, `msu` = `tiles.msu` de ce seul jour (0 sans événement, négatif possible). Calculé quelle que soit la période demandée ; une seule requête SQL supplémentaire au plus (aucune si `period === 'month'`).
+
+- [ ] **Step 1 : tests** : `today=2026-02-10` donne 28 éléments de `2026-02-01` à `2026-02-28` ; `2028-02-10` en donne 29 ; un jour avec une expédition rentable a `msu > 0`, un jour avec seulement du carburant `msu < 0`, les autres 0 ; avec `period=day` la série couvre quand même le mois ; un compte d'un autre utilisateur donne une série de zéros.
+- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run test/stats-api.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter dans `getStats`.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Return the per-day MSU series of the month with the stats"`
+
+### Tâche 16.3 : Icônes du jeu
+
+**Files :** Create `apps/userscript/src/ui/icons.ts` ; Test `apps/userscript/test/icons.test.ts`.
+
+**Interfaces :**
+- Produit :
+  - `export type IconKind = 'metal' | 'crystal' | 'deuterium' | 'darkMatter' | 'artefacts' | 'lithium'` ;
+  - `export function resourceIcon(doc: Document, kind: IconKind, title: string): HTMLElement` ;
+  - `export function shipIcon(doc: Document, shipId: string, title: string): HTMLElement`.
+- Règle : si `doc.defaultView?.customElements.get(tag)` est défini, créer le composant du jeu (`<resource-icon class="metal|crystal|deuterium" sq16>`, `<technology-icon <nom technique>>` d'après `SHIP_TECH_NAMES`, `<lithium-icon sq16>`) ; sinon une image statique :
+  - ressources et AM : sprite `https://gf3.geo.gfsrv.net/cdned/7f14c18b15064d2604c5476f5d10b3.png` (`background-size: 302px`, cadre 28×18), positions métal `1% 11%`, cristal `16% 11%`, deut `30% 11%`, AM `57% 11%` ;
+  - artefacts : `https://gf1.geo.gfsrv.net/cdn65/596ba85baa74145390e04f7428d93e.png` (provisoire, à confirmer sur le PTS en 16.7) ;
+  - lithium : toujours `<lithium-icon sq16>` (aucune image de secours connue) ;
+  - vaisseaux : table `SHIP_IMAGES` id → URL, valeurs relevées le 2026-11-12 : 202 `https://gf2.geo.gfsrv.net/cdnd9/60555c3c87b9eb3b5ddf76780b5712.jpg`, 203 `https://gf1.geo.gfsrv.net/cdn34/fdbcc505474e3e108d10a3ed4a19f4.jpg`, 204 `https://gf2.geo.gfsrv.net/cdnd2/9ed5c1b6aea28fa51f84cdb8cb1e7e.jpg`, 205 `https://gf1.geo.gfsrv.net/cdnf1/8266a2cbae5ad630c5fedbdf270f3e.jpg`, 206 `https://gf2.geo.gfsrv.net/cdn45/b7ee4f9d556a0f39dae8d2133e05b7.jpg`, 207 `https://gf1.geo.gfsrv.net/cdn32/3f4a081f4d15662bed33473db53d5b.jpg`, 208 `https://gf1.geo.gfsrv.net/cdn6f/41a21e4253d2231f8937ddef1ba43e.jpg`, 209 `https://gf1.geo.gfsrv.net/cdn07/6246eb3d7fa67414f6b818fa79dd9b.jpg`, 210 `https://gf3.geo.gfsrv.net/cdnb5/347821e80cafc52aec04f27c3a2a4d.jpg`, 211 `https://gf1.geo.gfsrv.net/cdnca/4d55a520aed09d0c43e7b962f33e27.jpg`, 212 `https://gf2.geo.gfsrv.net/cdnda/665c65072887153d44a6684ec276e9.jpg`, 213 `https://gf3.geo.gfsrv.net/cdn2a/c2b9fedc9c93ef22f2739c49fbac52.jpg`, 214 `https://gf3.geo.gfsrv.net/cdn84/155e9e24fc1d34ed4660de8d428f45.jpg`, 215 `https://gf3.geo.gfsrv.net/cdn5a/24f511ec14a71e2d83fd750aa0dee2.jpg`, 217 `https://gf3.geo.gfsrv.net/cdn26/28e8d79a5b489dc795cc47f3adf165.jpg`, 218 `https://gf1.geo.gfsrv.net/cdn39/12d016c8bb0d71e053b901560c17cc.jpg`, 219 `https://gf3.geo.gfsrv.net/cdne2/b8d8d18f2baf674acedb7504c7cc83.jpg` ; id inconnu → vignette vide avec le `title`.
+- Commentaire : `//! AGENTS.md §4: game components or static Gameforge CDN images, no game request`.
+
+- [ ] **Step 1 : tests** : sans composant défini, `resourceIcon(doc,'metal',…)` a le sprite et la position `1% 11%` ; avec `customElements.define('resource-icon', …)` simulé, c'est un `<resource-icon class="metal" sq16>` ; `shipIcon(doc,'202',…)` donne une image à l'URL 202, ou `<technology-icon transportersmall>` si défini ; `lithium` est toujours `<lithium-icon>` ; tout élément porte le `title`.
+- [ ] **Step 2 :** `pnpm --filter ./apps/userscript exec vitest run test/icons.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add game icons with static CDN fallback"`
+
+### Tâche 16.4 : Période, navigation et calendrier
+
+**Files :** Create `apps/userscript/src/ui/details/calendar.ts` ; Modify `apps/userscript/src/ui/details.ts`, `apps/userscript/src/i18n.ts`, `apps/userscript/src/ui/styles.ts` ; Test `apps/userscript/test/details.test.ts`, `apps/userscript/test/calendar.test.ts`.
+
+**Interfaces :**
+- Consomme : `StatsResponse.days` (16.2).
+- Produit :
+  - `export function renderCalendar(doc: Document, days: { day: string; msu: number }[] | undefined, selected: string, onSelect: (day: string) => void): HTMLElement` : une barre par élément de `days` (`data-day`), hauteur proportionnelle à `|msu|` rapporté au plus grand `|msu|` du mois, classe `is-negative` si `msu < 0`, `aria-pressed` sur le jour sélectionné ; sans `days`, un calendrier vide ;
+  - dans `openDetails` : état `{ period: StatsPeriod; refDay: string }`, initialisé à `{ 'day', todayKey(...) }` ; `refDay` est envoyé comme `today` à `getStats` ; boutons J/S/M/Tout (`periodDay`, `periodWeek`, `periodMonth`, `periodAll`), boutons ‹ › (`prevMonth`, `nextMonth`) qui déplacent `refDay` au même jour du mois voisin, ramené au dernier jour s'il n'existe pas ; libellé du mois localisé (`Intl.DateTimeFormat`, langue de l'interface) ; clic sur un jour → `{ period: 'day', refDay: jour }`.
+  - Chaque changement déclenche une seule requête `getStats` (aucune pour un clic sur la période déjà affichée).
+
+- [ ] **Step 1 : tests** : `renderCalendar` (28 barres pour février, barre négative marquée, jour sélectionné, clic appelle `onSelect('2026-02-14')`, `days` absent → aucun `NaN` dans les styles) ; `openDetails` avec une API simulée : ‹ depuis `2026-03-31` envoie `today=2026-02-28`, un clic sur un jour envoie `period=day&today=<jour>`, deux clics rapides n'affichent que la seconde réponse, un recliquage sur la période active n'envoie rien.
+- [ ] **Step 2 :** `pnpm --filter ./apps/userscript exec vitest run test/calendar.test.ts test/details.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add period navigation and month calendar to the detail window"`
+
+### Tâche 16.5 : Donut des expéditions et grille des vaisseaux
+
+**Files :** Create `apps/userscript/src/ui/details/donut.ts`, `apps/userscript/src/ui/details/ships.ts` ; Modify `ui/details.ts`, `ui/styles.ts` ; Test `apps/userscript/test/donut.test.ts`, `apps/userscript/test/ships-grid.test.ts`.
+
+**Interfaces :**
+- Consomme : `summary.expeditions.outcomes`, `summary.ships` (16.1), `shipIcon` (16.3).
+- Produit :
+  - `export function renderDonut(doc: Document, t: T, outcomes: Record<string, number> | undefined): HTMLElement` : SVG (un arc par résultat non nul, couleurs fixes par résultat), total au centre, légende (libellé `OUTCOME_KEYS`, nombre, pourcentage à une décimale, virgule ou point selon la langue) ; total 0 → cercle vide et légende sans pourcentage ;
+  - `export function renderShips(doc: Document, t: T, ships: { found: ShipCounts; lost: ShipCounts } | undefined): HTMLElement` : une vignette par id de `SHIP_TECH_NAMES` trié, nombre trouvé (`formatAmount`), nombre perdu en dessous en `-n` (classe de perte) seulement s'il est > 0 ; `ships` absent → `?`.
+
+- [ ] **Step 1 : tests** : 19 / 8 / 5 sur 32 donnent `59,4 %`, `25,0 %`, `15,6 %` en français ; total 0 → aucun `NaN` ; vaisseau trouvé 400 et perdu 20 affiche `400` et `-20` ; perdu 0 n'affiche pas de ligne de perte ; nombre de vignettes = nombre d'entrées de `SHIP_TECH_NAMES`.
+- [ ] **Step 2 :** `pnpm --filter ./apps/userscript exec vitest run test/donut.test.ts test/ships-grid.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add expedition donut and ship grid to the detail window"`
+
+### Tâche 16.6 : Tableau et informations hors tableau
+
+**Files :** Create `apps/userscript/src/ui/details/table.ts` ; Modify `ui/details.ts` (retrait de l'ancien rendu : `outcomesList`, `shipsTable`, `balanceTable`, `lithiumText`, `discoveriesText`, `tradesNetNote` et leurs clés i18n devenues inutiles), `i18n.ts`, `ui/styles.ts` ; Test `apps/userscript/test/details-table.test.ts`, `apps/userscript/test/details.test.ts`.
+
+**Interfaces :**
+- Consomme : `summary.rows` (16.1), `resourceIcon` (16.3), `formatAmount`, `formatPartial`.
+- Produit : `export function renderTable(doc: Document, t: T, stats: StatsResponse): HTMLElement` et `export function renderNotes(doc: Document, t: T, stats: StatsResponse): HTMLElement`.
+  - Colonnes : nombre, métal, cristal, deut, MSU, AM, artefacts, lithium ; en-têtes = icônes avec libellé en `title`.
+  - Lignes dans l'ordre `expeditions, combats, recycling, wreckfields, anomalies, discoveries, fuel, trades (si count non null), total` ; `null` → `-` ; valeur négative avec la classe de perte ; `unknown > 0` → `formatPartial` sur le MSU et sur la colonne concernée (deut pour fuel, lithium pour anomalies, MSU pour total).
+  - Infobulle (`title`) des lignes expéditions, combats, champs d'épaves, anomalies : « valeur des vaisseaux incluse » ; ligne anomalies : AM payée.
+  - `renderNotes` : carburant inconnu (départs), lithium dépensé / remboursé / inconnus, AM payée, issues des combats (gagnés, perdus, nuls), XP des découvertes, échanges non inclus (reçus, envoyés, net), messages non reconnus, conflits — chaque note seulement si elle a un contenu.
+  - Le tableau est dans un conteneur à défilement horizontal, première colonne `position: sticky`.
+
+- [ ] **Step 1 : tests** : une réponse type rend 9 lignes avec trades inclus, 8 sans ; `rows.discoveries.resources: null` rend `-` dans métal/cristal/deut/MSU ; `rows.combats.resources.metal < 0` a la classe de perte ; `rows.fuel.unknown = 2` affiche `+ ? (2)` ; `rows.total.msu` égal à la tuile MSU de la réponse ; réponse sans `rows` → cases `?` sans exception ; les notes vides n'apparaissent pas ; plus aucune référence aux anciennes fonctions supprimées.
+- [ ] **Step 2 :** `pnpm --filter ./apps/userscript exec vitest run test/details-table.test.ts test/details.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Render the detail balance as an OGLight-style table"`
+
+### Tâche 16.7 : Vérification sur le PTS (utilisateur)
+
+- [ ] L'utilisateur installe le script de la branche sur le PTS, ouvre le détail sur PC et sur téléphone, et vérifie : icônes (ressources, vaisseaux, lithium, artefacts), lisibilité, navigation J/S/M/Tout et mois, chiffres du Total égaux aux tuiles de l'encart.
+- [ ] Ajustements éventuels dans la même branche (icône des artefacts notamment), avant le merge.
+

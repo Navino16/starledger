@@ -5,6 +5,7 @@ import {
   periodRange,
   type StatsResponse,
   type StoredEvent,
+  type ValuationSettings,
 } from '@app/shared';
 import type { Kysely } from 'kysely';
 import type { Database } from '../db/schema';
@@ -18,6 +19,28 @@ export interface StatsQuery {
   today: string;
 }
 
+function dailyMsu(
+  month: { from: string; to: string } | null,
+  events: StoredEvent[],
+  settings: ValuationSettings,
+): { day: string; msu: number }[] {
+  if (!month) return [];
+  const byDay = new Map<string, StoredEvent[]>();
+  for (const e of events) {
+    const list = byDay.get(e.day);
+    if (list) list.push(e);
+    else byDay.set(e.day, [e]);
+  }
+  const days: { day: string; msu: number }[] = [];
+  const last = Number(month.to.slice(8));
+  for (let d = 1; d <= last; d++) {
+    const day = `${month.from.slice(0, 8)}${String(d).padStart(2, '0')}`;
+    const dayEvents = byDay.get(day);
+    days.push({ day, msu: dayEvents ? computeStats(dayEvents, settings).tiles.msu : 0 });
+  }
+  return days;
+}
+
 // Every query is scoped by user_id: an account of another user is indistinguishable from an unknown one.
 export async function getStats(
   db: Kysely<Database>,
@@ -26,6 +49,7 @@ export async function getStats(
 ): Promise<StatsResponse> {
   const { serverId, lang, playerId, period, today } = query;
   const range = periodRange(period, today);
+  const monthRange = periodRange('month', today);
   const settings = await getValuationSettings(db, userId, serverId, lang);
 
   const account = await db
@@ -38,20 +62,25 @@ export async function getStats(
     .executeTakeFirst();
 
   let events: StoredEvent[] = [];
+  let monthEvents: StoredEvent[] = [];
   let unrecognized = 0;
   if (account) {
-    let okQuery = db
-      .selectFrom('events')
-      .select(['day', 'status', 'data'])
-      .where('account_id', '=', account.id)
-      .where('status', 'in', ['ok', 'conflict']);
-    if (range) okQuery = okQuery.where('day', '>=', range.from).where('day', '<=', range.to);
-    const rows = await okQuery.execute();
-    events = rows.flatMap((row) =>
-      row.day && row.data && (row.status === 'ok' || row.status === 'conflict')
-        ? [{ day: row.day, status: row.status, event: row.data as ParsedEvent }]
-        : [],
-    );
+    const fetchEvents = async (r: { from: string; to: string } | null) => {
+      let okQuery = db
+        .selectFrom('events')
+        .select(['day', 'status', 'data'])
+        .where('account_id', '=', account.id)
+        .where('status', 'in', ['ok', 'conflict']);
+      if (r) okQuery = okQuery.where('day', '>=', r.from).where('day', '<=', r.to);
+      const rows = await okQuery.execute();
+      return rows.flatMap((row): StoredEvent[] =>
+        row.day && row.data && (row.status === 'ok' || row.status === 'conflict')
+          ? [{ day: row.day, status: row.status, event: row.data as ParsedEvent }]
+          : [],
+      );
+    };
+    events = await fetchEvents(range);
+    monthEvents = period === 'month' ? events : await fetchEvents(monthRange);
     const count = await db
       .selectFrom('events')
       .select((eb) => eb.fn.countAll<string>().as('n'))
@@ -66,6 +95,7 @@ export async function getStats(
     range,
     generatedAt: Date.now(),
     summary: computeStats(events, settings),
+    days: dailyMsu(monthRange, monthEvents, settings),
     counts: { unrecognized },
     settings,
   };
