@@ -393,6 +393,7 @@ OGLight `Datafinder` table (OGL l.144–160).
 | `ogame-universe-speed` | int, economy speed | OGL l.458 |
 | `ogame-universe-speed-fleet-peaceful` / `-holding` / `-war` | int, fleet speeds | OGL l.459–461 |
 | `ogame-language` | server language code | TRK `meta`, OGL l.457 |
+| `ogame-ui-language` | the player's interface language code, may differ from the server's (`fr` on `s808-en`, 2026-11-13) | live page |
 | `ogame-version` | dotted version; major `< 13` means legacy DOM | OGL l.249, l.462 |
 | `ogame-player-id` | int | TRK `meta`, OGL l.467 |
 | `ogame-player-name` | string | OGL l.469 |
