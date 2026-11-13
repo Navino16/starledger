@@ -24,6 +24,23 @@ describe('renderCalendar', () => {
     expect(bar?.style.height).toBe('100%');
   });
 
+  it('keeps a 4px bar for any non-zero day, however small against the month', () => {
+    const days = [
+      { day: '2026-11-01', msu: -8e9 },
+      { day: '2026-11-02', msu: -180e3 },
+      { day: '2026-11-03', msu: 6e6 },
+      { day: '2026-11-04', msu: 0 },
+    ];
+    const bar = (day: string) =>
+      renderCalendar(document, days, '2026-11-01', () => {}).querySelector<HTMLElement>(
+        `[data-day="${day}"] .starledger-bar`,
+      );
+    expect(bar('2026-11-02')?.style.height).toBe('0%');
+    expect(bar('2026-11-02')?.style.minHeight).toBe('4px');
+    expect(bar('2026-11-03')?.style.minHeight).toBe('4px');
+    expect(bar('2026-11-04')?.style.minHeight).toBe('');
+  });
+
   it('flags the selected day and reports clicks', () => {
     const onSelect = vi.fn();
     const cal = renderCalendar(document, febDays, '2026-02-14', onSelect);

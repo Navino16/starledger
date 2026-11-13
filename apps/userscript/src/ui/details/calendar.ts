@@ -44,6 +44,8 @@ export function renderCalendar(
     const height = max > 0 ? Math.round((Math.abs(msu) / max) * 100) : 0;
     const bar = el(doc, 'span', { className: 'starledger-bar' });
     bar.style.height = `${height}%`;
+    // A small day next to a huge one would round to 0%: keep its sign visible
+    if (msu !== 0) bar.style.minHeight = '4px';
     const cell = el(
       doc,
       'button',
