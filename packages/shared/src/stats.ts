@@ -87,7 +87,14 @@ export type StatsSummary = {
   };
   anomalies: {
     combats: { count: number; won: number; lost: number; draw: number; shipsLost: ShipCounts };
-    rewards: { count: number; resources: Resources; ships: ShipCounts };
+    rewards: {
+      count: number;
+      resources: Resources;
+      ships: ShipCounts;
+      artefacts: number;
+      xpByLifeform: Record<string, number>;
+      xpUnknown: number;
+    };
     lithium: {
       spent: number;
       refunded: number;
@@ -152,9 +159,9 @@ const addRes = (into: Resources, r: Resources, factor = 1): void => {
   into.deuterium += r.deuterium * factor;
 };
 
-const addShips = (into: ShipCounts, ships: ShipCounts | null): void => {
-  if (!ships) return;
-  for (const [id, n] of Object.entries(ships)) into[id] = (into[id] ?? 0) + n;
+const addCounts = (into: Record<string, number>, counts: Record<string, number> | null): void => {
+  if (!counts) return;
+  for (const [key, n] of Object.entries(counts)) into[key] = (into[key] ?? 0) + n;
 };
 
 // Multiply before dividing to avoid float noise; ship ids absent from SHIP_COSTS add nothing.
@@ -219,7 +226,14 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
     },
     anomalies: {
       combats: { count: 0, won: 0, lost: 0, draw: 0, shipsLost: {} },
-      rewards: { count: 0, resources: zeroRes(), ships: {} },
+      rewards: {
+        count: 0,
+        resources: zeroRes(),
+        ships: {},
+        artefacts: 0,
+        xpByLifeform: {},
+        xpUnknown: 0,
+      },
       lithium: {
         spent: 0,
         refunded: 0,
@@ -266,8 +280,8 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         stats.tiles.darkMatter += e.darkMatter ?? 0;
         stats.expeditions.artefacts += e.artifacts ?? 0;
         stats.tiles.artefacts += e.artifacts ?? 0;
-        addShips(stats.expeditions.shipsFound, e.shipsFound);
-        addShips(stats.expeditions.shipsLost, e.shipsLost);
+        addCounts(stats.expeditions.shipsFound, e.shipsFound);
+        addCounts(stats.expeditions.shipsLost, e.shipsLost);
         addShipValue(balance.expeditions.gains, e.shipsFound, settings.expeditionShipRatio);
         loss(balance.expeditions, e.shipsLost, true);
         break;
@@ -288,7 +302,7 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         if (e.isAnomaly === true) {
           stats.anomalies.combats.count++;
           stats.anomalies.combats[e.outcome]++;
-          addShips(stats.anomalies.combats.shipsLost, e.shipsLost);
+          addCounts(stats.anomalies.combats.shipsLost, e.shipsLost);
           loss(balance.anomalies, e.shipsLost, false);
           break;
         }
@@ -297,7 +311,7 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         if (e.isProbeOnly) stats.combats.probeOnly++;
         addRes(stats.combats.lootSigned, e.loot, e.lootSign);
         addRes(stats.combats.debrisCreated, e.debrisCreated);
-        addShips(
+        addCounts(
           e.isExpedition ? stats.combats.expeditionShipsLost : stats.combats.shipsLost,
           e.shipsLost,
         );
@@ -309,7 +323,7 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
       case 'combat_short': {
         stats.combats.count++;
         if (e.isProbeOnly) stats.combats.probeOnly++;
-        addShips(
+        addCounts(
           e.isExpedition ? stats.combats.expeditionShipsLost : stats.combats.shipsLost,
           e.shipsLost,
         );
@@ -323,7 +337,7 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         break;
       case 'wreckfield':
         stats.wreckfields.count++;
-        addShips(stats.wreckfields.shipsRecovered, e.shipsRecovered);
+        addCounts(stats.wreckfields.shipsRecovered, e.shipsRecovered);
         addShipValue(balance.wreckfields.gains, e.shipsRecovered);
         break;
       case 'transport':
@@ -339,7 +353,11 @@ export function computeStats(events: StoredEvent[], settings: ValuationSettings)
         // User decision 2026-11-12 (docs/decisions.md): anomaly ships use anomalyShipRatio
         stats.anomalies.rewards.count++;
         addRes(stats.anomalies.rewards.resources, e.resources);
-        addShips(stats.anomalies.rewards.ships, e.ships);
+        addCounts(stats.anomalies.rewards.ships, e.ships);
+        stats.anomalies.rewards.artefacts += e.artefacts ?? 0;
+        stats.tiles.artefacts += e.artefacts ?? 0;
+        if (e.xpByLifeform) addCounts(stats.anomalies.rewards.xpByLifeform, e.xpByLifeform);
+        else stats.anomalies.rewards.xpUnknown++;
         addRes(balance.anomalies.gains, e.resources);
         addShipValue(balance.anomalies.gains, e.ships, settings.anomalyShipRatio);
         break;
@@ -424,7 +442,11 @@ function fillDetail(stats: StatsSummary, settings: ValuationSettings): void {
   rows.anomalies = withRes(
     anomalies.combats.count + anomalies.rewards.count,
     netOf(balance.anomalies),
-    { lithium: anomalies.lithium.net, unknown: lithiumUnknown },
+    {
+      artefacts: anomalies.rewards.artefacts,
+      lithium: anomalies.lithium.net,
+      unknown: lithiumUnknown,
+    },
   );
   rows.discoveries = {
     ...empty,
@@ -458,11 +480,11 @@ function fillDetail(stats: StatsSummary, settings: ValuationSettings): void {
     unknown: shown.reduce((sum, r) => sum + r.unknown, 0),
   };
 
-  addShips(ships.found, stats.expeditions.shipsFound);
-  addShips(ships.found, anomalies.rewards.ships);
-  addShips(ships.found, stats.wreckfields.shipsRecovered);
-  addShips(ships.lost, stats.expeditions.shipsLost);
-  addShips(ships.lost, stats.combats.shipsLost);
-  addShips(ships.lost, stats.combats.expeditionShipsLost);
-  addShips(ships.lost, anomalies.combats.shipsLost);
+  addCounts(ships.found, stats.expeditions.shipsFound);
+  addCounts(ships.found, anomalies.rewards.ships);
+  addCounts(ships.found, stats.wreckfields.shipsRecovered);
+  addCounts(ships.lost, stats.expeditions.shipsLost);
+  addCounts(ships.lost, stats.combats.shipsLost);
+  addCounts(ships.lost, stats.combats.expeditionShipsLost);
+  addCounts(ships.lost, anomalies.combats.shipsLost);
 }

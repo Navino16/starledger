@@ -18,9 +18,27 @@ const lootSchema = z.array(
   ]),
 );
 
+const xpSchema = z.array(
+  z.object({ lifeform: z.number().int().positive().nullable(), amount: amount.nullable() }),
+);
+
 const RESOURCES = ['metal', 'crystal', 'deuterium'] as const;
 type ResourceKey = (typeof RESOURCES)[number];
 const isResourceKey = (s: string): s is ResourceKey => (RESOURCES as readonly string[]).includes(s);
+
+// x-xp absent: observation of an older collector, experience unknown (spec: unknown is not 0)
+function readXp(obs: MessageObservation): Record<string, number> | null {
+  const rows = need(rawJson(obs.raw, 'x-xp', xpSchema), 'x-xp');
+  if (rows === null) return null;
+  const xp: Record<string, number> = {};
+  for (const { lifeform, amount: gain } of rows) {
+    // An unreadable line makes the experience unknown, not the whole reward
+    if (lifeform === null || gain === null) return null;
+    const key = String(lifeform);
+    xp[key] = (xp[key] ?? 0) + gain;
+  }
+  return xp;
+}
 
 function build(obs: MessageObservation): AnomalyRewardEvent {
   // docs/decisions.md scope 13: raw attributes of the game would take precedence over x-loot if they appear
@@ -30,10 +48,13 @@ function build(obs: MessageObservation): AnomalyRewardEvent {
 
   const resources = { metal: 0, crystal: 0, deuterium: 0 };
   const ships: Record<string, number> = {};
+  let artefacts = 0;
   for (const item of loot) {
     if (item.type === 'unknown') throw new Invalid('unknown reward kind');
     if (item.amount === null) throw new Invalid('reward without amount');
-    if (item.type === 'resource') {
+    if (item.type === 'resource' && item.resource === 'artifact') {
+      artefacts += item.amount;
+    } else if (item.type === 'resource') {
       if (!isResourceKey(item.resource)) throw new Invalid(`unknown resource ${item.resource}`);
       resources[item.resource] += item.amount;
     } else {
@@ -47,7 +68,14 @@ function build(obs: MessageObservation): AnomalyRewardEvent {
 
   const coordsRaw = obs.raw['x-anomalycoords'];
   const anomalyCoords = coordsRaw === undefined ? null : parseCoords(coordsRaw);
-  return { kind: 'anomaly_reward', anomalyCoords, resources, ships };
+  return {
+    kind: 'anomaly_reward',
+    anomalyCoords,
+    resources,
+    ships,
+    artefacts,
+    xpByLifeform: readXp(obs),
+  };
 }
 
 export function parseAnomalyReward(obs: MessageObservation): ParseResult {

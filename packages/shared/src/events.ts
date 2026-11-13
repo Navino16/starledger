@@ -120,6 +120,10 @@ export type AnomalyRewardEvent = {
   anomalyCoords: Coords | null;
   resources: Resources;
   ships: ShipCounts;
+  // Both absent from events stored before PARSER_VERSION 7 and not reparsed yet
+  artefacts?: number;
+  // null: observed by a collector older than x-xp
+  xpByLifeform?: Record<string, number> | null;
 };
 
 export type AnomalyActionEvent = {

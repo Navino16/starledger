@@ -255,11 +255,39 @@ describe('computeStats', () => {
       count: 2,
       resources: res(1010, 500, 100),
       ships: { '202': 3 },
+      artefacts: 0,
+      xpByLifeform: {},
+      xpUnknown: 2,
     });
     expect(s.balance.anomalies.gains).toEqual(res(7010, 6500, 100));
     expect(s.tiles.metal).toBe(7010);
     expect(s.tiles.crystal).toBe(6500);
     expect(s.tiles.deuterium).toBe(100);
+  });
+
+  it('adds anomaly reward artefacts to the tile and sums the experience per lifeform', () => {
+    const reward = (artefacts: number, xp: Record<string, number> | null): ParsedEvent => ({
+      kind: 'anomaly_reward',
+      anomalyCoords: null,
+      resources: res(1),
+      ships: {},
+      artefacts,
+      xpByLifeform: xp,
+    });
+    const s = run([
+      reward(117, { '1': 4444, '2': 4444 }),
+      reward(3, { '1': 6 }),
+      reward(0, {}),
+      reward(0, null),
+    ]);
+    expect(s.anomalies.rewards).toMatchObject({
+      artefacts: 120,
+      xpByLifeform: { '1': 4450, '2': 4444 },
+      xpUnknown: 1,
+    });
+    expect(s.tiles.artefacts).toBe(120);
+    expect(s.rows.anomalies.artefacts).toBe(120);
+    expect(s.rows.total.artefacts).toBe(s.tiles.artefacts);
   });
 
   it('values anomaly reward ships at the anomaly ship ratio, independently of the expedition one', () => {
@@ -642,7 +670,7 @@ describe('detail rows', () => {
     expect(rows.combats.count).toBe(1);
     expect(rows.anomalies.count).toBe(2);
     expect(rows.anomalies.darkMatter).toBeNull();
-    expect(rows.anomalies.artefacts).toBeNull();
+    expect(rows.anomalies.artefacts).toBe(0);
     expect(rows.anomalies.lithium).toBe(-3);
     expect(rows.anomalies.unknown).toBe(1);
     expect(rows.total.darkMatter).toBe(tiles.darkMatter);

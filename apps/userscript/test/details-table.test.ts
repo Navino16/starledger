@@ -183,6 +183,20 @@ describe('renderTable', () => {
     );
   });
 
+  it('adds the reward experience to the anomalies tooltip, unknown ones marked', () => {
+    const hint = (rewards: Record<string, unknown>) =>
+      rowEl(renderTable(document, t, statsOf(undefined, { anomalies: { rewards } })), 'anomalies')
+        ?.title ?? '';
+    expect(hint({ count: 1, xpByLifeform: { '1': 8888, '2': 8888 }, xpUnknown: 0 })).toContain(
+      'Rewards: XP 17.8k',
+    );
+    expect(hint({ count: 2, xpByLifeform: { '1': 4444 }, xpUnknown: 1 })).toContain(
+      'Rewards: XP 4.4k + ? (1)',
+    );
+    expect(hint({ count: 1, xpByLifeform: {}, xpUnknown: 0 })).not.toContain('XP');
+    expect(hint({ count: 1 })).not.toContain('XP');
+  });
+
   it('shows the anomaly counts hint when rewards or combats exist without lithium', () => {
     const body = statsOf(undefined, {
       anomalies: { rewards: { count: 2 }, combats: { count: 1 } },

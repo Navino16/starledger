@@ -13,7 +13,8 @@
       "messagetype": "76",
       "timestamp": "1790002000",
       "coords": "4:100:7",
-      "x-loot": "[{\"type\":\"resource\",\"resource\":\"metal\",\"amount\":12500},{\"type\":\"ship\",\"attributes\":[\"transportersmall\"],\"amount\":3}]",
+      "x-loot": "[{\"type\":\"resource\",\"resource\":\"metal\",\"amount\":12500},{\"type\":\"resource\",\"resource\":\"artifact\",\"amount\":117},{\"type\":\"ship\",\"attributes\":[\"transportersmall\"],\"amount\":3}]",
+      "x-xp": "[{\"lifeform\":1,\"amount\":4444},{\"lifeform\":2,\"amount\":4444}]",
       "x-anomalycoords": "4:101:9"
     }
   },
@@ -25,7 +26,9 @@
       "kind": "anomaly_reward",
       "anomalyCoords": { "galaxy": 4, "system": 101, "position": 9 },
       "resources": { "metal": 12500, "crystal": 0, "deuterium": 0 },
-      "ships": { "202": 3 }
+      "ships": { "202": 3 },
+      "artefacts": 117,
+      "xpByLifeform": { "1": 4444, "2": 4444 }
     }
   }
 }

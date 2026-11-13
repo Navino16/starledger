@@ -180,6 +180,34 @@ describe('ingestBatch', () => {
     expect(statuses(await send(aliceId, [sameAsStored]))).toEqual(['duplicate']);
   });
 
+  it('completes an event whose unknown values a later reading fills, and keeps it on a weaker one', async () => {
+    const reward = (msgId: number, xp?: string) =>
+      expedition({
+        msgId,
+        messageType: 76,
+        subtabId: 24,
+        raw: {
+          messagetype: '76',
+          timestamp: '1790000100',
+          coords: '4:100:7',
+          'x-loot': '[{"type":"resource","resource":"metal","amount":500}]',
+          ...(xp === undefined ? {} : { 'x-xp': xp }),
+        },
+      });
+    const old = reward(nextMsgId++);
+    const key = `msg:${old.msgId}`;
+    expect(statuses(await send(aliceId, [old]))).toEqual(['accepted']);
+    const full = reward(old.msgId, '[{"lifeform":1,"amount":4444}]');
+    expect(statuses(await send(aliceId, [full], deviceB))).toEqual(['accepted']);
+    expect((await eventsOf(aliceId, key))[0]).toMatchObject({
+      status: 'ok',
+      data: { xpByLifeform: { '1': 4444 } },
+    });
+    expect(statuses(await send(aliceId, [reward(old.msgId)]))).toEqual(['duplicate']);
+    const other = reward(old.msgId, '[{"lifeform":1,"amount":1}]');
+    expect(statuses(await send(aliceId, [other]))).toEqual(['conflict']);
+  });
+
   it('creates two events for different msgIds with identical gains', async () => {
     const a = expedition();
     const b = expedition();
