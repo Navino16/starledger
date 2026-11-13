@@ -239,8 +239,11 @@ const fr: Record<MessageKey, string> = {
 
 export const MESSAGES: Record<Lang, Record<MessageKey, string>> = { en, fr };
 
+// The player's interface language may differ from the server's (French UI on an English server)
 export function detectLang(doc: Document): Lang {
-  const lang = doc.querySelector('meta[name="ogame-language"]')?.getAttribute('content');
+  const meta = (name: string) =>
+    doc.querySelector(`meta[name="${name}"]`)?.getAttribute('content') || null;
+  const lang = meta('ogame-ui-language') ?? meta('ogame-language');
   return lang === 'fr' ? 'fr' : 'en';
 }
 
