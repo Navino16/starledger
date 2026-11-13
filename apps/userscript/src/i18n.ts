@@ -59,6 +59,7 @@ const en = {
   periodWeekShort: 'W',
   periodMonthShort: 'M',
   periodAllShort: 'All',
+  customPeriodUnsupported: 'Update your Starledger server to use custom periods',
   prevMonth: 'Previous month',
   nextMonth: 'Next month',
   detailsTitle: 'Starledger details',
@@ -176,6 +177,8 @@ const fr: Record<MessageKey, string> = {
   periodWeekShort: 'S',
   periodMonthShort: 'M',
   periodAllShort: 'Tout',
+  customPeriodUnsupported:
+    'Mettez à jour votre serveur Starledger pour utiliser les périodes personnalisées',
   prevMonth: 'Mois précédent',
   nextMonth: 'Mois suivant',
   detailsTitle: 'Détail Starledger',

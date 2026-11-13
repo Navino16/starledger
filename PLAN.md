@@ -42,7 +42,7 @@
 | 14 | Dossier de tolérance et publication | ☐ |
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
 | 16 | Détail façon OGLight | ☐ |
-| 17 | Période personnalisée | ☐ |
+| 17 | Période personnalisée | ☐ (code fait, vérification PTS 17.4) |
 
 ## Global Constraints
 
@@ -1317,11 +1317,11 @@ Branche : `feature/custom-period`, partie de `feature/details-dashboard` (PR #47
   - `periodRange(period: Period, today: string, custom?: DayRange): DayRange | null` : `custom` renvoie `custom`, lève `Error('custom period needs bounds')` sans bornes ;
   - `StatsQuery.custom?: DayRange` côté serveur ; route : `period` accepte `custom`, `from`/`to` optionnels (`isRealDay`), obligatoires et `from <= to` pour `custom` (sinon 400 `invalid_payload`), ignorés sinon.
 
-- [ ] **Step 1 : tests** : shared, `periodRange('custom', '2026-11-13', { from: '2026-11-04', to: '2026-11-11' })` renvoie les bornes, sans bornes lève ; serveur, `period=custom&from=2026-09-20&to=2026-09-27` (`today` du fichier) → `range` égal aux bornes, compte les événements de la plage seulement, `days` couvre le mois de `today` ; 400 pour `to` absent, `from` après `to`, `from=2026-02-30` ; `period=day&from=…&to=…` → `range` du jour.
-- [ ] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/time.test.ts` et `pnpm --filter @app/server exec vitest run test/stats-api.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter (le mois est toujours relu sauf si `period === 'month'`).
-- [ ] **Step 4 :** mêmes commandes → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Accept custom day spans in the stats API"`
+- [x] **Step 1 : tests** : shared, `periodRange('custom', '2026-11-13', { from: '2026-11-04', to: '2026-11-11' })` renvoie les bornes, sans bornes lève ; serveur, `period=custom&from=2026-09-20&to=2026-09-27` (`today` du fichier) → `range` égal aux bornes, compte les événements de la plage seulement, `days` couvre le mois de `today` ; 400 pour `to` absent, `from` après `to`, `from=2026-02-30` ; `period=day&from=…&to=…` → `range` du jour.
+- [x] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/time.test.ts` et `pnpm --filter @app/server exec vitest run test/stats-api.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter (le mois est toujours relu sauf si `period === 'month'`).
+- [x] **Step 4 :** mêmes commandes → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Accept custom day spans in the stats API"`
 
 ### Tâche 17.2 : Glisser sur le calendrier
 
@@ -1336,11 +1336,11 @@ Branche : `feature/custom-period`, partie de `feature/details-dashboard` (PR #47
   - `pointercancel` : abandon, cadre et classes de la période affichée restaurés ;
   - CSS : `.starledger-calendar{touch-action:pan-y;user-select:none;-webkit-user-select:none}`.
 
-- [ ] **Step 1 : tests** (`describe('drag')`, `elementFromPoint` simulé, événements `pointer*` créés avec `clientX/clientY/isPrimary/button`) : glisser du 4 au 11 → `onRange({ from: '…-04', to: '…-11' })` une fois et `onSelect` jamais, même après le `click` ; glisser du 11 au 4 → mêmes bornes ; pendant le glisser, le cadre couvre les colonnes 4 à 11 ; pointeur hors du calendrier (`elementFromPoint` → `document.body`) puis relâché → plage jusqu'au dernier jour survolé ; `pointercancel` → aucun appel, cadre d'origine ; pointerdown/up sur le même jour puis `click` → `onSelect` seul ; bouton droit → rien.
-- [ ] **Step 2 :** `pnpm --filter ./apps/userscript exec vitest run test/calendar.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter (une fonction qui peint le cadre entre deux index, partagée par le rendu initial et le glisser).
-- [ ] **Step 4 :** même commande → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Select a span of days by dragging over the calendar"`
+- [x] **Step 1 : tests** (`describe('drag')`, `elementFromPoint` simulé, événements `pointer*` créés avec `clientX/clientY/isPrimary/button`) : glisser du 4 au 11 → `onRange({ from: '…-04', to: '…-11' })` une fois et `onSelect` jamais, même après le `click` ; glisser du 11 au 4 → mêmes bornes ; pendant le glisser, le cadre couvre les colonnes 4 à 11 ; pointeur hors du calendrier (`elementFromPoint` → `document.body`) puis relâché → plage jusqu'au dernier jour survolé ; `pointercancel` → aucun appel, cadre d'origine ; pointerdown/up sur le même jour puis `click` → `onSelect` seul ; bouton droit → rien.
+- [x] **Step 2 :** `pnpm --filter ./apps/userscript exec vitest run test/calendar.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter (une fonction qui peint le cadre entre deux index, partagée par le rendu initial et le glisser).
+- [x] **Step 4 :** même commande → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Select a span of days by dragging over the calendar"`
 
 ### Tâche 17.3 : Période personnalisée dans le détail
 
@@ -1354,11 +1354,11 @@ Branche : `feature/custom-period`, partie de `feature/details-dashboard` (PR #47
   - libellé : `Intl.DateTimeFormat(lang, { day, month: 'long', year }).formatRange(from, to)` (« 4–11 novembre 2026 ») ; aucun bouton de période pressé ;
   - erreur `invalid_payload` sur une requête `custom` → `t('customPeriodUnsupported')` : en « Update your Starledger server to use custom periods », fr « Mettez à jour votre serveur Starledger pour utiliser les périodes personnalisées ».
 
-- [ ] **Step 1 : tests** : `getStats` sans `from`/`to` n'a pas `from=` dans l'URL, avec les a ; glisser du 4 au 11 dans le détail → une requête `period=custom&today=<refDay>&from=…-04&to=…-11`, libellé de plage, aucun `aria-pressed="true"` dans la barre des périodes ; reglisser la même plage → aucune requête ; ‹ depuis `custom` → `period=month` sans `from` ; serveur qui répond 400 → message dédié ; clic sur un jour après → `period=day` sans `from`.
-- [ ] **Step 2 :** `pnpm --filter ./apps/userscript exec vitest run test/details.test.ts test/api.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; contrôle visuel du glisser sur le banc de rendu (Playwright, souris et tactile émulé).
-- [ ] **Step 5 : commit.** `git commit -m "Show custom day spans in the detail window"`
+- [x] **Step 1 : tests** : `getStats` sans `from`/`to` n'a pas `from=` dans l'URL, avec les a ; glisser du 4 au 11 dans le détail → une requête `period=custom&today=<refDay>&from=…-04&to=…-11`, libellé de plage, aucun `aria-pressed="true"` dans la barre des périodes ; reglisser la même plage → aucune requête ; ‹ depuis `custom` → `period=month` sans `from` ; serveur qui répond 400 → message dédié ; clic sur un jour après → `period=day` sans `from`.
+- [x] **Step 2 :** `pnpm --filter ./apps/userscript exec vitest run test/details.test.ts test/api.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; contrôle visuel du glisser sur le banc de rendu (Playwright, souris et tactile émulé).
+- [x] **Step 5 : commit.** `git commit -m "Show custom day spans in the detail window"`
 
 ### Tâche 17.4 : Vérification sur le PTS (utilisateur)
 

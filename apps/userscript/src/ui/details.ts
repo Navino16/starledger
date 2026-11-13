@@ -1,4 +1,4 @@
-import type { AccountRef, ApiError, StatsPeriod, StatsResponse } from '@app/shared';
+import type { AccountRef, ApiError, DayRange, StatsPeriod, StatsResponse } from '@app/shared';
 import { todayKey } from '../env/page';
 import { detectLang, errorKey, type MessageKey, type T } from '../i18n';
 import { loadSettings } from '../storage';
@@ -30,6 +30,13 @@ function dateLabel(doc: Document, t: T, stats: StatsResponse, refDay: string): s
     );
   const full: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
   if (stats.period === 'day') return format(refDay, full);
+  if (stats.period === 'custom' && stats.range) {
+    const date = (day: string) => new Date(`${day}T00:00:00Z`);
+    return new Intl.DateTimeFormat(lang, { ...full, timeZone: 'UTC' }).formatRange(
+      date(stats.range.from),
+      date(stats.range.to),
+    );
+  }
   if (stats.period === 'month') return format(refDay, { month: 'long', year: 'numeric' });
   if (stats.range) return `${format(stats.range.from, full)} – ${format(stats.range.to, full)}`;
   return t(stats.period === 'week' ? 'periodWeek' : 'periodAll');
@@ -85,7 +92,7 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
     year: 'numeric',
     timeZone: 'UTC',
   });
-  const state: { period: StatsPeriod; refDay: string } = {
+  const state: { period: StatsPeriod; refDay: string; range?: DayRange } = {
     period: 'day',
     refDay: todayKey(env.serverUtcOffsetMinutes),
   };
@@ -93,15 +100,12 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
   const isOpen = handle.isOpen;
   let seq = 0;
 
-  const showError = (error: ApiError) => {
+  const showMessage = (text: string) => {
     calendarBox.replaceChildren();
-    body.replaceChildren(
-      el(doc, 'p', {
-        className: 'starledger-error',
-        textContent: t('statusError', { error: t(errorKey(error)) }),
-      }),
-    );
+    body.replaceChildren(el(doc, 'p', { className: 'starledger-error', textContent: text }));
   };
+  const showError = (error: ApiError) =>
+    showMessage(t('statusError', { error: t(errorKey(error)) }));
 
   const ready = (): Promise<unknown> => {
     const settings = loadSettings(gm);
@@ -127,7 +131,7 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
 
   async function load(before?: Promise<unknown>, refocus = false): Promise<void> {
     const mine = ++seq;
-    const { period, refDay } = state;
+    const { period, refDay, range } = state;
     for (const [p, b] of buttons) b.setAttribute('aria-pressed', String(p === period));
     renderMonthLabel();
     body.replaceChildren(el(doc, 'p', { textContent: t('loading') }));
@@ -146,6 +150,7 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
       playerId: env.account.playerId,
       period,
       today: refDay,
+      ...(period === 'custom' ? range : undefined),
     });
     if (!isOpen() || mine !== seq) return;
     if (!loadSettings(gm).consent) {
@@ -153,7 +158,10 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
       return;
     }
     if (!result.ok) {
-      showError(result.error);
+      // Spec 2026-11-13 "Older server": a server without custom periods rejects the query
+      if (period === 'custom' && result.error === 'invalid_payload') {
+        showMessage(t('customPeriodUnsupported'));
+      } else showError(result.error);
       return;
     }
     try {
@@ -162,8 +170,9 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
           doc,
           result.data.days,
           refDay,
-          (day) => change({ period: 'day', refDay: day }, true),
+          (day) => change({ period: 'day', refDay: day, range: undefined }, true),
           period === 'all' ? 'all' : (result.data.range ?? undefined),
+          (span) => change({ period: 'custom', range: span }),
         ),
       );
       body.replaceChildren(...renderContent(doc, t, result.data, refDay));
@@ -175,7 +184,14 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
 
   function change(next: Partial<typeof state>, refocus = false): void {
     const merged = { ...state, ...next };
-    if (merged.period === state.period && merged.refDay === state.refDay) return;
+    if (
+      merged.period === state.period &&
+      merged.refDay === state.refDay &&
+      merged.range?.from === state.range?.from &&
+      merged.range?.to === state.range?.to
+    ) {
+      return;
+    }
     Object.assign(state, merged);
     void load(undefined, refocus);
   }
@@ -185,7 +201,13 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
     b.title = t(key);
     b.setAttribute('aria-label', t(key));
     b.dataset.nav = dir;
-    b.addEventListener('click', () => change({ refDay: shiftMonth(state.refDay, delta) }));
+    b.addEventListener('click', () => {
+      const refDay = shiftMonth(state.refDay, delta);
+      // Spec 2026-11-13: a span of the old month would not be visible, so show the whole new month
+      change(
+        state.period === 'custom' ? { period: 'month', refDay, range: undefined } : { refDay },
+      );
+    });
     return b;
   };
   nav.append(navButton('prev', 'prevMonth', -1), monthLabel, navButton('next', 'nextMonth', 1));
@@ -194,7 +216,7 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
     const b = el(doc, 'button', { type: 'button', textContent: t(shortKey), title: t(key) });
     b.setAttribute('aria-label', t(key));
     b.dataset.period = period;
-    b.addEventListener('click', () => change({ period }));
+    b.addEventListener('click', () => change({ period, range: undefined }));
     buttons.set(period, b);
     bar.append(b);
   }
