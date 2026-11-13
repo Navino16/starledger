@@ -3,12 +3,14 @@ import { parseAnomalyReward } from '../../src/parsers/anomaly';
 import { loadFixtures, observationOf, withRaw } from './helpers';
 
 const base = observationOf(loadFixtures(''), 'recycling.json');
-const obs = (loot: unknown, coords: string | null = '3:44:7') =>
+const obs = (loot: unknown, coords: string | null = '3:44:7', xp?: unknown) =>
   withRaw(base, {
     messagetype: '76',
     'x-loot': typeof loot === 'string' ? loot : JSON.stringify(loot),
     'x-anomalycoords': coords ?? undefined,
+    'x-xp': xp === undefined ? undefined : typeof xp === 'string' ? xp : JSON.stringify(xp),
   });
+const xp = (lifeform: number | null, amount: number | null) => ({ lifeform, amount });
 const res = (resource: string, amount: number | null) => ({ type: 'resource', resource, amount });
 const ship = (attributes: string[], amount: number | null) => ({
   type: 'ship',
@@ -28,6 +30,32 @@ describe('parseAnomalyReward', () => {
       anomalyCoords: { galaxy: 3, system: 44, position: 7 },
       resources: { metal: 1000, crystal: 0, deuterium: 50 },
       ships: {},
+      artefacts: 0,
+      xpByLifeform: null,
+    });
+  });
+
+  it('reads artefacts and sums the experience per lifeform', () => {
+    const r = parseAnomalyReward(
+      obs([res('metal', 550), res('artifact', 117), res('artifact', 3)], '3:44:7', [
+        xp(1, 4444),
+        xp(3, 1250),
+        xp(1, 6),
+      ]),
+    );
+    expect(eventOf(r)).toMatchObject({
+      resources: { metal: 550, crystal: 0, deuterium: 0 },
+      artefacts: 120,
+      xpByLifeform: { '1': 4450, '3': 1250 },
+    });
+  });
+
+  it('knows a reward without experience from an older collector', () => {
+    expect(eventOf(parseAnomalyReward(obs([res('metal', 1)], '3:44:7', [])))).toMatchObject({
+      xpByLifeform: {},
+    });
+    expect(eventOf(parseAnomalyReward(obs([res('metal', 1)])))).toMatchObject({
+      xpByLifeform: null,
     });
   });
 
@@ -78,6 +106,11 @@ describe('parseAnomalyReward', () => {
     ['ambiguous ship', obs([ship(['fighterlight', 'cruiser'], 1)])],
     ['icon-less item', obs([res('metal', 1), { type: 'unknown', tag: 'span', amount: null }])],
     ['unknown entry', obs([res('metal', 1), { type: 'unknown', tag: 'x-icon', amount: 2 }])],
+    ['experience as a loot resource', obs([res('speciesExperience', 10)])],
+    ['invalid x-xp json', obs([res('metal', 1)], '3:44:7', '[')],
+    ['wrong x-xp shape', obs([res('metal', 1)], '3:44:7', { a: 1 })],
+    ['unreadable experience', obs([res('metal', 1)], '3:44:7', [xp(1, null)])],
+    ['experience without lifeform', obs([res('metal', 1)], '3:44:7', [xp(null, 10)])],
   ])('is unrecognized: %s', (_name, o) => {
     const r = parseAnomalyReward(o);
     expect(r.status).toBe('unrecognized');
