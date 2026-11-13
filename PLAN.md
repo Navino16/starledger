@@ -43,7 +43,7 @@
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
 | 16 | Détail façon OGLight | ✅ |
 | 17 | Période personnalisée | ✅ |
-| 18 | XP et artefacts des récompenses d'anomalie | ☐ (vérifié sur le PTS, à merger après #47 et #48) |
+| 18 | XP et artefacts des récompenses d'anomalie | ✅ |
 
 ## Global Constraints
 
