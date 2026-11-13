@@ -55,9 +55,29 @@ function readLootItem(item: Element): Record<string, unknown> {
   return { type: 'unknown', tag, amount };
 }
 
+// Localized gain such as "+4.444" or "+1,250": the separators are grouping only, XP is an integer
+function xpGain(text: string | null | undefined): number | null {
+  if (!text || !/^\+?[\d.,\s\u00a0]+$/.test(text.trim())) return null;
+  const digits = text.replace(/\D/g, '');
+  return digits ? Number(digits) : null;
+}
+
+function readXpRow(row: Element): { lifeform: number | null; amount: number | null } {
+  const icon = row.querySelector('.lifeform-item-icon');
+  const lifeform = /(?:^|\s)lifeform(\d+)(?:\s|$)/.exec(icon?.className ?? '');
+  return {
+    lifeform: lifeform ? Number(lifeform[1]) : null,
+    amount: xpGain(row.querySelector('.undermark')?.textContent),
+  };
+}
+
 function readAnomalyReward(msg: HTMLElement, raw: Record<string, string>): void {
   const items = [...msg.querySelectorAll('.content-box .loot-item')].map(readLootItem);
   if (items.length > 0) raw['x-loot'] = JSON.stringify(items);
+  // Always set, so an empty list (no experience) differs from an older collector (unknown)
+  raw['x-xp'] = JSON.stringify(
+    [...msg.querySelectorAll('.content-box .technology-row')].map(readXpRow),
+  );
   const link = msg.querySelector('.msgContent a.txt_link')?.textContent ?? '';
   const coords = /\[(\d+):(\d+):(\d+)\]/.exec(link);
   if (coords) raw['x-anomalycoords'] = `${coords[1]}:${coords[2]}:${coords[3]}`;

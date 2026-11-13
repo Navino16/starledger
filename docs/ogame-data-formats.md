@@ -317,17 +317,26 @@ tower". **None carries a resource attribute in `.rawMessageData`.**
   `aria-description="<localized name>: <integer>"`; `.amount` is the localized, dot-grouped value.
 - Ships: `<technology-icon ... transportersmall="" ...>` (202), `fighterlight=""` (204): the ship
   is a valueless attribute named after the game's technical name; same `aria-description` format.
-- Seen: 1 to 4 items per message, resources and ships mixed, no lithium. The scanner announces
-  other reward kinds (lifeform experience, artifacts, premium items, 9.2) whose markup in a 76
-  is not captured yet.
+- Artifacts (2026-11-13): one more `.loot-item`, `<resource-icon class="artifact ...">` with the
+  same `aria-description` format (`"Artéfacts: 117"`).
+- Lifeform experience (2026-11-13): not a `.loot-item` but a `.loot-row > .technology-row` per
+  lifeform: `<div class="lifeform-item-icon small lifeform<N>">` (N = 1 to 4) then
+  `<span>Expérience: 621.930<span class="undermark">+4.444</span></span>`; the total is the
+  lifeform's new experience, `.undermark` the localized, grouped gain. Seen: the same gain for the
+  four lifeforms.
+- Seen: 1 to 9 items per message, resources, artifacts and ships mixed, no lithium. Premium items
+  (9.2) are announced by the scanner; their markup in a 76 is not captured yet.
 
 **Client-extracted keys.** Since the reward is not in `data-raw-*`, the userscript reads the HTML
-of each message 76 the player opened and stores two extra keys in `raw`; the `x-` prefix marks values
+of each message 76 the player opened and stores three extra keys in `raw`; the `x-` prefix marks values
 read from the HTML, not from `data-raw-*`. `x-loot` is a JSON array, one entry per `.loot-item` in
 document order: `{ "type": "resource", "resource", "amount" }`, `{ "type": "ship", "attributes", "amount" }`
 (valueless attribute names, lowercased) or `{ "type": "unknown", "tag", "amount" }`; `amount` is the
 integer after the last `:` of `aria-description`, `null` if unreadable. It is absent when the message
-has no `.loot-item`. `x-anomalycoords` is `"g:s:p"` from the first `a.txt_link` of `.msgContent`. The
+has no `.loot-item`. `x-xp` is a JSON array, one `{ "lifeform", "amount" }` per `.technology-row`:
+`lifeform` is N of the `lifeform<N>` class, `amount` the digits of `.undermark` (`null` for either if
+unreadable); it is `[]` without experience and absent from observations of older collectors, whose
+experience is therefore unknown. `x-anomalycoords` is `"g:s:p"` from the first `a.txt_link` of `.msgContent`. The
 parser treats any unreadable amount, unknown resource, ship or entry kind as unrecognized.
 
 **Anomaly missions also produce combat reports (25)** at the anomaly coordinates: the player is
@@ -578,7 +587,8 @@ Planet/target type ids: `1` planet, `2` debris field, `3` moon
    and page globals `serverTimeZoneOffsetInMinutes` / `localTimeZoneOffsetInMinutes`.
 5. `data-raw-datetime` format, subtab 25 meaning, type 35 meaning.
 6. **Anomaly page**: a non-null `lithiumBonus`, the Dark Matter collect overlay (9.4) and the
-   markup of lifeform experience, artifact and premium item rewards in a message 76 (3.9).
+   markup of premium item rewards in a message 76 (3.9). ~~Lifeform experience and artifact
+   rewards~~: captured 2026-11-13 (3.9).
 
 ---
 

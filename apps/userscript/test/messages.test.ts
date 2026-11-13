@@ -127,6 +127,51 @@ describe('anomaly reward extraction (type 76)', () => {
     expect(obs?.raw['x-anomalycoords']).toBe('3:44:7');
   });
 
+  describe('artefacts and lifeform experience', () => {
+    const xpRow = (icon: string, gain: string) =>
+      `<div class="technology-row"><div class="${icon} tooltip"></div><span>Experience: 621,930<span class="undermark">${gain}</span></span></div>`;
+    const reward = (xpRows: string) =>
+      anomalyMsg(
+        76,
+        `<div class="content-box"><div class="loot-row">
+          <div class="loot-item"><resource-icon class="metal" aria-description="Metal: 550378"></resource-icon></div>
+          <div class="loot-item"><resource-icon class="artifact tooltip" aria-description="Artefacts: 117"></resource-icon></div>
+        </div><div class="loot-row">${xpRows}</div></div>`,
+      );
+    const xpOf = (html: string) => JSON.parse(extract(html)[0]?.raw['x-xp'] ?? 'null');
+
+    it('reads the gain of each lifeform in either number format', () => {
+      const html = reward(
+        xpRow('lifeform-item-icon small lifeform1', '+4.444') +
+          xpRow('lifeform-item-icon small lifeform3', '+1,250'),
+      );
+      expect(xpOf(html)).toEqual([
+        { lifeform: 1, amount: 4444 },
+        { lifeform: 3, amount: 1250 },
+      ]);
+      expect(JSON.parse(extract(html)[0]?.raw['x-loot'] ?? 'null')).toContainEqual({
+        type: 'resource',
+        resource: 'artifact',
+        amount: 117,
+      });
+    });
+
+    it('sets an empty x-xp when the reward has no experience', () => {
+      expect(xpOf(reward(''))).toEqual([]);
+      expect(xpOf(anomalyMsg(76, ''))).toEqual([]);
+    });
+
+    it('keeps an unreadable gain or lifeform as null', () => {
+      const html = reward(
+        xpRow('lifeform-item-icon lifeform2', '+?') + xpRow('lifeform-item-icon', '+10'),
+      );
+      expect(xpOf(html)).toEqual([
+        { lifeform: 2, amount: null },
+        { lifeform: null, amount: 10 },
+      ]);
+    });
+  });
+
   it('omits x-anomalycoords when the link is missing or malformed', () => {
     const html = anomalyMsg(76, LOOT).replace('[3:44:7]', 'nowhere');
     expect(extract(html)[0]?.raw['x-anomalycoords']).toBeUndefined();
