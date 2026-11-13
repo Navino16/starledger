@@ -43,6 +43,7 @@
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
 | 16 | Détail façon OGLight | ✅ |
 | 17 | Période personnalisée | ✅ |
+| 18 | XP et artefacts des récompenses d'anomalie | ☐ |
 
 ## Global Constraints
 
@@ -1363,4 +1364,67 @@ Branche : `feature/custom-period`, partie de `feature/details-dashboard` (PR #47
 ### Tâche 17.4 : Vérification sur le PTS (utilisateur)
 
 - [x] Sur PC et sur téléphone : glisser sur plusieurs jours, clic simple, défilement vertical de la page avec le doigt posé sur le calendrier, flèches de mois depuis une plage.
+
+## Scope 18 — XP et artefacts des récompenses d'anomalie
+
+Branche : `feature/anomaly-xp-artefacts`, partie de `feature/custom-period` (chaîne #47 → #48). **Source** : un vrai message 76 du 2026-11-13 (dump de l'utilisateur, jamais copié dans le dépôt : fixtures synthétiques de même structure).
+
+**Format relevé** (`.content-box` du message 76) :
+- artefacts : un `.loot-item` de plus, `<resource-icon class="artifact …" aria-description="Artéfacts: 117">` ; le collecteur le met déjà dans `x-loot` (`resource: "artifact"`) et le parseur lève `unknown resource` ;
+- XP : hors `.loot-item`, une `.loot-row > .technology-row` par forme de vie : `.lifeform-item-icon.lifeform<N>` (1 à 4) et `<span>Expérience: 621.930<span class="undermark">+4.444</span></span>` ; seul le gain (`.undermark`, nombre localisé) compte.
+
+**Contraintes propres au scope** :
+- Inconnu ≠ 0 : une observation sans `x-xp` (collecteur ancien) donne une XP inconnue, comptée à part, jamais 0.
+- `PARSER_VERSION` passe à 7 ; les 76 déjà stockés sont relus par `reparse`.
+
+**Review Focus du scope :**
+1. Gain d'XP écrit `+4,444` (anglais) ou `+4.444` (français) : 4444 dans les deux cas (test en 18.1).
+2. Gain illisible ou forme de vie absente : entrée `amount: null` / `lifeform: null`, message non reconnu (tests en 18.1 et 18.2).
+3. Événement stocké avant ce scope (sans `artefacts` ni `xpByLifeform`) : stats sans `NaN`, XP comptée inconnue (test en 18.3).
+4. Récompense sans XP (aucune `.technology-row`) : `x-xp` vaut `[]`, XP connue et nulle (test en 18.1).
+
+### Tâche 18.1 : Collecte de l'XP
+
+**Files :** Modify `apps/userscript/src/collect/messages.ts`, `docs/ogame-data-formats.md` (§3.9, §8 point 6) ; Test `apps/userscript/test/messages.test.ts`.
+
+**Interfaces :**
+- Produit : `raw['x-xp']` sur tout message 76, JSON `{ lifeform: number | null; amount: number | null }[]`, une entrée par `.content-box .technology-row` dans l'ordre ; `lifeform` = N de la classe `lifeform<N>` ; `amount` = texte de `.undermark` si conforme à `^\+?[\d.,\s\u00a0]+$`, chiffres seuls gardés, sinon `null` ; `[]` sans ligne.
+
+- [ ] **Step 1 : tests** : HTML synthétique à deux formes de vie (`+4.444`, `+1,250`) → `[{ lifeform: 1, amount: 4444 }, { lifeform: 3, amount: 1250 }]` ; artefacts toujours dans `x-loot` ; sans `.technology-row` → `x-xp` = `[]` ; `.undermark` `+?` → `amount: null` ; icône sans classe `lifeform<N>` → `lifeform: null`.
+- [ ] **Step 2 :** `pnpm --filter ./apps/userscript exec vitest run test/messages.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter ; documenter `x-xp` et le format artefact/XP au §3.9, cocher le point du §8.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Collect lifeform experience from anomaly rewards"`
+
+### Tâche 18.2 : Parseur
+
+**Files :** Modify `packages/shared/src/events.ts`, `packages/shared/src/parsers/anomaly.ts`, `packages/shared/src/parsers/index.ts` (`PARSER_VERSION = 7`) ; Test `packages/shared/test/parsers/anomaly.test.ts`.
+
+**Interfaces :**
+- Produit : `AnomalyRewardEvent` gagne `artefacts: number` (somme des `resource: "artifact"`, 0 sans) et `xpByLifeform: Record<string, number> | null` (clé `String(lifeform)`, sommée ; `null` si `x-xp` absent).
+- Non reconnu : `x-xp` JSON invalide ou mal formé, entrée à `amount` ou `lifeform` `null`.
+
+- [ ] **Step 1 : tests** : `artifact` 117 + métal → `artefacts: 117` ; `x-xp` à deux entrées → `xpByLifeform: { '1': 4444, '3': 1250 }` ; `x-xp` `[]` → `{}` ; sans `x-xp` → `null` ; cas non reconnus ci-dessus ; `speciesExperience` dans `x-loot` reste non reconnu.
+- [ ] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/parsers/anomaly.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Parse artefacts and lifeform experience of anomaly rewards"`
+
+### Tâche 18.3 : Stats et détail
+
+**Files :** Modify `packages/shared/src/stats.ts`, `apps/userscript/src/ui/details/table.ts`, `apps/userscript/src/i18n.ts` ; Test `packages/shared/test/stats.test.ts`, `apps/userscript/test/details-table.test.ts`.
+
+**Interfaces :**
+- Produit : `StatsSummary.anomalies.rewards` gagne `artefacts: number`, `xpByLifeform: Record<string, number>`, `xpUnknown: number` (récompenses dont l'XP est `null` ou absente) ; `tiles.artefacts` et `rows.anomalies.artefacts` incluent les artefacts des récompenses (`e.artefacts ?? 0`).
+- Info-bulle de la ligne Anomalies : `anomalyXp` « Rewards: XP {n} » / « Récompenses : XP {n} », `n = formatPartial(somme, xpUnknown)`, seulement si somme > 0 ou `xpUnknown > 0`.
+
+- [ ] **Step 1 : tests** : stats, une récompense à 117 artefacts → `rows.anomalies.artefacts === 117`, `tiles.artefacts` augmenté d'autant, `rows.total.artefacts === tiles.artefacts` ; XP sommée par forme de vie ; un événement sans `artefacts` ni `xpByLifeform` → `xpUnknown === 1`, aucun `NaN` ; tableau, info-bulle `Rewards: XP 17.8k` et `+ ? (1)` quand une XP est inconnue, rien sans XP.
+- [ ] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/stats.test.ts` et `pnpm --filter ./apps/userscript exec vitest run test/details-table.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; le message 76 du dump, passé dans `extractMessageObservations` puis `parseObservation` hors dépôt, donne 117 artefacts et 4 × 4444 XP.
+- [ ] **Step 5 : commit.** `git commit -m "Show anomaly reward artefacts and experience in the detail"`
+
+### Tâche 18.4 : Vérification sur le PTS (utilisateur)
+
+- [ ] Rouvrir sur le PTS un message 76 avec XP et artefacts **avant** tout `reparse` : l'événement non reconnu est remplacé par la lecture complète. Puis `node dist/cli.js reparse` pour les autres 76.
 
