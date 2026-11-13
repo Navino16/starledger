@@ -43,7 +43,7 @@
 | 15 | Renovate | ✅ (config ; installer l’app Renovate) |
 | 16 | Détail façon OGLight | ✅ |
 | 17 | Période personnalisée | ✅ |
-| 18 | XP et artefacts des récompenses d'anomalie | ☐ |
+| 18 | XP et artefacts des récompenses d'anomalie | ☐ (code fait, vérification PTS 18.4) |
 
 ## Global Constraints
 
@@ -1390,11 +1390,11 @@ Branche : `feature/anomaly-xp-artefacts`, partie de `feature/custom-period` (cha
 **Interfaces :**
 - Produit : `raw['x-xp']` sur tout message 76, JSON `{ lifeform: number | null; amount: number | null }[]`, une entrée par `.content-box .technology-row` dans l'ordre ; `lifeform` = N de la classe `lifeform<N>` ; `amount` = texte de `.undermark` si conforme à `^\+?[\d.,\s\u00a0]+$`, chiffres seuls gardés, sinon `null` ; `[]` sans ligne.
 
-- [ ] **Step 1 : tests** : HTML synthétique à deux formes de vie (`+4.444`, `+1,250`) → `[{ lifeform: 1, amount: 4444 }, { lifeform: 3, amount: 1250 }]` ; artefacts toujours dans `x-loot` ; sans `.technology-row` → `x-xp` = `[]` ; `.undermark` `+?` → `amount: null` ; icône sans classe `lifeform<N>` → `lifeform: null`.
-- [ ] **Step 2 :** `pnpm --filter ./apps/userscript exec vitest run test/messages.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter ; documenter `x-xp` et le format artefact/XP au §3.9, cocher le point du §8.
-- [ ] **Step 4 :** même commande → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Collect lifeform experience from anomaly rewards"`
+- [x] **Step 1 : tests** : HTML synthétique à deux formes de vie (`+4.444`, `+1,250`) → `[{ lifeform: 1, amount: 4444 }, { lifeform: 3, amount: 1250 }]` ; artefacts toujours dans `x-loot` ; sans `.technology-row` → `x-xp` = `[]` ; `.undermark` `+?` → `amount: null` ; icône sans classe `lifeform<N>` → `lifeform: null`.
+- [x] **Step 2 :** `pnpm --filter ./apps/userscript exec vitest run test/messages.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter ; documenter `x-xp` et le format artefact/XP au §3.9, cocher le point du §8.
+- [x] **Step 4 :** même commande → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Collect lifeform experience from anomaly rewards"`
 
 ### Tâche 18.2 : Parseur
 
@@ -1404,11 +1404,11 @@ Branche : `feature/anomaly-xp-artefacts`, partie de `feature/custom-period` (cha
 - Produit : `AnomalyRewardEvent` gagne `artefacts: number` (somme des `resource: "artifact"`, 0 sans) et `xpByLifeform: Record<string, number> | null` (clé `String(lifeform)`, sommée ; `null` si `x-xp` absent).
 - Non reconnu : `x-xp` JSON invalide ou mal formé, entrée à `amount` ou `lifeform` `null`.
 
-- [ ] **Step 1 : tests** : `artifact` 117 + métal → `artefacts: 117` ; `x-xp` à deux entrées → `xpByLifeform: { '1': 4444, '3': 1250 }` ; `x-xp` `[]` → `{}` ; sans `x-xp` → `null` ; cas non reconnus ci-dessus ; `speciesExperience` dans `x-loot` reste non reconnu.
-- [ ] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/parsers/anomaly.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** même commande → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Parse artefacts and lifeform experience of anomaly rewards"`
+- [x] **Step 1 : tests** : `artifact` 117 + métal → `artefacts: 117` ; `x-xp` à deux entrées → `xpByLifeform: { '1': 4444, '3': 1250 }` ; `x-xp` `[]` → `{}` ; sans `x-xp` → `null` ; cas non reconnus ci-dessus ; `speciesExperience` dans `x-loot` reste non reconnu.
+- [x] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/parsers/anomaly.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** même commande → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Parse artefacts and lifeform experience of anomaly rewards"`
 
 ### Tâche 18.3 : Stats et détail
 
@@ -1418,11 +1418,11 @@ Branche : `feature/anomaly-xp-artefacts`, partie de `feature/custom-period` (cha
 - Produit : `StatsSummary.anomalies.rewards` gagne `artefacts: number`, `xpByLifeform: Record<string, number>`, `xpUnknown: number` (récompenses dont l'XP est `null` ou absente) ; `tiles.artefacts` et `rows.anomalies.artefacts` incluent les artefacts des récompenses (`e.artefacts ?? 0`).
 - Info-bulle de la ligne Anomalies : `anomalyXp` « Rewards: XP {n} » / « Récompenses : XP {n} », `n = formatPartial(somme, xpUnknown)`, seulement si somme > 0 ou `xpUnknown > 0`.
 
-- [ ] **Step 1 : tests** : stats, une récompense à 117 artefacts → `rows.anomalies.artefacts === 117`, `tiles.artefacts` augmenté d'autant, `rows.total.artefacts === tiles.artefacts` ; XP sommée par forme de vie ; un événement sans `artefacts` ni `xpByLifeform` → `xpUnknown === 1`, aucun `NaN` ; tableau, info-bulle `Rewards: XP 17.8k` et `+ ? (1)` quand une XP est inconnue, rien sans XP.
-- [ ] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/stats.test.ts` et `pnpm --filter ./apps/userscript exec vitest run test/details-table.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; le message 76 du dump, passé dans `extractMessageObservations` puis `parseObservation` hors dépôt, donne 117 artefacts et 4 × 4444 XP.
-- [ ] **Step 5 : commit.** `git commit -m "Show anomaly reward artefacts and experience in the detail"`
+- [x] **Step 1 : tests** : stats, une récompense à 117 artefacts → `rows.anomalies.artefacts === 117`, `tiles.artefacts` augmenté d'autant, `rows.total.artefacts === tiles.artefacts` ; XP sommée par forme de vie ; un événement sans `artefacts` ni `xpByLifeform` → `xpUnknown === 1`, aucun `NaN` ; tableau, info-bulle `Rewards: XP 17.8k` et `+ ? (1)` quand une XP est inconnue, rien sans XP.
+- [x] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/stats.test.ts` et `pnpm --filter ./apps/userscript exec vitest run test/details-table.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; le message 76 du dump, passé dans `extractMessageObservations` puis `parseObservation` hors dépôt, donne 117 artefacts et 4 × 4444 XP.
+- [x] **Step 5 : commit.** `git commit -m "Show anomaly reward artefacts and experience in the detail"`
 
 ### Tâche 18.4 : Vérification sur le PTS (utilisateur)
 

@@ -171,6 +171,10 @@ function rowHints(t: T, stats: StatsResponse, key: DetailRowKey): string[] {
         t('anomalyDarkMatter', { n: formatPartial(l.darkMatterSpent, l.darkMatterUnknown) }),
       );
     }
+    const r = summary.anomalies?.rewards;
+    const xp = Object.values(r?.xpByLifeform ?? {}).reduce((a, b) => a + b, 0);
+    const xpUnknown = r?.xpUnknown ?? 0;
+    if (xp > 0 || xpUnknown > 0) hints.push(t('anomalyXp', { n: formatPartial(xp, xpUnknown) }));
     const line = anomalyCounts(t, stats);
     if (line) hints.push(line);
   }
