@@ -1,18 +1,18 @@
-import { SHIP_TECH_NAMES } from '@app/shared';
 import { el } from './dom';
 
 export type IconKind = 'metal' | 'crystal' | 'deuterium' | 'darkMatter' | 'artefacts' | 'lithium';
 
-export type IconPage = { customElements?: { get(name: string): unknown } };
-
 const SPRITE = 'https://gf3.geo.gfsrv.net/cdned/7f14c18b15064d2604c5476f5d10b3.png';
-const ARTEFACTS_IMAGE = 'https://gf1.geo.gfsrv.net/cdn65/596ba85baa74145390e04f7428d93e.png';
+// Images of the game's own resource-icon.artifact and lithium-icon rules
+const ARTEFACTS_IMAGE = 'https://gf3.geo.gfsrv.net/cdn2b/0e2244125e97c0d38bab285e057e44.png';
+const LITHIUM_IMAGE = 'https://gf2.geo.gfsrv.net/cdna5/ab5e3b93021d20163984bc9bdc3f93.png';
 
-const SPRITE_POSITIONS: Partial<Record<IconKind, string>> = {
-  metal: '1% 11%',
-  crystal: '16% 11%',
-  deuterium: '30% 11%',
-  darkMatter: '57% 11%',
+// The sprite (640x192) ends with a row of 48x32 icons at y=160, drawn here at 27x18
+const SPRITE_INDEX: Partial<Record<IconKind, number>> = {
+  metal: 0,
+  crystal: 1,
+  deuterium: 2,
+  darkMatter: 4,
 };
 
 const SHIP_IMAGES = new Map(
@@ -37,69 +37,37 @@ const SHIP_IMAGES = new Map(
   }),
 );
 
-const TECH_NAME_BY_ID = new Map(Object.entries(SHIP_TECH_NAMES).map(([n, id]) => [id, n] as const));
-
-const GAME_COMPONENT_KINDS = new Set<IconKind>(['metal', 'crystal', 'deuterium']);
-
-const isDefined = (page: IconPage | undefined, tag: string): boolean =>
-  page?.customElements?.get(tag) !== undefined;
-
 function thumb(doc: Document, title: string, w: number, h: number): HTMLElement {
-  const e = el(doc, 'span', { title });
-  e.style.display = 'inline-block';
+  const e = el(doc, 'span', { title, className: 'starledger-icon' });
   e.style.width = `${w}px`;
   e.style.height = `${h}px`;
-  e.style.backgroundRepeat = 'no-repeat';
   return e;
 }
 
-//! AGENTS.md §4: game components or static Gameforge CDN images, no game request
-export function resourceIcon(
-  doc: Document,
-  kind: IconKind,
-  title: string,
-  page?: IconPage,
-): HTMLElement {
-  if (kind === 'lithium' || (GAME_COMPONENT_KINDS.has(kind) && isDefined(page, 'resource-icon'))) {
-    const tag = kind === 'lithium' ? 'lithium-icon' : 'resource-icon';
-    const e = doc.createElement(tag);
-    if (kind !== 'lithium') e.className = kind.toLowerCase();
-    e.setAttribute('sq16', '');
-    e.title = title;
-    return e;
-  }
-  const sprite = SPRITE_POSITIONS[kind];
-  if (sprite) {
-    const e = thumb(doc, title, 28, 18);
+//! AGENTS.md §4: static Gameforge CDN images, no game request
+export function resourceIcon(doc: Document, kind: IconKind, title: string): HTMLElement {
+  const index = SPRITE_INDEX[kind];
+  if (index !== undefined) {
+    const e = thumb(doc, title, 27, 18);
     e.style.backgroundImage = `url("${SPRITE}")`;
-    e.style.backgroundSize = '302px';
-    e.style.backgroundPosition = sprite;
+    e.style.backgroundSize = '360px 108px';
+    e.style.backgroundPosition = `-${index * 27}px -90px`;
     return e;
   }
   const e = thumb(doc, title, 18, 18);
-  e.style.backgroundImage = `url("${ARTEFACTS_IMAGE}")`;
+  e.style.backgroundImage = `url("${kind === 'lithium' ? LITHIUM_IMAGE : ARTEFACTS_IMAGE}")`;
   e.style.backgroundSize = 'contain';
+  e.style.backgroundPosition = 'center';
+  if (kind === 'lithium') e.classList.add('is-lithium');
   return e;
 }
 
-export function shipIcon(
-  doc: Document,
-  shipId: string,
-  title: string,
-  page?: IconPage,
-): HTMLElement {
-  const tech = TECH_NAME_BY_ID.get(shipId);
-  if (tech && isDefined(page, 'technology-icon')) {
-    const e = doc.createElement('technology-icon');
-    e.setAttribute(tech, '');
-    e.title = title;
-    return e;
-  }
-  const e = thumb(doc, title, 28, 28);
+export function shipIcon(doc: Document, shipId: string, title: string): HTMLElement {
+  const e = thumb(doc, title, 38, 28);
   const url = SHIP_IMAGES.get(shipId);
   if (url) {
     e.style.backgroundImage = `url("${url}")`;
-    e.style.backgroundSize = 'contain';
+    e.style.backgroundSize = 'cover';
   }
   return e;
 }

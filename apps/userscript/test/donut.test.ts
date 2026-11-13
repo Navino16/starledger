@@ -18,7 +18,7 @@ describe('renderDonut', () => {
     expect(text).toContain('25,0 %');
     expect(text).toContain('15,6 %');
     expect(text).toContain('Ressources');
-    expect(d.querySelectorAll('circle[data-outcome]')).toHaveLength(3);
+    expect(d.querySelectorAll('[data-outcome]')).toHaveLength(3);
     expect(d.querySelector('.starledger-donut-total')?.textContent).toBe('32');
   });
 
@@ -34,7 +34,7 @@ describe('renderDonut', () => {
       const d = renderDonut(document, createT('en'), outcomes);
       expect(d.textContent).not.toContain('NaN');
       expect(d.textContent).not.toContain('%');
-      expect(d.querySelectorAll('circle[data-outcome]')).toHaveLength(0);
+      expect(d.querySelectorAll('[data-outcome]')).toHaveLength(0);
       expect(d.querySelector('.starledger-donut-total')?.textContent).toBe('0');
     }
   });
@@ -48,7 +48,7 @@ describe('renderDonut', () => {
     const d = renderDonut(document, createT('en'), undefined);
     expect(d.querySelector('.starledger-donut-total')?.textContent).toBe('?');
     expect(d.querySelectorAll('[data-legend]')).toHaveLength(0);
-    expect(d.querySelectorAll('circle[data-outcome]')).toHaveLength(0);
+    expect(d.querySelectorAll('[data-outcome]')).toHaveLength(0);
   });
 
   it('keeps 0 in the centre for an empty outcomes object', () => {
@@ -61,7 +61,7 @@ describe('renderDonut', () => {
     const svg = d.querySelector('svg');
     expect(svg?.getAttribute('role')).toBe('img');
     expect(svg?.getAttribute('aria-label')).toBe('Resources 19 (59.4%), Nothing 13 (40.6%)');
-    expect(d.querySelector('circle[data-outcome="nothing"] title')?.textContent).toBe(
+    expect(d.querySelector('path[data-outcome="nothing"] title')?.textContent).toBe(
       'Nothing 13 (40.6%)',
     );
   });
@@ -80,28 +80,36 @@ describe('renderDonut', () => {
     expect(label({})).toBe(t('noExpedition'));
   });
 
-  describe('arc geometry', () => {
-    const CIRC = 2 * Math.PI * 40;
-    const arcs = (d: HTMLElement) =>
-      [...d.querySelectorAll('circle[data-outcome]')].map((c) => ({
-        length: Number.parseFloat((c.getAttribute('stroke-dasharray') ?? '').split(' ')[0] ?? ''),
-        offset: Number.parseFloat(c.getAttribute('stroke-dashoffset') ?? ''),
-      }));
+  describe('sector geometry', () => {
+    const points = (d: string) =>
+      d
+        .replace(/[MZ]/g, '')
+        .split('L')
+        .map((p) => p.trim().split(' ').map(Number));
+    const sectors = (d: HTMLElement) =>
+      [...d.querySelectorAll('[data-outcome]')].map((p) => points(p.getAttribute('d') ?? ''));
 
-    it('gives a single outcome the full circumference', () => {
-      const [arc] = arcs(renderDonut(document, createT('en'), { resources: 1 }));
-      expect(arc?.length).toBeCloseTo(CIRC, 6);
+    it('starts at the top and closes a single outcome on itself', () => {
+      const [ring] = sectors(renderDonut(document, createT('en'), { resources: 1 }));
+      expect(ring?.[0]).toEqual([50, 2]);
+      expect(ring?.[ring.length / 2 - 1]?.[0]).toBeCloseTo(50, 1);
+      expect(ring?.[ring.length / 2 - 1]?.[1]).toBeCloseTo(2, 1);
     });
 
-    it('sums the arcs to the circumference with cumulative offsets', () => {
-      const list = arcs(
+    it('chains the sectors: each starts where the previous one ends', () => {
+      const list = sectors(
         renderDonut(document, createT('en'), { resources: 19, nothing: 8, ships: 5 }),
       );
-      expect(list.reduce((s, a) => s + a.length, 0)).toBeCloseTo(CIRC, 6);
-      let expected = 0;
-      for (const a of list) {
-        expect(-a.offset).toBeCloseTo(expected, 6);
-        expected += a.length;
+      for (let i = 1; i < list.length; i++) {
+        const prev = list[i - 1] ?? [];
+        expect(list[i]?.[0]).toEqual(prev[prev.length / 2 - 1]);
+      }
+    });
+
+    it('draws only straight segments', () => {
+      const d = renderDonut(document, createT('en'), { resources: 3, nothing: 1 });
+      for (const p of d.querySelectorAll('[data-outcome]')) {
+        expect(p.getAttribute('d')).toMatch(/^M [\d. L-]+ Z$/);
       }
     });
   });

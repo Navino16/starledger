@@ -35,6 +35,49 @@ describe('renderCalendar', () => {
     expect(onSelect).toHaveBeenCalledWith('2026-02-14');
   });
 
+  it('marks the days of the shown period', () => {
+    const marked = (period: Parameters<typeof renderCalendar>[4]) =>
+      [
+        ...renderCalendar(
+          document,
+          febDays,
+          '2026-02-14',
+          () => {},
+          period,
+        ).querySelectorAll<HTMLElement>('.is-in-period'),
+      ].map((b) => b.dataset.day);
+    expect(marked(undefined)).toEqual(['2026-02-14']);
+    expect(marked({ from: '2026-02-09', to: '2026-02-15' })).toEqual([
+      '2026-02-09',
+      '2026-02-10',
+      '2026-02-11',
+      '2026-02-12',
+      '2026-02-13',
+      '2026-02-14',
+      '2026-02-15',
+    ]);
+    expect(marked('all')).toHaveLength(febDays.length);
+  });
+
+  it('draws one box from the first to the last day of the period', () => {
+    const cal = renderCalendar(document, febDays, '2026-02-14', () => {}, {
+      from: '2026-02-09',
+      to: '2026-02-15',
+    });
+    const boxes = cal.querySelectorAll<HTMLElement>('.starledger-period');
+    expect(boxes).toHaveLength(1);
+    expect(boxes[0]?.style.gridArea).toBe('1 / 9 / 2 / 16');
+    expect(cal.querySelector<HTMLElement>('[data-day="2026-02-09"]')?.style.gridArea).toBe('1 / 9');
+  });
+
+  it('draws no box when the period has no day in the month', () => {
+    const cal = renderCalendar(document, febDays, '2026-02-14', () => {}, {
+      from: '2026-03-02',
+      to: '2026-03-08',
+    });
+    expect(cal.querySelector('.starledger-period')).toBeNull();
+  });
+
   it('renders an empty calendar without NaN when days are missing or all zero', () => {
     const none = renderCalendar(document, undefined, '2026-02-14', () => {});
     expect(none.querySelectorAll('[data-day]')).toHaveLength(0);

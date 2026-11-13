@@ -7,49 +7,65 @@ import { CLIENT_VERSION } from '../version';
 import { renderCalendar, shiftMonth } from './details/calendar';
 import { renderDonut } from './details/donut';
 import { renderShips } from './details/ships';
-import { renderNotes, renderTable } from './details/table';
+import { renderTable } from './details/table';
 import { el, type UiContext } from './dom';
-import type { IconPage } from './icons';
 import { openPanel } from './panel';
 
 export const DETAILS_ID = 'starledger-details';
 
 export type DetailsEnv = { account: AccountRef; serverUtcOffsetMinutes: number };
 
-const PERIODS: [StatsPeriod, MessageKey][] = [
-  ['day', 'periodDay'],
-  ['week', 'periodWeek'],
-  ['month', 'periodMonth'],
-  ['all', 'periodAll'],
+const PERIODS: [StatsPeriod, MessageKey, MessageKey][] = [
+  ['day', 'periodDay', 'periodDayShort'],
+  ['week', 'periodWeek', 'periodWeekShort'],
+  ['month', 'periodMonth', 'periodMonthShort'],
+  ['all', 'periodAll', 'periodAllShort'],
 ];
 
-function renderContent(doc: Document, t: T, stats: StatsResponse, win?: IconPage): HTMLElement[] {
+function dateLabel(doc: Document, t: T, stats: StatsResponse, refDay: string): string {
+  const lang = detectLang(doc);
+  const format = (day: string, opts: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat(lang, { ...opts, timeZone: 'UTC' }).format(
+      new Date(`${day}T00:00:00Z`),
+    );
+  const full: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' };
+  if (stats.period === 'day') return format(refDay, full);
+  if (stats.period === 'month') return format(refDay, { month: 'long', year: 'numeric' });
+  if (stats.range) return `${format(stats.range.from, full)} – ${format(stats.range.to, full)}`;
+  return t(stats.period === 'week' ? 'periodWeek' : 'periodAll');
+}
+
+function renderDateLine(doc: Document, t: T, stats: StatsResponse, refDay: string): HTMLElement {
+  return el(
+    doc,
+    'div',
+    { className: 'starledger-dateline' },
+    el(doc, 'strong', { textContent: dateLabel(doc, t, stats, refDay) }),
+  );
+}
+
+function renderContent(doc: Document, t: T, stats: StatsResponse, refDay: string): HTMLElement[] {
   const { summary } = stats;
-  const nodes: HTMLElement[] = [
+  const section = (label: MessageKey, className: string, child: HTMLElement) => {
+    const node = el(doc, 'section', { className }, child);
+    node.setAttribute('aria-label', t(label));
+    return node;
+  };
+  return [
+    renderDateLine(doc, t, stats, refDay),
     el(
       doc,
       'div',
       { className: 'starledger-split' },
-      el(
-        doc,
-        'section',
-        {},
-        el(doc, 'h4', { textContent: t('sectionOutcomes') }),
+      section(
+        'sectionOutcomes',
+        'starledger-card',
         renderDonut(doc, t, summary.expeditions?.outcomes),
       ),
-      el(
-        doc,
-        'section',
-        {},
-        el(doc, 'h4', { textContent: t('sectionShips') }),
-        renderShips(doc, summary.ships, win),
-      ),
+      section('sectionShips', 'starledger-ships', renderShips(doc, summary.ships)),
     ),
-    el(doc, 'h4', { textContent: t('sectionBalance') }),
-    renderTable(doc, t, stats, win),
-    renderNotes(doc, t, stats),
+    section('sectionBalance', 'starledger-balancewrap', renderTable(doc, t, stats)),
   ];
-  return nodes;
 }
 
 export function openDetails(ctx: UiContext, env: DetailsEnv): void {
@@ -62,7 +78,7 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
   const handle = openPanel(
     doc,
     { id: DETAILS_ID, title: t('detailsTitle'), closeLabel: t('close'), closeOnOutside: true },
-    [bar, nav, calendarBox, body],
+    [el(doc, 'div', { className: 'starledger-toolbar' }, bar, nav), calendarBox, body],
   );
   const monthFormat = new Intl.DateTimeFormat(detectLang(doc), {
     month: 'long',
@@ -142,11 +158,15 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
     }
     try {
       calendarBox.replaceChildren(
-        renderCalendar(doc, result.data.days, refDay, (day) =>
-          change({ period: 'day', refDay: day }, true),
+        renderCalendar(
+          doc,
+          result.data.days,
+          refDay,
+          (day) => change({ period: 'day', refDay: day }, true),
+          period === 'all' ? 'all' : (result.data.range ?? undefined),
         ),
       );
-      body.replaceChildren(...renderContent(doc, t, result.data, ctx.win));
+      body.replaceChildren(...renderContent(doc, t, result.data, refDay));
       if (refocus) calendarBox.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus();
     } catch {
       showError('server_error');
@@ -170,8 +190,9 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
   };
   nav.append(navButton('prev', 'prevMonth', -1), monthLabel, navButton('next', 'nextMonth', 1));
 
-  for (const [period, key] of PERIODS) {
-    const b = el(doc, 'button', { type: 'button', textContent: t(key) });
+  for (const [period, key, shortKey] of PERIODS) {
+    const b = el(doc, 'button', { type: 'button', textContent: t(shortKey), title: t(key) });
+    b.setAttribute('aria-label', t(key));
     b.dataset.period = period;
     b.addEventListener('click', () => change({ period }));
     buttons.set(period, b);

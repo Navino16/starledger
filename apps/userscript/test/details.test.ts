@@ -111,6 +111,10 @@ describe('stats details dialog', () => {
       { account: ACCOUNT, serverUtcOffsetMinutes: 0 },
     );
   const dialog = () => document.getElementById(DETAILS_ID);
+  const hints = () =>
+    [...(dialog()?.querySelectorAll<HTMLElement>('tr[data-category]') ?? [])]
+      .map((tr) => tr.title)
+      .join('\n');
   const stats = () => gm.requests.filter((r) => r.url.includes('/api/v1/stats'));
 
   beforeEach(() => {
@@ -134,19 +138,29 @@ describe('stats details dialog', () => {
   it('shows outcome percentages, ships by id and the balance table with its notes', async () => {
     open();
     await tick();
-    const text = dialog()?.textContent ?? '';
-    expect(text).toContain('Resources: 3 (75.0%)');
-    expect(text).toContain('Nothing: 1 (25.0%)');
+    const legend = (key: string) => dialog()?.querySelector(`[data-legend="${key}"]`)?.textContent;
+    expect(legend('resources')).toBe('Resources375.0%');
+    expect(legend('nothing')).toBe('Nothing125.0%');
+    const longDate = new Intl.DateTimeFormat('en', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(new Date(`${todayKey(0)}T00:00:00Z`));
+    expect(dialog()?.querySelector('.starledger-dateline')?.textContent).toBe(longDate);
     expect(dialog()?.querySelector('[data-ship="202"] .starledger-found')?.textContent).toBe('5');
     expect(dialog()?.querySelector('[data-ship="202"] .starledger-lost')?.textContent).toBe('-2');
     expect(dialog()?.querySelectorAll('.starledger-balance tr[data-category]')).toHaveLength(9);
     expect(dialog()?.querySelector('[data-category="total"] [data-col="msu"]')?.textContent).toBe(
-      '4k + ? (2)',
+      '4.0k + ? (2)',
     );
     expect(
       dialog()?.querySelector('[data-category="fuel"] [data-col="deuterium"]')?.textContent,
     ).toBe('-777 + ? (2)');
-    expect(dialog()?.querySelector('.starledger-notes')?.textContent).toContain('XP 150');
+    expect(dialog()?.querySelector<HTMLElement>('[data-category="discoveries"]')?.title).toContain(
+      'XP 150',
+    );
+    expect(dialog()?.querySelector('.starledger-notes')).toBeNull();
   });
 
   it('shows ? cells when an older server sends no rows', async () => {
@@ -160,19 +174,21 @@ describe('stats details dialog', () => {
     ).toBe('?');
   });
 
-  it('shows unrecognized and conflict lines only when above 0', async () => {
+  it('puts unrecognized and conflict counts in the total row tooltip only when above 0', async () => {
     open();
     await tick();
-    expect(dialog()?.textContent).not.toContain('unrecognized');
-    expect(dialog()?.textContent).not.toContain('conflicts');
+    expect(hints()).not.toContain('unrecognized');
+    expect(hints()).not.toContain('conflicts');
     gm.respondWith(() => ({
       status: 200,
       body: JSON.stringify(statsOf({ unrecognized: 3, conflictCount: 2 })),
     }));
     dialog()?.querySelector<HTMLElement>('[data-period="all"]')?.click();
     await tick();
-    expect(dialog()?.textContent).toContain('3 unrecognized reports');
-    expect(dialog()?.textContent).toContain('2 conflicts');
+    const total = dialog()?.querySelector<HTMLElement>('[data-category="total"]')?.title;
+    expect(total).toContain('3 unrecognized reports');
+    expect(total).toContain('2 conflicts');
+    expect(dialog()?.textContent).not.toContain('unrecognized');
   });
 
   it('opens in a backdrop at the end of the body and leaves the page as before on close', async () => {
@@ -247,19 +263,21 @@ describe('stats details dialog', () => {
     expect(kinds.indexOf('GET')).toBeGreaterThan(kinds.indexOf('POST'));
   });
 
-  it('uses singular forms and notes ignored consumption', async () => {
+  it('uses singular forms and hints ignored consumption on the fuel row', async () => {
     gm.respondWith(() => ({
       status: 200,
       body: JSON.stringify(statsOf({ unrecognized: 1, conflictCount: 1, ignoreConsumption: true })),
     }));
     open();
     await tick();
-    const text = dialog()?.textContent ?? '';
+    const text = hints();
     expect(text).toContain('1 unrecognized report');
     expect(text).not.toContain('1 unrecognized reports');
     expect(text).toContain('1 conflict');
     expect(text).not.toContain('1 conflicts');
-    expect(text).toContain(t('fuelIgnoredNote'));
+    expect(dialog()?.querySelector<HTMLElement>('[data-category="fuel"]')?.title).toContain(
+      t('fuelIgnoredNote'),
+    );
   });
 
   it('shows nothing from a response that arrives after consent was withdrawn', async () => {
@@ -270,7 +288,7 @@ describe('stats details dialog', () => {
     saveSettings(gm, { consent: false });
     pending[0]?.({ status: 200, body: JSON.stringify(statsOf({ unrecognized: 5 })) });
     await tick();
-    expect(dialog()?.textContent).not.toContain('5 unrecognized');
+    expect(hints()).not.toContain('5 unrecognized');
   });
 
   it('shows the translated error and handles a missing configuration without requesting', async () => {
@@ -297,8 +315,8 @@ describe('stats details dialog', () => {
     await tick();
     pending[0]?.({ status: 200, body: JSON.stringify(statsOf({ unrecognized: 1 })) });
     await tick();
-    expect(dialog()?.textContent).toContain('7 unrecognized');
-    expect(dialog()?.textContent).not.toContain('1 unrecognized');
+    expect(hints()).toContain('7 unrecognized');
+    expect(hints()).not.toContain('1 unrecognized');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(dialog()).toBeNull();
   });

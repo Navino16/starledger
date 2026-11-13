@@ -631,6 +631,11 @@ describe('detail rows', () => {
     expect(rows.total.count).toBe(1 + 1 + 1 + 1 + 2 + 1 + 2);
   });
 
+  it('shows no expedition artefacts when none were found', () => {
+    const { rows } = run([expedition({ artifacts: null })]);
+    expect(rows.expeditions.artefacts).toBeNull();
+  });
+
   it('keeps negative combat nets and dark matter out of anomalies', () => {
     const { rows, tiles } = run(events());
     expect(rows.combats.resources?.metal).toBeLessThan(0);

@@ -1,8 +1,8 @@
 import type { DetailRow, DetailRowKey, StatsResponse } from '@app/shared';
 import type { MessageKey, T } from '../../i18n';
 import { el } from '../dom';
-import { formatAmount, formatPartial } from '../format';
-import { type IconKind, type IconPage, resourceIcon } from '../icons';
+import { amountParts, formatAmount, formatPartial } from '../format';
+import { type IconKind, resourceIcon } from '../icons';
 
 const ROWS: [DetailRowKey, MessageKey][] = [
   ['expeditions', 'catExpeditions'],
@@ -86,18 +86,23 @@ function dataCell(
     fuelIgnored && (col.id === 'deuterium' || col.id === 'msu') ? null : cellValue(row, col.id);
   if (value === null) {
     td.textContent = '-';
+    td.className = 'is-empty';
     return td;
   }
   const unknown = unknownFor(key, col.id, rows);
-  const text = value === undefined ? '?' : formatPartial(value, unknown);
+  const { value: num, unit } = amountParts(value ?? null);
+  const suffix = value !== undefined && unknown > 0 ? ` + ? (${unknown})` : '';
+  if (num === '0' && !suffix) td.classList.add('is-zero');
   if (col.id === 'count') {
-    td.textContent = text;
+    td.textContent = `${num}${unit}${suffix}`;
     return td;
   }
-  const span = el(doc, 'span', { className: 'starledger-amount', textContent: text });
+  const span = el(doc, 'span', { className: 'starledger-amount', textContent: num });
+  if (unit) span.append(el(doc, 'span', { className: 'starledger-unit', textContent: unit }));
+  if (suffix) span.append(suffix);
   if (col.res) span.dataset.res = col.res;
   td.append(span);
-  if (text.startsWith('-')) td.classList.add('is-negative');
+  if (num.startsWith('-')) td.classList.add('is-negative');
   return td;
 }
 
@@ -119,20 +124,15 @@ function anomalyCounts(t: T, stats: StatsResponse): string | null {
   });
 }
 
-export function renderTable(
-  doc: Document,
-  t: T,
-  stats: StatsResponse,
-  win?: IconPage,
-): HTMLElement {
-  const { rows, anomalies } = stats.summary;
+export function renderTable(doc: Document, t: T, stats: StatsResponse): HTMLElement {
+  const { rows } = stats.summary;
   const table = el(doc, 'table', { className: 'starledger-balance' });
-  const head = el(doc, 'tr', {}, el(doc, 'th', { textContent: t('colCategory') }));
+  const head = el(doc, 'tr', {}, el(doc, 'th', { title: t('colCategory') }));
   for (const col of COLUMNS) {
     const th = el(doc, 'th', { title: t(col.label) });
     th.dataset.col = col.id;
-    if (col.icon) th.append(resourceIcon(doc, col.icon, t(col.label), win));
-    else th.textContent = col.id === 'count' ? '#' : t(col.label);
+    if (col.icon) th.append(resourceIcon(doc, col.icon, t(col.label)));
+    else th.textContent = col.id === 'count' ? '➤' : t(col.label);
     head.append(th);
   }
   table.append(head);
@@ -142,16 +142,7 @@ export function renderTable(
     if (key === 'trades' && (row?.count ?? null) === null) continue;
     const tr = el(doc, 'tr', {}, el(doc, 'td', { textContent: t(label) }));
     tr.dataset.category = key;
-    const hints: string[] = [];
-    if (SHIPS_INCLUDED.has(key)) hints.push(t('shipsValueIncluded'));
-    const paid = anomalies?.lithium;
-    if (key === 'anomalies' && paid && (paid.darkMatterSpent > 0 || paid.darkMatterUnknown > 0)) {
-      hints.push(
-        t('anomalyDarkMatter', { n: formatPartial(paid.darkMatterSpent, paid.darkMatterUnknown) }),
-      );
-    }
-    const counts = key === 'anomalies' ? anomalyCounts(t, stats) : null;
-    if (counts) hints.push(counts);
+    const hints = rowHints(t, stats, key);
     if (hints.length > 0) tr.title = hints.join(' · ');
     for (const col of COLUMNS) tr.append(dataCell(doc, key, rows, col));
     table.append(tr);
@@ -159,89 +150,62 @@ export function renderTable(
   return el(doc, 'div', { className: 'starledger-tablewrap' }, table);
 }
 
-const note = (doc: Document, text: string, className = 'starledger-note'): HTMLElement =>
-  el(doc, 'p', { className, textContent: text });
-
-export function renderNotes(doc: Document, t: T, stats: StatsResponse): HTMLElement {
+// Details kept out of the window, shown on hover of their row
+function rowHints(t: T, stats: StatsResponse, key: DetailRowKey): string[] {
   const { summary, settings, counts } = stats;
-  const box = el(doc, 'div', { className: 'starledger-notes' });
-  const lines: HTMLElement[] = [];
-  const add = (text: string, className?: string) => lines.push(note(doc, text, className));
-
-  const fuelUnknown = summary.fuel?.unknownCount ?? 0;
-  if (fuelUnknown > 0) add(t('fuelUnknownNote', { n: String(fuelUnknown) }));
-  if (settings?.ignoreConsumption) add(t('fuelIgnoredNote'));
-
-  const l = summary.anomalies?.lithium;
-  const parts: string[] = [];
-  if (l && (l.spent > 0 || l.refunded > 0 || l.spentUnknown > 0 || l.refundUnknown > 0)) {
-    parts.push(
-      t('lithiumSummary', {
-        spent: formatPartial(l.spent, l.spentUnknown),
-        refunded: formatPartial(l.refunded, l.refundUnknown),
-        net: formatPartial(l.net, l.spentUnknown + l.refundUnknown),
-      }),
-    );
-  }
-  const anomalyLine = anomalyCounts(t, stats);
-  if (anomalyLine) parts.push(anomalyLine);
-  if (parts.length > 0) add(parts.join(' · '));
-  if (l && (l.darkMatterSpent > 0 || l.darkMatterUnknown > 0)) {
-    add(t('anomalyDarkMatter', { n: formatPartial(l.darkMatterSpent, l.darkMatterUnknown) }));
-  }
-
-  const c = summary.combats;
-  if (c && c.won + c.lost + c.draw > 0) {
-    add(
-      t('combatOutcomes', {
-        won: formatAmount(c.won),
-        lost: formatAmount(c.lost),
-        draw: formatAmount(c.draw),
-      }),
-    );
-  }
-
-  const xp = Object.values(summary.discoveries?.xpByLifeform ?? {}).reduce((a, b) => a + b, 0);
-  if (xp > 0) add(t('discoveriesXp', { n: formatAmount(xp) }));
-
-  const trades = summary.trades;
-  if (
-    trades &&
-    !settings?.includeTradesInBalance &&
-    trades.receivedCount + trades.deliveredCount > 0
-  ) {
-    const triple = (r: { metal: number; crystal: number; deuterium: number }) =>
-      `${t('resMetal')} ${formatAmount(r.metal)} · ${t('resCrystal')} ${formatAmount(r.crystal)} · ${t('resDeuterium')} ${formatAmount(r.deuterium)}`;
-    const { received: r, delivered: d } = trades;
-    add(
-      t('tradesNotIncluded', {
-        received: triple(r),
-        sent: triple(d),
-        net: triple({
-          metal: r.metal - d.metal,
-          crystal: r.crystal - d.crystal,
-          deuterium: r.deuterium - d.deuterium,
+  const hints: string[] = [];
+  if (SHIPS_INCLUDED.has(key)) hints.push(t('shipsValueIncluded'));
+  if (key === 'anomalies') {
+    const l = summary.anomalies?.lithium;
+    if (l && (l.spent > 0 || l.refunded > 0 || l.spentUnknown > 0 || l.refundUnknown > 0)) {
+      hints.push(
+        t('lithiumSummary', {
+          spent: formatPartial(l.spent, l.spentUnknown),
+          refunded: formatPartial(l.refunded, l.refundUnknown),
+          net: formatPartial(l.net, l.spentUnknown + l.refundUnknown),
         }),
-        receivedCount: formatAmount(trades.receivedCount),
-        deliveredCount: formatAmount(trades.deliveredCount),
-      }),
-    );
+      );
+    }
+    if (l && (l.darkMatterSpent > 0 || l.darkMatterUnknown > 0)) {
+      hints.push(
+        t('anomalyDarkMatter', { n: formatPartial(l.darkMatterSpent, l.darkMatterUnknown) }),
+      );
+    }
+    const line = anomalyCounts(t, stats);
+    if (line) hints.push(line);
   }
-
-  const unrecognized = counts?.unrecognized ?? 0;
-  if (unrecognized > 0) {
-    add(
-      t(unrecognized === 1 ? 'unrecognizedOne' : 'unrecognized', { n: String(unrecognized) }),
-      'starledger-unrecognized',
-    );
+  if (key === 'combats') {
+    const c = summary.combats;
+    if (c && c.won + c.lost + c.draw > 0) {
+      hints.push(
+        t('combatOutcomes', {
+          won: formatAmount(c.won),
+          lost: formatAmount(c.lost),
+          draw: formatAmount(c.draw),
+        }),
+      );
+    }
   }
-  const conflicts = summary.conflictCount ?? 0;
-  if (conflicts > 0) {
-    add(
-      t(conflicts === 1 ? 'conflictsOne' : 'conflicts', { n: String(conflicts) }),
-      'starledger-conflicts',
-    );
+  if (key === 'discoveries') {
+    const xp = Object.values(summary.discoveries?.xpByLifeform ?? {}).reduce((a, b) => a + b, 0);
+    if (xp > 0) hints.push(t('discoveriesXp', { n: formatAmount(xp) }));
   }
-  box.append(...lines);
-  return box;
+  if (key === 'fuel') {
+    const fuelUnknown = summary.fuel?.unknownCount ?? 0;
+    if (fuelUnknown > 0) hints.push(t('fuelUnknownNote', { n: String(fuelUnknown) }));
+    if (settings?.ignoreConsumption) hints.push(t('fuelIgnoredNote'));
+  }
+  if (key === 'total') {
+    const unrecognized = counts?.unrecognized ?? 0;
+    if (unrecognized > 0) {
+      hints.push(
+        t(unrecognized === 1 ? 'unrecognizedOne' : 'unrecognized', { n: String(unrecognized) }),
+      );
+    }
+    const conflicts = summary.conflictCount ?? 0;
+    if (conflicts > 0) {
+      hints.push(t(conflicts === 1 ? 'conflictsOne' : 'conflicts', { n: String(conflicts) }));
+    }
+  }
+  return hints;
 }

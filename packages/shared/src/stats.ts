@@ -414,7 +414,8 @@ function fillDetail(stats: StatsSummary, settings: ValuationSettings): void {
 
   rows.expeditions = withRes(stats.expeditions.count, netOf(balance.expeditions), {
     darkMatter: stats.expeditions.darkMatter,
-    artefacts: stats.expeditions.artefacts,
+    // No live expedition message carries artifactsfound (2026-11-13): "-" unless one ever does
+    artefacts: stats.expeditions.artefacts > 0 ? stats.expeditions.artefacts : null,
   });
   rows.combats = withRes(stats.combats.count, netOf(balance.combats));
   rows.recycling = withRes(stats.recycling.count, netOf(balance.recycling));

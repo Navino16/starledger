@@ -45,38 +45,66 @@ div.starledger-status{margin:6px 0}
 .starledger-dialog p{margin:6px 0}
 .starledger-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .starledger-dialog-content button{min-width:70px;margin:0;padding:5px 10px;font:700 11px/16px Verdana,Arial,Helvetica,sans-serif;color:#fff;text-align:center;text-shadow:0 1px 2px #2d4052;cursor:pointer;background:linear-gradient(to bottom,#526e86 0%,#577596 17%,#627f9b 51%,#445b75 53%,#3d5e7e 85%,#607994 100%);border:1px solid #354a5d;border-color:#7088a3 #577696 #546a7e #6282a2;border-radius:3px}
-.starledger-dialog-content button:hover,.starledger-periods [aria-pressed=true]{background:linear-gradient(to bottom,#6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%)}
+.starledger-dialog-content button:hover{background:linear-gradient(to bottom,#6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%)}
 .starledger-dialog table{border-collapse:collapse;width:100%}
 .starledger-dialog td,.starledger-dialog th{padding:3px 6px;text-align:left;border-bottom:1px solid #1f2833}
-.starledger-note{color:#5a6b7a}
-.starledger-periods{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 6px}
-.starledger-monthnav{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 6px}
-.starledger-month{min-width:110px;text-align:center;color:#6f9fc8;font-weight:700;text-transform:capitalize}
-.starledger-dialog-content .starledger-monthnav button{min-width:28px}
-.starledger-calendar{display:flex;align-items:flex-end;gap:2px;height:64px;margin:0 0 8px;overflow-x:auto}
-.starledger-dialog-content .starledger-calendar button{display:flex;flex-direction:column;justify-content:flex-end;flex:1 0 14px;min-width:14px;height:100%;padding:0;background:none;border:1px solid transparent;border-radius:2px;color:#757ba6;font-size:9px;text-shadow:none}
-.starledger-dialog-content .starledger-calendar button:hover{background:#1f2833}
-.starledger-dialog-content .starledger-calendar button[aria-pressed=true]{background:#1f2833;border-color:#6f9fc8}
-.starledger-bar{display:block;width:100%;background:#64a69b}
-.is-negative .starledger-bar{background:#e2574c}
-.starledger-daynum{display:block;line-height:11px}
-.starledger-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:0 12px}
-.starledger-donut{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.starledger-donut-wrap{position:relative;width:110px;height:110px;flex:none}
+#starledger-details{width:880px}
+#starledger-details .starledger-dialog-content{padding:12px;color:#c9cdd6;font-size:12px;font-variant-numeric:tabular-nums}
+.starledger-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.starledger-periods,.starledger-monthnav{display:flex;align-items:center;gap:4px}
+.starledger-month{min-width:112px;text-align:center;color:#e7e8eb;text-transform:capitalize}
+#starledger-details .starledger-toolbar button{min-width:0;height:28px;padding:0 8px;font:11px/26px Verdana,Arial,Helvetica,sans-serif;color:#c9cdd6;text-shadow:none;background:#1b212b;border:1px solid #2a3240;border-radius:4px;transition:background-color .15s,border-color .15s}
+#starledger-details .starledger-toolbar button:hover{background:#252d3a}
+#starledger-details .starledger-toolbar button[aria-pressed=true]{background:#252d3a;border-color:#e3b955;color:#fff}
+.starledger-calendar{display:grid;grid-auto-columns:minmax(0,1fr);gap:2px;margin:12px 0 0;padding:8px;overflow-x:auto;background:#161b23;border-radius:8px}
+#starledger-details .starledger-calendar button{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;padding:0;font:8px/12px Verdana,Arial,Helvetica,sans-serif;color:#858b98;text-shadow:none;background:none;border:0;border-radius:0}
+.starledger-slot{position:relative;display:block;width:100%;height:40px;overflow:hidden;background:#232a35;border-radius:2px;transition:background-color .15s}
+#starledger-details .starledger-calendar button:hover .starledger-slot{background:#2c3442}
+.starledger-bar{position:absolute;left:0;right:0;bottom:0;background:#4f8f7a}
+.is-negative .starledger-bar{background:#8a3b37}
+.starledger-period{align-self:start;height:40px;outline:2px solid #e3b955;outline-offset:2px;border-radius:2px;pointer-events:none}
+#starledger-details .starledger-calendar button[aria-pressed=true] .starledger-daynum{color:#fff}
+.starledger-daynum{display:block}
+.starledger-dateline{margin:16px 0 12px}
+#starledger-details .starledger-dateline strong{font-size:13px;font-weight:normal;color:#e7e8eb}
+.starledger-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.starledger-card{padding:12px;background:#161b23;border-radius:8px}
+.starledger-donut{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px 24px;height:100%}
+.starledger-donut-wrap{position:relative;width:152px;height:152px;flex:none}
 .starledger-donut-chart{display:block;width:100%;height:100%}
-.starledger-donut-total{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-weight:bold;color:#e7e8eb}
-.starledger-legend{margin:0;padding:0;list-style:none}
-.starledger-dialog .starledger-legend li{display:flex;align-items:center;gap:5px}
-.starledger-swatch{display:inline-block;width:9px;height:9px;border-radius:2px}
-.starledger-shipgrid{display:flex;flex-wrap:wrap;gap:4px}
-.starledger-shiptile{display:flex;flex-direction:column;align-items:center;gap:1px;min-width:40px;padding:2px;background:#11161d;border-radius:3px}
+.starledger-donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.starledger-donut-total{font-size:20px;line-height:24px;font-weight:600;color:#fff}
+.starledger-donut-center small{font-size:11px;color:#858b98}
+#starledger-details .starledger-legend{flex:0 1 200px;min-width:0;margin:0;padding:0;list-style:none}
+#starledger-details .starledger-legend li{display:grid;grid-template-columns:8px minmax(0,1fr) auto 44px;align-items:center;gap:8px;margin:0;padding:2px 0}
+.starledger-swatch{display:block;width:8px;height:8px;border-radius:2px}
+.starledger-legend-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.starledger-legend b{font-weight:normal;color:#e7e8eb;text-align:right}
+.starledger-legend small{font-size:11px;color:#858b98;text-align:right}
+.starledger-shipgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;align-content:start}
+.starledger-shiptile{display:flex;align-items:center;gap:8px;min-width:0;padding:4px 8px 4px 4px;background:#161b23;border-radius:6px}
+.starledger-icon{display:inline-block;flex:none;vertical-align:middle;background-repeat:no-repeat;border-radius:2px}
+/* The game's own icon-blue filter on its grey lithium image */
+.starledger-icon.is-lithium{filter:invert(66%) sepia(63%) saturate(277%) hue-rotate(169deg) brightness(120%) contrast(94%)}
+.starledger-shipcounts{display:flex;flex-direction:column;align-items:flex-end;min-width:0;margin-left:auto;line-height:16px}
 .starledger-found{color:#e7e8eb}
-.starledger-lost{color:#e2574c}
-.starledger-tablewrap{overflow-x:auto}
-.starledger-dialog .starledger-balance{min-width:520px}
-.starledger-dialog .starledger-balance th:first-child,.starledger-dialog .starledger-balance td:first-child{position:sticky;left:0;background:#0d1014}
-.starledger-dialog .starledger-balance td:not(:first-child),.starledger-dialog .starledger-balance th:not(:first-child){text-align:right}
-.starledger-dialog .starledger-balance tr[data-category=total] td{border-top:1px solid #6f9fc8;font-weight:bold}
-.starledger-dialog td.is-negative .starledger-amount{color:#e2574c}
-@media (max-width:560px){.starledger-split{grid-template-columns:minmax(0,1fr)}}
+.starledger-shiptile.is-idle .starledger-found{color:#5b6270}
+.starledger-lost{font-size:11px;line-height:12px;color:#e2574c}
+.starledger-balancewrap{margin-top:16px}
+.starledger-tablewrap{overflow-x:auto;padding:4px 0;background:#161b23;border-radius:8px}
+#starledger-details .starledger-balance{min-width:620px;border-collapse:collapse}
+#starledger-details .starledger-balance th{height:32px;padding:0 12px;font-size:11px;font-weight:normal;color:#858b98;text-align:right;vertical-align:middle;border:0}
+#starledger-details .starledger-balance td{height:32px;padding:0 12px;text-align:right;white-space:nowrap;background:none;border:0;border-top:1px solid rgba(231,232,235,.06)}
+#starledger-details .starledger-balance th:first-child,#starledger-details .starledger-balance td:first-child{position:sticky;left:0;text-align:left;background:#161b23}
+#starledger-details .starledger-balance td:first-child{color:#c9cdd6}
+#starledger-details .starledger-balance tr[data-category=total] td{font-weight:600;color:#e7e8eb;background:#1b212b;border-top:1px solid rgba(231,232,235,.16)}
+#starledger-details .starledger-balance td[data-col=count]{color:#c9cdd6}
+.starledger-amount[data-res=darkMatter]{color:#b88ce8}
+.starledger-amount[data-res=artefacts]{color:#e3b955}
+.starledger-amount[data-res=lithium]{color:#e58fb1}
+#starledger-details td.is-negative .starledger-amount{color:#e2574c}
+#starledger-details .starledger-balance td.is-empty,#starledger-details .starledger-balance td.is-zero,#starledger-details .starledger-balance td.is-zero .starledger-amount{color:#5b6270}
+.starledger-unit{margin-left:1px;font-size:10px;opacity:.8}
+.starledger-legend:empty{display:none}
+@media (max-width:560px){.starledger-split{grid-template-columns:minmax(0,1fr)}#starledger-details .starledger-calendar button:not([aria-pressed=true]):not(:nth-child(5n)) .starledger-daynum{visibility:hidden}#starledger-details .starledger-balance td:first-child{min-width:80px;max-width:110px;white-space:normal}}
 `;

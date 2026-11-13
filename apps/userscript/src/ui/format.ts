@@ -18,6 +18,25 @@ export function formatAmount(n: number | null): string {
   return '?';
 }
 
+const FIXED_DECIMALS: Record<string, number> = { k: 1, M: 2, G: 2 };
+
+// Detail window format (mockup v3): fixed decimals per unit, unit returned apart for a smaller font.
+export function amountParts(n: number | null): { value: string; unit: string } {
+  if (n === null || !Number.isFinite(n)) return { value: '?', unit: '' };
+  const abs = Math.abs(n);
+  const sign = n < 0 ? '-' : '';
+  if (Math.round(abs) < 1000) {
+    return { value: Math.round(abs) === 0 ? '0' : `${sign}${Math.round(abs)}`, unit: '' };
+  }
+  for (const [i, [unit, divisor]] of UNITS.entries()) {
+    const digits = FIXED_DECIMALS[unit] ?? 1;
+    const rounded = (abs / divisor).toFixed(digits);
+    if (Number(rounded) < 1000 || i === UNITS.length - 1)
+      return { value: `${sign}${rounded}`, unit };
+  }
+  return { value: '?', unit: '' };
+}
+
 // Unknown is not 0: entries without a known amount are counted apart, never added as 0.
 export function formatPartial(n: number | null, unknownCount: number | undefined): string {
   return unknownCount && unknownCount > 0

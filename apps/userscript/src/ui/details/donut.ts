@@ -16,34 +16,43 @@ export const OUTCOME_KEYS: Record<string, MessageKey> = {
 };
 
 const COLORS: Record<string, string> = {
-  resources: '#64a69b',
+  resources: '#9fe0f5',
   darkmatter: '#b88ce8',
-  nothing: '#5a6b7a',
-  ships: '#6f9fc8',
-  trader: '#e3b955',
-  item: '#d98a4e',
-  blackhole: '#2b2f3a',
-  early: '#95c1dd',
-  late: '#9899be',
-  pirates: '#e2574c',
-  aliens: '#8fd46a',
+  nothing: '#e6e6e6',
+  ships: '#6fcf97',
+  trader: '#5b8def',
+  item: '#c98a5a',
+  blackhole: '#8a8f9c',
+  early: '#ef8fb0',
+  late: '#e2574c',
+  pirates: '#f0d34a',
+  aliens: '#e0903a',
 };
 const FALLBACK_COLOR = '#757ba6';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-const RADIUS = 40;
-const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const OUTER = 48;
+const INNER = 32;
+const STEP = Math.PI / 90;
 
-function circle(doc: Document, stroke: string, attrs: Record<string, string> = {}): Element {
-  const c = doc.createElementNS(SVG_NS, 'circle');
-  c.setAttribute('cx', '50');
-  c.setAttribute('cy', '50');
-  c.setAttribute('r', String(RADIUS));
-  c.setAttribute('fill', 'none');
-  c.setAttribute('stroke', stroke);
-  c.setAttribute('stroke-width', '16');
-  for (const [k, v] of Object.entries(attrs)) c.setAttribute(k, v);
-  return c;
+const point = (r: number, angle: number) =>
+  `${(50 + r * Math.cos(angle)).toFixed(2)} ${(50 + r * Math.sin(angle)).toFixed(2)}`;
+
+// Ring sectors as straight-edged polygons: no stroke dashes nor arc commands, which some renderers drop
+export function sectorPath(from: number, to: number): string {
+  const a0 = from * 2 * Math.PI - Math.PI / 2;
+  const a1 = to * 2 * Math.PI - Math.PI / 2;
+  const steps = Math.max(1, Math.ceil((a1 - a0) / STEP));
+  const angles = Array.from({ length: steps + 1 }, (_, i) => a0 + ((a1 - a0) * i) / steps);
+  const outer = angles.map((a) => point(OUTER, a));
+  const inner = angles.reverse().map((a) => point(INNER, a));
+  return `M ${outer.join(' L ')} L ${inner.join(' L ')} Z`;
+}
+
+function svgNode(doc: Document, tag: string, attrs: Record<string, string>): Element {
+  const node = doc.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, v);
+  return node;
 }
 
 export function renderDonut(
@@ -51,7 +60,9 @@ export function renderDonut(
   t: T,
   outcomes: Record<string, number> | undefined,
 ): HTMLElement {
-  const entries = Object.entries(outcomes ?? {}).filter(([, n]) => n > 0);
+  const entries = Object.entries(outcomes ?? {})
+    .filter(([, n]) => n > 0)
+    .sort((a, b) => b[1] - a[1]);
   const total = entries.reduce((sum, [, n]) => sum + n, 0);
   const lang = detectLang(doc);
   const decimal = new Intl.NumberFormat(lang, {
@@ -64,30 +75,45 @@ export function renderDonut(
   svg.setAttribute('role', 'img');
   svg.setAttribute('viewBox', '0 0 100 100');
   svg.setAttribute('class', 'starledger-donut-chart');
-  svg.append(circle(doc, '#1f2833'));
+  svg.append(
+    svgNode(doc, 'circle', {
+      cx: '50',
+      cy: '50',
+      r: String((OUTER + INNER) / 2),
+      fill: 'none',
+      stroke: '#262d39',
+      'stroke-width': String(OUTER - INNER),
+    }),
+  );
   const legend = el(doc, 'ul', { className: 'starledger-legend' });
-  let offset = 0;
+  let done = 0;
   const summaries: string[] = [];
   for (const [key, n] of entries) {
     const color = COLORS[key] ?? FALLBACK_COLOR;
-    const length = (n / total) * CIRCUMFERENCE;
     const label = OUTCOME_KEYS[key] ? t(OUTCOME_KEYS[key]) : key;
     const summary = `${label} ${n} (${percent(n / total)})`;
     summaries.push(summary);
-    const arc = circle(doc, color, {
+    const arc = svgNode(doc, 'path', {
       'data-outcome': key,
-      'stroke-dasharray': `${length} ${CIRCUMFERENCE - length}`,
-      'stroke-dashoffset': String(-offset),
-      transform: 'rotate(-90 50 50)',
+      d: sectorPath(done / total, (done + n) / total),
+      fill: color,
     });
     const title = doc.createElementNS(SVG_NS, 'title');
     title.textContent = summary;
     arc.append(title);
     svg.append(arc);
-    offset += length;
+    done += n;
     const swatch = el(doc, 'span', { className: 'starledger-swatch' });
     swatch.style.background = color;
-    const item = el(doc, 'li', {}, swatch, `${label}: ${n} (${percent(n / total)})`);
+    const item = el(
+      doc,
+      'li',
+      {},
+      swatch,
+      el(doc, 'span', { className: 'starledger-legend-label', textContent: label }),
+      el(doc, 'b', { textContent: String(n) }),
+      el(doc, 'small', { textContent: percent(n / total) }),
+    );
     item.dataset.legend = key;
     legend.append(item);
   }
@@ -97,6 +123,13 @@ export function renderDonut(
     className: 'starledger-donut-total',
     textContent: outcomes === undefined ? '?' : String(total),
   });
-  root.append(el(doc, 'div', { className: 'starledger-donut-wrap' }, svg, center), legend);
+  const middle = el(
+    doc,
+    'span',
+    { className: 'starledger-donut-center' },
+    center,
+    el(doc, 'small', { textContent: t('donutCaption') }),
+  );
+  root.append(el(doc, 'div', { className: 'starledger-donut-wrap' }, svg, middle), legend);
   return root;
 }

@@ -6,10 +6,28 @@ const tile = (root: HTMLElement, id: string) =>
   root.querySelector<HTMLElement>(`[data-ship="${id}"]`);
 
 describe('renderShips', () => {
-  it('renders one tile per known ship, sorted by id', () => {
-    const g = renderShips(document, { found: {}, lost: {} });
-    const ids = [...g.querySelectorAll<HTMLElement>('[data-ship]')].map((e) => e.dataset.ship);
-    expect(ids).toEqual(Object.values(SHIP_TECH_NAMES).sort((a, b) => Number(a) - Number(b)));
+  const ids = (g: HTMLElement) =>
+    [...g.querySelectorAll<HTMLElement>('[data-ship]')].map((e) => e.dataset.ship);
+
+  it('renders the 15 fleet ships sorted by id when nothing moved', () => {
+    expect(ids(renderShips(document, { found: {}, lost: {} }))).toEqual(
+      Object.values(SHIP_TECH_NAMES)
+        .filter((id) => id !== '212' && id !== '217')
+        .sort((a, b) => Number(a) - Number(b)),
+    );
+  });
+
+  it('adds the solar satellite or crawler once found or lost, and dims idle ships', () => {
+    const g = renderShips(document, { found: { '202': 3 }, lost: { '212': 2 } });
+    expect(ids(g)).toContain('212');
+    expect(ids(g)).not.toContain('217');
+    expect(tile(g, '202')?.classList.contains('is-idle')).toBe(false);
+    expect(tile(g, '203')?.classList.contains('is-idle')).toBe(true);
+  });
+
+  it('keeps one decimal on thousands', () => {
+    const g = renderShips(document, { found: { '204': 1000 }, lost: {} });
+    expect(tile(g, '204')?.querySelector('.starledger-found')?.textContent).toBe('1.0k');
   });
 
   it('shows found and lost counts, the loss in the loss class', () => {

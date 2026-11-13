@@ -1,7 +1,7 @@
 import type { DetailRow, DetailRowKey, StatsResponse } from '@app/shared';
 import { describe, expect, it } from 'vitest';
 import { createT } from '../src/i18n';
-import { renderNotes, renderTable } from '../src/ui/details/table';
+import { renderTable } from '../src/ui/details/table';
 
 const t = createT('en');
 const none: DetailRow = {
@@ -128,7 +128,7 @@ describe('renderTable', () => {
     expect(cell(root, 'fuel', 'deuterium')?.textContent).toBe('-777 + ? (2)');
     expect(cell(root, 'fuel', 'msu')?.textContent).toBe('-777 + ? (2)');
     expect(cell(root, 'fuel', 'metal')?.textContent).toBe('0');
-    expect(cell(root, 'anomalies', 'lithium')?.textContent).toBe('-1k + ? (1)');
+    expect(cell(root, 'anomalies', 'lithium')?.textContent).toBe('-1.0k + ? (1)');
     expect(cell(root, 'anomalies', 'msu')?.textContent).toBe('3');
   });
 
@@ -140,7 +140,7 @@ describe('renderTable', () => {
     const root = renderTable(document, t, body);
     expect(cell(root, 'total', 'msu')?.textContent).toBe('4.2k + ? (2)');
     expect(cell(root, 'total', 'deuterium')?.textContent).toBe('3 + ? (2)');
-    expect(cell(root, 'total', 'lithium')?.textContent).toBe('-1k');
+    expect(cell(root, 'total', 'lithium')?.textContent).toBe('-1.0k');
   });
 
   it('marks Total lithium for anomaly unknowns only', () => {
@@ -149,7 +149,7 @@ describe('renderTable', () => {
       total: row({ count: 4, resources: res(1, 2, 3), msu: 4242, lithium: -1000, unknown: 1 }),
     });
     const root = renderTable(document, t, body);
-    expect(cell(root, 'total', 'lithium')?.textContent).toBe('-1k + ? (1)');
+    expect(cell(root, 'total', 'lithium')?.textContent).toBe('-1.0k + ? (1)');
     expect(cell(root, 'total', 'msu')?.textContent).toBe('4.2k');
     expect(cell(root, 'total', 'deuterium')?.textContent).toBe('3');
   });
@@ -183,11 +183,11 @@ describe('renderTable', () => {
     );
   });
 
-  it('shows the anomaly counts note when rewards or combats exist without lithium', () => {
+  it('shows the anomaly counts hint when rewards or combats exist without lithium', () => {
     const body = statsOf(undefined, {
       anomalies: { rewards: { count: 2 }, combats: { count: 1 } },
     });
-    expect(renderNotes(document, t, body).textContent).toContain(
+    expect(rowEl(renderTable(document, t, body), 'anomalies')?.title).toContain(
       'scans: 0 · collects: 0 · rewards: 2 · combats: 1',
     );
   });
@@ -217,6 +217,13 @@ describe('renderTable', () => {
     expect(cell(root, 'total', 'count')?.textContent).toBe('?');
   });
 
+  it('mutes zero cells but not unknown or non-zero ones', () => {
+    const root = renderTable(document, t, typical());
+    expect(cell(root, 'combats', 'deuterium')?.classList.contains('is-zero')).toBe(true);
+    expect(cell(root, 'combats', 'crystal')?.classList.contains('is-zero')).toBe(false);
+    expect(cell(root, 'total', 'darkMatter')?.classList.contains('is-zero')).toBe(true);
+  });
+
   it('sits in a horizontal scroll container', () => {
     const root = renderTable(document, t, typical());
     expect(root.className).toBe('starledger-tablewrap');
@@ -224,14 +231,22 @@ describe('renderTable', () => {
   });
 });
 
-describe('renderNotes', () => {
-  it('renders nothing for an empty response', () => {
-    expect(renderNotes(document, t, statsOf({})).children).toHaveLength(0);
+describe('row hints', () => {
+  const titles = (body: StatsResponse) => {
+    const root = renderTable(document, t, body);
+    return (key: string) => rowEl(root, key)?.title ?? '';
+  };
+
+  it('adds no hint beyond the ships value for an empty response', () => {
+    const title = titles(typical());
+    expect(title('combats')).toBe(t('shipsValueIncluded'));
+    expect(title('fuel')).toBe('');
+    expect(title('total')).toBe('');
   });
 
-  it('renders each note only with content', () => {
+  it('puts each detail on its own row', () => {
     const body = statsOf(
-      {},
+      { total: row({ count: 0 }) },
       {
         fuel: { recorded: 0, departures: 3, unknownCount: 2 },
         combats: { won: 3, lost: 1, draw: 2 },
@@ -251,45 +266,20 @@ describe('renderNotes', () => {
           rewards: { count: 2 },
           combats: { count: 1 },
         },
-        trades: {
-          received: res(500, 300, 100),
-          delivered: res(200, 400, 100),
-          receivedCount: 3,
-          deliveredCount: 1,
-        },
         conflictCount: 2,
       },
       { ignoreConsumption: true },
     );
     body.counts = { unrecognized: 1 } as never;
-    const text = renderNotes(document, t, body).textContent ?? '';
-    expect(text).toContain('2 departures with unknown fuel');
-    expect(text).toContain('Fuel is ignored');
-    expect(text).toContain('spent 1.2k + ? (1), refunded 200, net -1k + ? (1)');
-    expect(text).toContain('Dark Matter paid: 50');
-    expect(text).toContain('scans: 4 · collects: 3 · rewards: 2 · combats: 1');
-    expect(text).toContain('(3 received, 1 delivered)');
-    expect(text).toContain('won 3, lost 1, draw 2');
-    expect(text).toContain('XP 150');
-    expect(text).toContain('received: M 500 · C 300 · D 100');
-    expect(text).toContain('net: M 300 · C -100 · D 0');
-    expect(text).toContain('1 unrecognized report');
-    expect(text).toContain('2 conflicts');
-  });
-
-  it('omits the trades note when trades are included in the balance', () => {
-    const body = statsOf(
-      {},
-      {
-        trades: {
-          received: res(1, 1, 1),
-          delivered: res(0, 0, 0),
-          receivedCount: 1,
-          deliveredCount: 0,
-        },
-      },
-      { includeTradesInBalance: true },
-    );
-    expect(renderNotes(document, t, body).textContent).not.toContain('received');
+    const title = titles(body);
+    expect(title('fuel')).toContain('2 departures with unknown fuel');
+    expect(title('fuel')).toContain('Fuel is ignored');
+    expect(title('anomalies')).toContain('spent 1.2k + ? (1), refunded 200, net -1k + ? (1)');
+    expect(title('anomalies')).toContain('Dark Matter paid: 50');
+    expect(title('anomalies')).toContain('scans: 4 · collects: 3 · rewards: 2 · combats: 1');
+    expect(title('combats')).toContain('won 3, lost 1, draw 2');
+    expect(title('discoveries')).toContain('XP 150');
+    expect(title('total')).toContain('1 unrecognized report');
+    expect(title('total')).toContain('2 conflicts');
   });
 });
