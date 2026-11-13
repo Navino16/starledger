@@ -1,5 +1,6 @@
 import {
   computeStats,
+  type DayRange,
   type ParsedEvent,
   type Period,
   periodRange,
@@ -17,6 +18,7 @@ export interface StatsQuery {
   playerId: number;
   period: Period;
   today: string;
+  custom?: DayRange;
 }
 
 function dailyMsu(
@@ -47,8 +49,8 @@ export async function getStats(
   userId: string,
   query: StatsQuery,
 ): Promise<StatsResponse> {
-  const { serverId, lang, playerId, period, today } = query;
-  const range = periodRange(period, today);
+  const { serverId, lang, playerId, period, today, custom } = query;
+  const range = periodRange(period, today, custom);
   const monthRange = periodRange('month', today);
   const settings = await getValuationSettings(db, userId, serverId, lang);
 

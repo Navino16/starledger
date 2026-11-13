@@ -150,6 +150,30 @@ describe('GET /api/v1/stats', () => {
     expect(month.summary.expeditions.count).toBe(1);
   });
 
+  it('counts only the custom span and keeps the month series of today', async () => {
+    const p = nextPlayerId++;
+    await send(aliceId, [
+      expedition(p, TODAY_TS),
+      expedition(p, TODAY_TS - 3 * DAY_S),
+      expedition(p, TODAY_TS - 30 * DAY_S),
+    ]);
+    const span = { from: '2026-09-15', to: '2026-09-19' };
+    const res = await get(q(p, { period: 'custom', ...span }));
+    expect(res.statusCode).toBe(200);
+    const stats = res.json<StatsResponse>();
+    expect(stats.period).toBe('custom');
+    expect(stats.range).toEqual(span);
+    expect(stats.summary.expeditions.count).toBe(1);
+    expect(stats.days).toHaveLength(30);
+    expect(stats.days[0]?.day).toBe('2026-09-01');
+  });
+
+  it('ignores custom bounds for the other periods', async () => {
+    const res = await get(q(1, { period: 'day', from: '2026-09-01', to: '2026-09-10' }));
+    expect(res.statusCode).toBe(200);
+    expect(res.json<StatsResponse>().range).toEqual({ from: TODAY, to: TODAY });
+  });
+
   it('applies the caller settings to the summary', async () => {
     const p = nextPlayerId++;
     await send(aliceId, [
@@ -248,6 +272,10 @@ describe('GET /api/v1/stats', () => {
     ['non numeric serverId', { serverId: 'abc' }],
     ['bad lang', { lang: 'EN1' }],
     ['bad playerId', { playerId: 'x' }],
+    ['custom without to', { period: 'custom', from: '2026-09-01' }],
+    ['custom without bounds', { period: 'custom' }],
+    ['custom with from after to', { period: 'custom', from: '2026-09-20', to: '2026-09-10' }],
+    ['custom with a non-existent from', { period: 'custom', from: '2026-02-30', to: '2026-03-02' }],
   ])('rejects %s with 400 invalid_payload', async (_name, patch) => {
     const res = await get(q(1, patch));
     expect(res.statusCode).toBe(400);
