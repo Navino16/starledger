@@ -33,12 +33,18 @@ const statsQuerySchema = z
     playerId: integerParam(z.number().int().min(0).max(Number.MAX_SAFE_INTEGER)),
     period: z.enum(['day', 'week', 'month', 'all', 'custom']),
     today: realDay('today'),
-    from: realDay('from').optional(),
-    to: realDay('to').optional(),
+    from: z.string().optional(),
+    to: z.string().optional(),
   })
   .refine(
-    (q) => q.period !== 'custom' || (q.from !== undefined && q.to !== undefined && q.from <= q.to),
-    'custom needs from <= to',
+    (q) =>
+      q.period !== 'custom' ||
+      (q.from !== undefined &&
+        q.to !== undefined &&
+        isRealDay(q.from) &&
+        isRealDay(q.to) &&
+        q.from <= q.to),
+    'custom needs real days with from <= to',
   );
 
 export async function statsRoutes(app: FastifyInstance, opts: { db: Kysely<Database> }) {

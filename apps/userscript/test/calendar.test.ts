@@ -182,6 +182,18 @@ describe('drag', () => {
     ).toEqual(['2026-02-14']);
   });
 
+  it('restores the shown period when a drag comes back to its first day', () => {
+    const { cal, onRange } = setup();
+    pointer(cal, 'pointerdown', cellOf(cal, 4));
+    pointer(cal, 'pointermove', cellOf(cal, 9));
+    pointer(cal, 'pointermove', cellOf(cal, 4));
+    pointer(cal, 'pointerup', cellOf(cal, 4));
+    expect(onRange).not.toHaveBeenCalled();
+    expect(
+      [...cal.querySelectorAll<HTMLElement>('.is-in-period')].map((c) => c.dataset.day),
+    ).toEqual(['2026-02-14']);
+  });
+
   it('keeps a press and release on one day as a plain day click', () => {
     const { cal, onSelect, onRange } = setup();
     pointer(cal, 'pointerdown', cellOf(cal, 6));

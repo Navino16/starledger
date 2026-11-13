@@ -169,7 +169,7 @@ describe('GET /api/v1/stats', () => {
   });
 
   it('ignores custom bounds for the other periods', async () => {
-    const res = await get(q(1, { period: 'day', from: '2026-09-01', to: '2026-09-10' }));
+    const res = await get(q(1, { period: 'day', from: 'garbage', to: '2026-09-10' }));
     expect(res.statusCode).toBe(200);
     expect(res.json<StatsResponse>().range).toEqual({ from: TODAY, to: TODAY });
   });

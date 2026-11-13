@@ -117,12 +117,13 @@ function enableDrag(
     const index = cell ? cells.indexOf(cell) : -1;
     if (index < 0) return;
     start = current = index;
-    cal.setPointerCapture?.(e.pointerId);
   });
   cal.addEventListener('pointermove', (e) => {
     if (start === undefined) return;
     const index = indexAt(e);
     if (index === undefined || index === current) return;
+    // Captured only once the drag leaves its first day, so a plain click keeps its button target
+    if (!cal.hasPointerCapture?.(e.pointerId)) cal.setPointerCapture?.(e.pointerId);
     current = index;
     paint(...span(start, current));
   });
@@ -131,7 +132,10 @@ function enableDrag(
     const end = indexAt(e) ?? current;
     const first = start;
     start = undefined;
-    if (end === first) return;
+    if (end === first) {
+      paint(...shown());
+      return;
+    }
     swallowClick = true;
     const [from, to] = span(first, end);
     onRange({ from: cells[from]?.dataset.day ?? '', to: cells[to]?.dataset.day ?? '' });
