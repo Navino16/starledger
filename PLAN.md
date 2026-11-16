@@ -36,7 +36,7 @@
 | 8 | Userscript : collecte des messages | ✅ |
 | 9 | Userscript : encart et détail | ✅ |
 | 10 | Validation PTS : vraies captures, reparse, audit | ☐ |
-| 11 | Carburant | ☐ (code fait, vérification PTS 11.2 step 5) |
+| 11 | Carburant | ✅ |
 | 12 | Transports entre joueurs | ✅ |
 | 13 | Anomalies | ✅ |
 | 14 | Dossier de tolérance et publication | ☐ |
@@ -1053,7 +1053,7 @@ Branche : `feature/userscript-fuel`.
 - [x] **Step 2 : lancer.** Attendu : FAIL.
 - [x] **Step 3 : implémenter.**
 - [x] **Step 4 : lancer.** Attendu : PASS.
-- [ ] **Step 5 : vérifier sur le PTS.** Une expédition envoyée augmente le carburant de l'encart de la valeur affichée par le jeu. Un envoi refusé ne change rien.
+- [x] **Step 5 : vérifier sur le PTS.** Une expédition envoyée augmente le carburant de l'encart de la valeur affichée par le jeu. Un envoi refusé ne change rien. (2026-11-16 : 33069 affiché = 33069 enregistré ; 13 expéditions envoyées = 13 observations ; 3 envois refusés, aucune observation.)
 - [x] **Step 6 : auto-audit** (`AGENTS.md` §7), noté pour la PR.
 - [x] **Step 7 : commit.** `git commit -m "Track fuel of confirmed fleet dispatches passively"`
 
