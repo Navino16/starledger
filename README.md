@@ -30,6 +30,7 @@ Requires Node 26 (`nvm use`) and pnpm 12 (`npm i -g pnpm@12`; pnpm then switches
 - [Functional spec](docs/spec-fonctionnelles.md)
 - [Deployment guide](docs/deploy.md)
 - [MVP design](docs/superpowers/specs/2026-11-11-mvp-client-sync-design.md)
+- [Web front design](docs/web-design.md) (mockups in `docs/web-design/`)
 - [Implementation plan](PLAN.md)
 
 The tool must comply with [AGENTS.md](AGENTS.md) (OGame tool rules).

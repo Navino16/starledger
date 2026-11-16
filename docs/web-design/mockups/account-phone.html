@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Compte (téléphone) — Starledger</title>
+<link rel="stylesheet" href="../starledger.css">
+</head>
+<body>
+<style>
+body{margin:0}
+</style>
+<div class="sl-root" style="width: 390px; min-height: 1420px; font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; color: #c9cdd6">
+  <header class="sl-header">
+    <div class="sl-header-in">
+      <a class="sl-brand" href="account-phone.html">Starledger</a>
+      <div class="sl-user">
+        <span>orion</span>
+        <a class="sl-btn sl-btn-sm sl-btn-ghost" href="login-phone.html">Déconnexion</a>
+      </div>
+      <nav class="sl-nav" aria-label="Menu principal">
+        <a href="dashboard-phone.html">Dashboard</a>
+        <a href="account-phone.html" aria-current="page">Compte</a>
+        <a href="settings-phone.html">Réglages</a>
+        <a href="admin-phone.html">Administration</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="sl-main">
+    <h1 class="sl-title">Compte</h1>
+
+    <section class="sl-card" aria-labelledby="keys-title">
+      <div class="sl-card-head">
+        <h2 id="keys-title">Clés API</h2>
+        <p>Une clé par appareil. Le userscript s'en sert pour envoyer vos rapports à ce serveur.</p>
+      </div>
+
+      <div class="sl-notice" role="status">
+        <p class="sl-notice-text">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="m9 12 2 2 4-4"></path></svg>
+          <span>Clé créée. Copiez-la maintenant : elle ne sera plus affichée.</span>
+        </p>
+        <div class="sl-secret">
+          <code>slk_UJB4ptkGB4exdWEme6lulTnFJrjpFsMMz2cmruH1CMA</code>
+          <button class="sl-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+            <span>Copier</span>
+          </button>
+        </div>
+      </div>
+
+      <form class="sl-create" method="post" action="#">
+        <div class="sl-field">
+          <label class="sl-label" for="key-name">Nom</label>
+          <input class="sl-input" id="key-name" name="name" type="text" maxlength="40" required placeholder="ex. PC, Téléphone">
+        </div>
+        <button class="sl-btn sl-btn-primary" type="button">Créer une clé</button>
+      </form>
+
+      <table class="sl-keys">
+        <caption class="sl-sr">Clés API actives</caption>
+        <thead>
+          <tr><th scope="col">Nom</th><th scope="col">Clé</th><th scope="col">Créée le</th><th scope="col">Dernière utilisation</th><th scope="col"><span class="sl-sr">Action</span></th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="sl-key-name">Téléphone</span></td>
+            <td><span class="sl-prefix">slk_UJB4…</span></td>
+            <td data-label="Créée le">16 nov. 2026</td>
+            <td data-label="Utilisée :"><span class="sl-never">jamais</span></td>
+            <td><button class="sl-btn sl-btn-sm sl-btn-danger" type="button">Révoquer</button></td>
+          </tr>
+          <tr>
+            <td><span class="sl-key-name">PC</span></td>
+            <td><span class="sl-prefix">slk_9f3a…</span></td>
+            <td data-label="Créée le">3 nov. 2026</td>
+            <td data-label="Utilisée :">16 nov. 2026, 14:32</td>
+            <td><button class="sl-btn sl-btn-sm sl-btn-danger" type="button">Révoquer</button></td>
+          </tr>
+          <tr>
+            <td><span class="sl-key-name is-unnamed">Sans nom</span></td>
+            <td><span class="sl-prefix">slk_Qm7d…</span></td>
+            <td data-label="Créée le">12 oct. 2026</td>
+            <td data-label="Utilisée :">2 nov. 2026, 21:05</td>
+            <td><button class="sl-btn sl-btn-sm sl-btn-danger" type="button">Révoquer</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="sl-card" aria-labelledby="pw-title">
+      <div class="sl-card-head">
+        <h2 id="pw-title">Mot de passe</h2>
+        <p>Le changer ne touche pas aux clés API de vos appareils</p>
+      </div>
+      <form class="sl-form" method="post" action="#">
+        <input type="text" name="username" autocomplete="username" value="orion" hidden>
+        <div class="sl-grid-2" style="align-items: start">
+          <div class="sl-field">
+            <label class="sl-label" for="pw-current">Mot de passe actuel</label>
+            <input class="sl-input" id="pw-current" name="currentPassword" type="password" autocomplete="current-password" required>
+          </div>
+          <div class="sl-field">
+            <label class="sl-label" for="pw-new">Nouveau mot de passe</label>
+            <input class="sl-input" id="pw-new" name="newPassword" type="password" autocomplete="new-password" minlength="12" required aria-describedby="pw-new-hint">
+            <p class="sl-hint" id="pw-new-hint">12 caractères minimum</p>
+          </div>
+        </div>
+        <div class="sl-actions">
+          <button class="sl-btn sl-btn-primary" type="button">Changer le mot de passe</button>
+        </div>
+      </form>
+    </section>
+  </main>
+</div>
+</body>
+</html>

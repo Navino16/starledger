@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Créer un compte — Starledger</title>
+<link rel="stylesheet" href="../starledger.css">
+</head>
+<body>
+<style>
+body{margin:0}
+</style>
+<div class="sl-root" style="font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; color: #c9cdd6">
+  <main class="sl-auth">
+    <div class="sl-card">
+      <div class="sl-card-head" style="gap: 16px">
+        <p class="sl-auth-brand">Starledger</p>
+        <h1 class="sl-title">Créer un compte</h1>
+      </div>
+      <form class="sl-form" method="post" action="#">
+        <div class="sl-field">
+          <label class="sl-label" for="username">Identifiant</label>
+          <input class="sl-input" id="username" name="username" type="text" autocomplete="username" required minlength="3" maxlength="32" pattern="[A-Za-z0-9_.\-]+" value="orion" aria-invalid="true" aria-describedby="username-error">
+          <p class="sl-field-error" id="username-error">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>
+            <span>Cet identifiant est déjà pris.</span>
+          </p>
+        </div>
+        <div class="sl-field">
+          <label class="sl-label" for="password">Mot de passe</label>
+          <input class="sl-input" id="password" name="password" type="password" autocomplete="new-password" required minlength="12" aria-describedby="password-hint">
+          <p class="sl-hint" id="password-hint">12 caractères minimum</p>
+        </div>
+        <a class="sl-btn sl-btn-primary sl-btn-block" href="account.html" style="margin-top: 8px">Créer le compte</a>
+      </form>
+      <p class="sl-auth-foot">Déjà un compte ? <a href="login.html">Se connecter</a></p>
+    </div>
+  </main>
+</div>
+</body>
+</html>
