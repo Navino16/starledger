@@ -44,6 +44,7 @@
 | 16 | Détail façon OGLight | ✅ |
 | 17 | Période personnalisée | ✅ |
 | 18 | XP et artefacts des récompenses d'anomalie | ✅ |
+| 19 | Surplus de lithium des récompenses | ☐ |
 
 ## Global Constraints
 
@@ -1428,4 +1429,29 @@ Branche : `feature/anomaly-xp-artefacts`, partie de `feature/custom-period` (cha
 ### Tâche 18.4 : Vérification sur le PTS (utilisateur)
 
 - [x] `node dist/cli.js reparse` (PARSER_VERSION 7), puis rouvrir sur le PTS un message 76 avec XP et artefacts : l'événement est complété (artefacts et XP par forme de vie), sans conflit ; l'info-bulle de la ligne Anomalies montre l'XP.
+
+## Scope 19 — Surplus de lithium des récompenses
+
+Branche : `feature/lithium-bonus`. **Source** : page des anomalies d'un joueur (2026-11-16) avec la fenêtre affichée par le jeu après `collectRewards` : titre « Du lithium ! », message « Quelle heureuse trouvaille ! Vous avez récupéré un surplus de lithium dans les débris de l`anomalie : 3.273. ». C'est le `lithiumBonus` `{ title, message }` de la réponse (§9.2), que le collecteur garde déjà brut dans `lithiumBonusRaw` en marquant le montant inconnu.
+
+**Contraintes propres au scope** : le montant est lu côté serveur depuis `lithiumBonusRaw` (relisible par `reparse`) ; aucun changement du userscript. Un message sans nombre ou avec plusieurs nombres reste inconnu, jamais 0.
+
+**Review Focus du scope :**
+1. Montant groupé `3.273` (fr) ou `3,273` (en), point final de phrase : 3273 (test en 19.1).
+2. Entités ou balises HTML dans le message (`&nbsp;`, `&#160;`, `<b>`) : leurs chiffres ne comptent pas (test en 19.1).
+3. JSON invalide, `message` absent ou non textuel : montant inconnu, événement gardé (test en 19.1).
+
+### Tâche 19.1 : Montant du surplus
+
+**Files :** Modify `packages/shared/src/parsers/anomaly-action.ts`, `packages/shared/src/parsers/index.ts` (`PARSER_VERSION = 8`), `docs/ogame-data-formats.md` (§9.2, §8 point 6) ; Test `packages/shared/test/parsers/anomaly-action.test.ts`.
+
+**Interfaces :**
+- Produit : `lithiumBonusAmount(raw: string | null): number | null` (exportée pour les tests) ; `parseAnomalyAction` donne `lithiumBonus = obs.lithiumBonus ?? lithiumBonusAmount(obs.lithiumBonusRaw)`.
+- Règle : `JSON.parse(raw).message` textuel, balises et entités HTML remplacées par une espace, nombres `\d{1,3}(?:[.,\s]\d{3})+|\d+` ; exactement un nombre → sa valeur sans séparateurs, sinon `null`.
+
+- [ ] **Step 1 : tests** : message fr de la source → 3273 ; « …: 3,273. » → 3273 ; « 12 » → 12 ; message avec `&#160;` et `<b>3.273</b>` → 3273 ; deux nombres, aucun nombre, JSON invalide, `message` absent ou numérique, `raw` `null` → `null` ; `obs.lithiumBonus` 0 gardé tel quel.
+- [ ] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/parsers/anomaly-action.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter ; documenter le format au §9.2 et cocher le point du §8.
+- [ ] **Step 4 :** même commande → PASS ; `pnpm test`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Read the lithium bonus amount of anomaly reward collects"`
 
