@@ -208,6 +208,25 @@ describe('ingestBatch', () => {
     expect(statuses(await send(aliceId, [other]))).toEqual(['conflict']);
   });
 
+  it('drops a message of an untracked type without storing it, so the client removes it', async () => {
+    const arrival = expedition({ messageType: 34 }, { messagetype: '34' });
+    const ack = await send(aliceId, [arrival]);
+    expect(ack.results).toEqual([
+      {
+        clientObservationId: arrival.clientObservationId,
+        status: 'duplicate',
+        reason: 'untracked message type',
+      },
+    ]);
+    expect(await eventsOf(aliceId, `msg:${arrival.msgId}`)).toHaveLength(0);
+    const stored = await t.db
+      .selectFrom('observations')
+      .select('id')
+      .where('client_observation_id', '=', arrival.clientObservationId)
+      .execute();
+    expect(stored).toHaveLength(0);
+  });
+
   it('creates two events for different msgIds with identical gains', async () => {
     const a = expedition();
     const b = expedition();

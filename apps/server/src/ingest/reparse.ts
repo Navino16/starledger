@@ -1,4 +1,10 @@
-import { type Observation, PARSER_VERSION, type ParseResult, parseObservation } from '@app/shared';
+import {
+  isTrackedMessage,
+  type Observation,
+  PARSER_VERSION,
+  type ParseResult,
+  parseObservation,
+} from '@app/shared';
 import type { Kysely, Transaction } from 'kysely';
 import type { Database } from '../db/schema';
 import type { IngestLogger } from './ingest';
@@ -9,6 +15,7 @@ export interface ReparseResult {
   stillUnrecognized: number;
   newConflicts: number;
   skipped: number;
+  removed: number;
 }
 
 export class UnknownUserError extends Error {}
@@ -51,7 +58,13 @@ export async function reparseEvents(
   if (userId !== undefined) query = query.where('accounts.user_id', '=', userId);
   const ids = (await query.execute()).map((r) => r.id);
 
-  const counts: ReparseResult = { updated: 0, stillUnrecognized: 0, newConflicts: 0, skipped: 0 };
+  const counts: ReparseResult = {
+    updated: 0,
+    stillUnrecognized: 0,
+    newConflicts: 0,
+    skipped: 0,
+    removed: 0,
+  };
   for (const id of ids) {
     try {
       await db.transaction().execute((trx) => reparseOne(trx, id, counts, opts.log));
@@ -89,6 +102,12 @@ async function reparseOne(
   if (!row || (row.status !== 'unrecognized' && row.parser_version >= PARSER_VERSION)) return;
 
   const obs = row.payload as Observation;
+  // Plan task 10.3: events of untracked types stored by older clients leave the history
+  if (obs.kind === 'message' && !isTrackedMessage(obs)) {
+    await trx.deleteFrom('events').where('id', '=', row.id).execute();
+    counts.removed++;
+    return;
+  }
   const result = interpret(obs, row.external_key, log);
   const outcome = await mergeReading(trx, row, result, obs.serverUtcOffsetMinutes, {
     sameSource: true,

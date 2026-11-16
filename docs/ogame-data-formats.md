@@ -153,6 +153,9 @@ Coordinate parsing: Tracker accepts `g:s:p` with optional surrounding brackets (
 | `combatPirates` | Pirate fight | TRK, OGL l.8756 |
 | `combatAliens` | Alien fight | TRK, OGL l.8757 |
 
+`combatPirates` and `combatAliens` messages carry no `shipslost` (live and PTS, 2026-11-12): the
+losses of the fight are only in its combat report (25) at position 16, so they are counted once.
+
 Navigation disambiguation differs between sources (to verify):
 - Tracker: `returnTimeMultiplier == 1` → delay, otherwise early (TRK `msg/expedition`).
 - OGLight: multiplier `< 1` → early; multiplier `> 1` or `returnTimeAbsoluteIncreaseHours >= 0` → late (OGL l.8754–8755).

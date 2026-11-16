@@ -983,12 +983,12 @@ Branche : `feature/pts-validation`. **Prérequis utilisateur** : serveur déploy
 - Create : `packages/shared/test/fixtures/messages-real/*.json`, avec `"synthetic": false`. Elles sont produites par une commande de debug du script (`GM_registerMenuCommand` « Exporter les observations en file (debug) »), qui télécharge la file en JSON sans rien envoyer.
 - Modify : les parseurs selon les écarts constatés, et `docs/ogame-data-formats.md` (marquer « verified on PTS <date> » ou corriger).
 
-- [ ] **Step 1 :** l'utilisateur affiche sur le PTS chaque type de message listé au design §9.2 et exporte la file. Captures à inclure en plus :
+- [ ] **Step 1 :** (2026-11-16 : 31 fixtures réelles couvrent 25, 32, 33, 41, 48, 61 et 76, tous les résultats d'expédition vus, les combats d'expédition pirates/aliens, défense perdue, sans butin et sans round ; listes vides écrites `[]`, pertes d'un combat d'expédition comptées une fois. **Manque : un message 54 réel.**) l'utilisateur affiche sur le PTS chaque type de message listé au design §9.2 et exporte la file. Captures à inclure en plus :
   - une expédition `combatPirates` ou `combatAliens` (41) **et** son rapport de combat en position 16 (25) : les pertes de vaisseaux ne doivent être déduites qu'une fois dans `computeStats` (aujourd'hui, les deux sources sont déduites) ;
   - un combat de défense sans réparation, un combat sans butin : confirmer que le jeu omet les listes vides ou écrit `[]`.
-- [ ] **Step 2 : écrire les tests** à partir des captures, avec les résultats attendus vérifiés à la main contre le message affiché. Lancer : les écarts apparaissent en FAIL.
-- [ ] **Step 3 : corriger** les parseurs et incrémenter `PARSER_VERSION`.
-- [ ] **Step 4 : lancer** `pnpm test`. Attendu : PASS.
+- [x] **Step 2 : écrire les tests** à partir des captures, avec les résultats attendus vérifiés à la main contre le message affiché. Lancer : les écarts apparaissent en FAIL.
+- [x] **Step 3 : corriger** les parseurs et incrémenter `PARSER_VERSION`.
+- [x] **Step 4 : lancer** `pnpm test`. Attendu : PASS.
 - [ ] **Step 5 : vérifier sur le PTS** l'unicité entre deux appareils : un même rapport lu sur PC puis sur mobile n'apparaît qu'une fois dans l'encart.
 - [ ] **Step 6 : commit.** `git commit -m "Validate parsers against real PTS captures"`
 
@@ -1016,6 +1016,7 @@ Décision utilisateur du 2026-11-12 (`docs/decisions.md`) : les arrivées de flo
 - L'ingestion ignore une observation `message` dont le type n'est pas dans `TRACKED_MESSAGE_TYPES` (réponse comptée comme ignorée, rien n'est stocké).
 - Le `reparse` retire de l'historique les événements existants de ces types (ou les exclut des stats, au choix de l'implémentation, justifié dans `docs/decisions.md`).
 - Tests : une observation 34 reçue n'est pas stockée ; un événement 34 déjà stocké sort du compteur de non reconnus après `reparse`.
+- [x] Fait (2026-11-16) : réponse `duplicate` (raison `untracked message type`), suppression par `reparse` (compteur `removed`) ; `docs/decisions.md`.
 
 ---
 

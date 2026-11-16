@@ -1,3 +1,4 @@
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import type {
   AnomalyActionEvent,
@@ -11,6 +12,7 @@ import type {
   TransportEvent,
   WreckfieldEvent,
 } from '../src/events';
+import { parseMessage } from '../src/parsers';
 import {
   computeStats,
   DEFAULT_VALUATION,
@@ -19,6 +21,7 @@ import {
   toMsu,
   type ValuationSettings,
 } from '../src/stats';
+import { loadFixtures, observationOf } from './parsers/helpers';
 
 const coords = { galaxy: 1, system: 2, position: 16 };
 const res = (metal = 0, crystal = 0, deuterium = 0) => ({ metal, crystal, deuterium });
@@ -721,5 +724,25 @@ describe('detail rows', () => {
     expect(Object.is(rows.total.msu, -0)).toBe(false);
     expect(Object.is(toMsu(res(0, 0, 0), [3, 2, 1]), -0)).toBe(false);
     expect(Object.is(toMsu(res(-0.4, 0, 0), [3, 2, 1]), -0)).toBe(false);
+  });
+});
+
+describe('real expedition fight and its combat report', () => {
+  const real = loadFixtures('', join(import.meta.dirname, 'fixtures/messages-real'));
+  const eventOf = (file: string): StoredEvent => {
+    const r = parseMessage(observationOf(real, file));
+    if (r.status !== 'ok') throw new Error(`${file} is not ok`);
+    return { day: '2026-11-12', status: 'ok', event: r.event };
+  };
+
+  it('deducts the lost ships once, from the combat report only', () => {
+    const s = computeStats(
+      [eventOf('expedition-aliens.json'), eventOf('combat-expedition-aliens-losses.json')],
+      DEFAULT_VALUATION,
+    );
+    expect(s.expeditions.shipsLost).toEqual({});
+    expect(s.combats.expeditionShipsLost).toEqual({ '203': 4 });
+    expect(s.ships.lost).toEqual({ '203': 4 });
+    expect(s.balance.expeditions.losses).toEqual(res());
   });
 });

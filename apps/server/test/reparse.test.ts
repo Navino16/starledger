@@ -59,7 +59,7 @@ async function freshUser() {
   return { id: user.id, username };
 }
 
-const NONE = { updated: 0, stillUnrecognized: 0, newConflicts: 0, skipped: 0 };
+const NONE = { updated: 0, stillUnrecognized: 0, newConflicts: 0, skipped: 0, removed: 0 };
 
 const eventOf = (obs: MessageObservation) =>
   t.db
@@ -217,6 +217,30 @@ describe('reparseEvents', () => {
     expect((await eventOf(b)).status).toBe('unrecognized');
   });
 
+  it('removes an event of an untracked message type stored by an older client', async () => {
+    const u = await freshUser();
+    const obs = await ingestUnrecognized(u.id);
+    // An older client stored a fleet arrival (34) before ingestion dropped untracked types.
+    await t.db
+      .updateTable('observations')
+      .set({
+        payload: JSON.stringify({
+          ...obs,
+          messageType: 34,
+          raw: { ...obs.raw, messagetype: '34' },
+        }),
+      })
+      .where('client_observation_id', '=', obs.clientObservationId)
+      .execute();
+    expect(await reparseEvents(t.db, { username: u.username })).toEqual({ ...NONE, removed: 1 });
+    const left = await t.db
+      .selectFrom('events')
+      .select('id')
+      .where('external_key', '=', `msg:${obs.msgId}`)
+      .execute();
+    expect(left).toHaveLength(0);
+  });
+
   it('limits the run to the given user', async () => {
     const alice = await freshUser();
     const bob = await freshUser();
@@ -288,7 +312,9 @@ describe('runCli reparse', () => {
     await ingestUnrecognized(u.id);
     const r = await run(['--user', u.username]);
     expect(r.code).toBe(0);
-    expect(r.out).toBe('updated: 1\nstillUnrecognized: 0\nnewConflicts: 0\nskipped: 0\n');
+    expect(r.out).toBe(
+      'updated: 1\nstillUnrecognized: 0\nnewConflicts: 0\nskipped: 0\nremoved: 0\n',
+    );
   });
 
   it('exits non-zero on an unknown user', async () => {
