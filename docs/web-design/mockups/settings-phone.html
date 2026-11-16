@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Réglages (téléphone) — Starledger</title>
+<link rel="stylesheet" href="../starledger.css">
+</head>
+<body>
+<style>
+body{margin:0}
+</style>
+<div class="sl-root" style="width: 390px; min-height: 1360px; font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; color: #c9cdd6">
+  <header class="sl-header">
+    <div class="sl-header-in">
+      <a class="sl-brand" href="account-phone.html">Starledger</a>
+      <div class="sl-user">
+        <span>orion</span>
+        <a class="sl-btn sl-btn-sm sl-btn-ghost" href="login-phone.html">Déconnexion</a>
+      </div>
+      <nav class="sl-nav" aria-label="Menu principal">
+        <a href="dashboard-phone.html">Dashboard</a>
+        <a href="account-phone.html">Compte</a>
+        <a href="settings-phone.html" aria-current="page">Réglages</a>
+        <a href="admin-phone.html">Administration</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="sl-main">
+    <div class="sl-page-head">
+      <h1 class="sl-title">Réglages de valorisation</h1>
+      <p class="sl-lead">Ratios et options utilisés pour calculer vos bilans, univers par univers</p>
+    </div>
+
+    <details class="sl-card sl-universe" open>
+      <summary>
+        <span class="sl-sum">
+          <h2>Univers 285 (fr)</h2>
+          <span class="sl-sum-meta">MSU 3 : 2 : 1 · Expéditions 100 % · Anomalies 100 %</span>
+        </span>
+        <svg class="sl-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+      </summary>
+      <form class="sl-universe-body" method="post" action="#">
+        <fieldset class="sl-fieldset">
+          <legend>Ratios MSU</legend>
+          <div class="sl-grid-3">
+            <div class="sl-field">
+              <label class="sl-label" for="u1-metal"><span class="sl-swatch" style="background: #9899be"></span>Métal</label>
+              <input class="sl-input" id="u1-metal" type="number" step="any" min="0.01" max="100" value="3">
+            </div>
+            <div class="sl-field">
+              <label class="sl-label" for="u1-crystal"><span class="sl-swatch" style="background: #95c1dd"></span>Cristal</label>
+              <input class="sl-input" id="u1-crystal" type="number" step="any" min="0.01" max="100" value="2">
+            </div>
+            <div class="sl-field">
+              <label class="sl-label" for="u1-deut"><span class="sl-swatch" style="background: #64a69b"></span>Deutérium</label>
+              <input class="sl-input" id="u1-deut" type="number" step="any" min="0.01" max="100" value="1">
+            </div>
+          </div>
+        </fieldset>
+        <fieldset class="sl-fieldset">
+          <legend>Vaisseaux</legend>
+          <div class="sl-grid-2">
+            <div class="sl-field">
+              <label class="sl-label" for="u1-expe">Valeur des vaisseaux en expédition (%)</label>
+              <input class="sl-input" id="u1-expe" type="number" step="1" min="0" max="100" value="100">
+            </div>
+            <div class="sl-field">
+              <label class="sl-label" for="u1-anomaly">Vaisseaux des récompenses d'anomalie valorisés à (%)</label>
+              <input class="sl-input" id="u1-anomaly" type="number" step="1" min="0" max="100" value="100">
+            </div>
+          </div>
+        </fieldset>
+        <div class="sl-checks">
+          <label class="sl-check"><input type="checkbox"><span>Ignorer les pertes de vaisseaux en expédition</span></label>
+          <label class="sl-check"><input type="checkbox"><span>Ignorer la consommation de carburant</span></label>
+          <label class="sl-check"><input type="checkbox" checked><span>Inclure les échanges dans le bilan</span></label>
+        </div>
+        <div class="sl-actions">
+          <button class="sl-btn sl-btn-primary" type="button">Enregistrer</button>
+        </div>
+      </form>
+    </details>
+
+    <details class="sl-card sl-universe">
+      <summary>
+        <span class="sl-sum">
+          <h2>Univers 172 (en)</h2>
+          <span class="sl-sum-meta">MSU 2,5 : 1,5 : 1 · Expéditions 100 % · Anomalies 50 %</span>
+        </span>
+        <svg class="sl-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+      </summary>
+      <form class="sl-universe-body" method="post" action="#">
+        <p class="sl-lead">Mêmes champs que les autres univers</p>
+      </form>
+    </details>
+
+    <details class="sl-card sl-universe">
+      <summary>
+        <span class="sl-sum">
+          <h2>Univers 214 (de)</h2>
+          <span class="sl-sum-meta">MSU 2,5 : 1,5 : 1 · Expéditions 100 % · Anomalies 100 %</span>
+        </span>
+        <svg class="sl-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+      </summary>
+      <form class="sl-universe-body" method="post" action="#">
+        <p class="sl-lead">Mêmes champs que les autres univers</p>
+      </form>
+    </details>
+
+    <details class="sl-card sl-universe">
+      <summary>
+        <span class="sl-sum">
+          <h2>Univers 103 (fr)</h2>
+          <span class="sl-sum-meta">MSU 3 : 2 : 1 · Expéditions 80 % · Anomalies 100 %</span>
+        </span>
+        <svg class="sl-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+      </summary>
+      <form class="sl-universe-body" method="post" action="#">
+        <p class="sl-lead">Mêmes champs que les autres univers</p>
+      </form>
+    </details>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Dashboard — Starledger</title>
+<link rel="stylesheet" href="../starledger.css">
+</head>
+<body>
+<style>
+body{margin:0}
+</style>
+<div class="sl-root" style="font-family: system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; color: #c9cdd6">
+  <header class="sl-header">
+    <div class="sl-header-in">
+      <a class="sl-brand" href="dashboard.html">Starledger</a>
+      <nav class="sl-nav" aria-label="Menu principal">
+        <a href="dashboard.html" aria-current="page">Dashboard</a>
+        <a href="account.html">Compte</a>
+        <a href="settings.html">Réglages</a>
+        <a href="admin.html">Administration</a>
+      </nav>
+      <div class="sl-user">
+        <span>orion</span>
+        <a class="sl-btn sl-btn-sm sl-btn-ghost" href="login.html">Déconnexion</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="sl-main is-wide">
+    <div class="sl-toolbar">
+      <h1 class="sl-title">Novembre 2026</h1>
+      <div class="sl-toolbar" style="width: auto; justify-content: flex-end">
+        <form class="sl-filter" method="get" action="#">
+          <label class="sl-sr" for="universe">Univers</label>
+          <select class="sl-input sl-select" id="universe" name="universe">
+            <option selected>Univers 285 (fr)</option>
+            <option>Univers 172 (en)</option>
+            <option>Univers 214 (de)</option>
+            <option>Univers 103 (fr)</option>
+          </select>
+          <button class="sl-btn" type="button">Afficher</button>
+        </form>
+        <nav class="sl-segment" aria-label="Période">
+          <a href="#">Jour</a>
+          <a href="#">Semaine</a>
+          <a href="#" aria-current="page">Mois</a>
+          <a href="#">Tout</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="sl-dash">
+      <section class="sl-card" aria-labelledby="balance-title">
+        <div class="sl-card-head">
+          <h2 id="balance-title">Bilan MSU par jour</h2>
+          <p class="sl-figure">+30,6 M<small>MSU au 16 novembre</small></p>
+        </div>
+        <div class="sl-chart">
+          <div class="sl-chart-axis" aria-hidden="true">
+            <span style="top: 0">+5 M</span>
+            <span style="top: 140px">0</span>
+            <span style="top: 196px">−2 M</span>
+          </div>
+          <div class="sl-plot" role="img" aria-label="Bilan MSU quotidien de novembre 2026, du 1er au 16 : total +30,6 M, 3 jours en perte">
+            <div class="sl-bars">
+                <div title="1 nov. : +2,1 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 59px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day">1</span>
+                </div>
+                <div title="2 nov. : +3,4 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 95px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="3 nov. : −0,6 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 17px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="4 nov. : +1,8 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 50px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="5 nov. : +2,9 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 81px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day">5</span>
+                </div>
+                <div title="6 nov. : +4,2 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 118px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="7 nov. : +0,4 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 11px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="8 nov. : −1,1 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 31px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="9 nov. : +2,6 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 73px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="10 nov. : +3,1 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 87px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day">10</span>
+                </div>
+                <div title="11 nov. : +1,5 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 42px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="12 nov. : +2,2 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 62px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="13 nov. : +3,8 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 106px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="14 nov. : −0,3 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 8px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="15 nov. : +2,7 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 76px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day">15</span>
+                </div>
+                <div title="16 nov. : +1,9 M MSU">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 53px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="17 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="18 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="19 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="20 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day">20</span>
+                </div>
+                <div title="21 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="22 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="23 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="24 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="25 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day">25</span>
+                </div>
+                <div title="26 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="27 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="28 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="29 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day"></span>
+                </div>
+                <div title="30 nov.">
+                  <div class="sl-bar-pos"><span class="sl-bar is-gain" style="height: 0px"></span></div>
+                  <div class="sl-bar-neg"><span class="sl-bar is-loss" style="height: 0px"></span></div>
+                  <span class="sl-bar-day">30</span>
+                </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="sl-card" aria-labelledby="outcomes-title">
+        <div class="sl-card-head">
+          <h2 id="outcomes-title">Résultats des expéditions</h2>
+          <p class="sl-figure">950<small>expéditions</small></p>
+        </div>
+        <ul class="sl-share">
+            <li>
+              <span class="sl-swatch" style="background: #9fe0f5"></span>
+              <span class="sl-share-label">Ressources</span>
+              <span class="sl-share-track"><span class="sl-share-fill" style="width: 100%"></span></span>
+              <span class="sl-share-count">412</span>
+              <span class="sl-share-pct">43,4 %</span>
+            </li>
+            <li>
+              <span class="sl-swatch" style="background: #e6e6e6"></span>
+              <span class="sl-share-label">Rien</span>
+              <span class="sl-share-track"><span class="sl-share-fill" style="width: 50%"></span></span>
+              <span class="sl-share-count">208</span>
+              <span class="sl-share-pct">21,9 %</span>
+            </li>
+            <li>
+              <span class="sl-swatch" style="background: #6fcf97"></span>
+              <span class="sl-share-label">Vaisseaux</span>
+              <span class="sl-share-track"><span class="sl-share-fill" style="width: 32%"></span></span>
+              <span class="sl-share-count">131</span>
+              <span class="sl-share-pct">13,8 %</span>
+            </li>
+            <li>
+              <span class="sl-swatch" style="background: #b88ce8"></span>
+              <span class="sl-share-label">Matière noire</span>
+              <span class="sl-share-track"><span class="sl-share-fill" style="width: 23%"></span></span>
+              <span class="sl-share-count">96</span>
+              <span class="sl-share-pct">10,1 %</span>
+            </li>
+            <li>
+              <span class="sl-swatch" style="background: #f0d34a"></span>
+              <span class="sl-share-label">Pirates</span>
+              <span class="sl-share-track"><span class="sl-share-fill" style="width: 9%"></span></span>
+              <span class="sl-share-count">38</span>
+              <span class="sl-share-pct">4,0 %</span>
+            </li>
+            <li>
+              <span class="sl-swatch" style="background: #e0903a"></span>
+              <span class="sl-share-label">Aliens</span>
+              <span class="sl-share-track"><span class="sl-share-fill" style="width: 5%"></span></span>
+              <span class="sl-share-count">21</span>
+              <span class="sl-share-pct">2,2 %</span>
+            </li>
+            <li>
+              <span class="sl-swatch" style="background: #e2574c"></span>
+              <span class="sl-share-label">Retour tardif</span>
+              <span class="sl-share-track"><span class="sl-share-fill" style="width: 4%"></span></span>
+              <span class="sl-share-count">17</span>
+              <span class="sl-share-pct">1,8 %</span>
+            </li>
+            <li>
+              <span class="sl-swatch" style="background: #ef8fb0"></span>
+              <span class="sl-share-label">Retour anticipé</span>
+              <span class="sl-share-track"><span class="sl-share-fill" style="width: 3%"></span></span>
+              <span class="sl-share-count">14</span>
+              <span class="sl-share-pct">1,5 %</span>
+            </li>
+            <li>
+              <span class="sl-swatch" style="background: #5b8def"></span>
+              <span class="sl-share-label">Marchand</span>
+              <span class="sl-share-track"><span class="sl-share-fill" style="width: 1%"></span></span>
+              <span class="sl-share-count">6</span>
+              <span class="sl-share-pct">0,6 %</span>
+            </li>
+            <li>
+              <span class="sl-swatch" style="background: #c98a5a"></span>
+              <span class="sl-share-label">Objet</span>
+              <span class="sl-share-track"><span class="sl-share-fill" style="width: 1%"></span></span>
+              <span class="sl-share-count">4</span>
+              <span class="sl-share-pct">0,4 %</span>
+            </li>
+            <li>
+              <span class="sl-swatch" style="background: #8a8f9c"></span>
+              <span class="sl-share-label">Trou noir</span>
+              <span class="sl-share-track"><span class="sl-share-fill" style="width: 1%"></span></span>
+              <span class="sl-share-count">3</span>
+              <span class="sl-share-pct">0,3 %</span>
+            </li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>
