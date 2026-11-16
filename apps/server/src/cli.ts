@@ -108,7 +108,7 @@ export async function runCli(argv: string[], io: CliIo): Promise<number> {
       };
       const r = await reparseEvents(io.db, { username: user, log });
       io.stdout.write(
-        `updated: ${r.updated}\nstillUnrecognized: ${r.stillUnrecognized}\nnewConflicts: ${r.newConflicts}\nskipped: ${r.skipped}\n`,
+        `updated: ${r.updated}\nstillUnrecognized: ${r.stillUnrecognized}\nnewConflicts: ${r.newConflicts}\nskipped: ${r.skipped}\nremoved: ${r.removed}\n`,
       );
       return 0;
     }

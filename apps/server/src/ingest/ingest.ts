@@ -2,6 +2,7 @@ import {
   type AckStatus,
   type BatchAck,
   dayKey,
+  isTrackedMessage,
   type Observation,
   type ObservationBatch,
   observationExternalKey,
@@ -73,6 +74,14 @@ async function ingestOne(
     return { clientObservationId: idOf(raw), status: 'rejected', reason: parsed.error.message };
   }
   const obs = parsed.data;
+  // Plan task 10.3: only an older client sends these; a new status would keep them in its queue forever
+  if (obs.kind === 'message' && !isTrackedMessage(obs)) {
+    return {
+      clientObservationId: obs.clientObservationId,
+      status: 'duplicate',
+      reason: 'untracked message type',
+    };
+  }
   await sql`savepoint observation`.execute(trx);
   try {
     const status = await ingestValid(trx, userId, deviceId, obs, log);

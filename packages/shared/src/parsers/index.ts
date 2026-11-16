@@ -16,6 +16,12 @@ export const PARSER_VERSION = 8;
 // Type 34 (fleet arrivals) is not collected: never a trade (docs/ogame-data-formats.md §3.7).
 export const TRACKED_MESSAGE_TYPES = [25, 32, 33, 41, 48, 54, 61, 76] as const;
 
+const TRACKED: readonly number[] = TRACKED_MESSAGE_TYPES;
+
+export function isTrackedMessage(obs: MessageObservation): boolean {
+  return obs.messageType !== null && TRACKED.includes(obs.messageType);
+}
+
 const PARSERS = new Map<number, (obs: MessageObservation) => ParseResult>([
   [25, parseCombat],
   [32, parseRecycling],

@@ -5,6 +5,7 @@ export * from './domain';
 export * from './events';
 export * from './observation';
 export {
+  isTrackedMessage,
   observationExternalKey,
   PARSER_VERSION,
   parseMessage,

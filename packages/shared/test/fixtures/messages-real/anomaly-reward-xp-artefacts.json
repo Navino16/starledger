@@ -1,0 +1,65 @@
+{
+  "synthetic": false,
+  "observation": {
+    "kind": "message",
+    "clientObservationId": "00000000-0000-4000-8000-000000000307",
+    "account": {
+      "serverId": 808,
+      "lang": "en",
+      "playerId": 100001,
+      "playerName": "Tester"
+    },
+    "observedAt": 1794821010019,
+    "serverUtcOffsetMinutes": 0,
+    "msgId": 4819717,
+    "messageType": 76,
+    "subtabId": 24,
+    "raw": {
+      "date": "2026-11-13T12:48:57.000Z",
+      "x-xp": "[{\"lifeform\":1,\"amount\":4444},{\"lifeform\":2,\"amount\":4444},{\"lifeform\":3,\"amount\":4444},{\"lifeform\":4,\"amount\":4444}]",
+      "coords": "2:34:5",
+      "x-loot": "[{\"type\":\"resource\",\"resource\":\"metal\",\"amount\":550378},{\"type\":\"resource\",\"resource\":\"crystal\",\"amount\":242166},{\"type\":\"resource\",\"resource\":\"deuterium\",\"amount\":62376},{\"type\":\"resource\",\"resource\":\"artifact\",\"amount\":117},{\"type\":\"ship\",\"attributes\":[\"sq26\",\"regular\",\"fighterlight\"],\"amount\":24},{\"type\":\"ship\",\"attributes\":[\"sq26\",\"regular\",\"fighterheavy\"],\"amount\":18},{\"type\":\"ship\",\"attributes\":[\"sq26\",\"regular\",\"cruiser\"],\"amount\":6},{\"type\":\"ship\",\"attributes\":[\"sq26\",\"regular\",\"battleship\"],\"amount\":1},{\"type\":\"ship\",\"attributes\":[\"sq26\",\"regular\",\"transportersmall\"],\"amount\":5}]",
+      "timestamp": "1794574137",
+      "messagetype": "76",
+      "targetplanetid": "1002",
+      "targetplayerid": "100001",
+      "x-anomalycoords": "2:44:5",
+      "targetplanetname": "Moon A",
+      "targetplanettype": "3",
+      "targetplayername": "Tester",
+      "targetplanetcoordinates": "2:34:5"
+    }
+  },
+  "expected": {
+    "status": "ok",
+    "externalKey": "msg:4819717",
+    "occurredAt": 1794574137000,
+    "event": {
+      "kind": "anomaly_reward",
+      "anomalyCoords": {
+        "galaxy": 2,
+        "system": 44,
+        "position": 5
+      },
+      "resources": {
+        "metal": 550378,
+        "crystal": 242166,
+        "deuterium": 62376
+      },
+      "ships": {
+        "202": 5,
+        "204": 24,
+        "205": 18,
+        "206": 6,
+        "207": 1
+      },
+      "artefacts": 117,
+      "xpByLifeform": {
+        "1": 4444,
+        "2": 4444,
+        "3": 4444,
+        "4": 4444
+      }
+    }
+  }
+}
