@@ -44,7 +44,7 @@
 | 16 | Détail façon OGLight | ✅ |
 | 17 | Période personnalisée | ✅ |
 | 18 | XP et artefacts des récompenses d'anomalie | ✅ |
-| 19 | Surplus de lithium des récompenses | ☐ |
+| 19 | Surplus de lithium des récompenses | ✅ |
 
 ## Global Constraints
 
@@ -1449,9 +1449,9 @@ Branche : `feature/lithium-bonus`. **Source** : page des anomalies d'un joueur (
 - Produit : `lithiumBonusAmount(raw: string | null): number | null` (exportée pour les tests) ; `parseAnomalyAction` donne `lithiumBonus = obs.lithiumBonus ?? lithiumBonusAmount(obs.lithiumBonusRaw)`.
 - Règle : `JSON.parse(raw).message` textuel, balises et entités HTML remplacées par une espace, nombres `\d{1,3}(?:[.,\s]\d{3})+|\d+` ; exactement un nombre → sa valeur sans séparateurs, sinon `null`.
 
-- [ ] **Step 1 : tests** : message fr de la source → 3273 ; « …: 3,273. » → 3273 ; « 12 » → 12 ; message avec `&#160;` et `<b>3.273</b>` → 3273 ; deux nombres, aucun nombre, JSON invalide, `message` absent ou numérique, `raw` `null` → `null` ; `obs.lithiumBonus` 0 gardé tel quel.
-- [ ] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/parsers/anomaly-action.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter ; documenter le format au §9.2 et cocher le point du §8.
-- [ ] **Step 4 :** même commande → PASS ; `pnpm test`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Read the lithium bonus amount of anomaly reward collects"`
+- [x] **Step 1 : tests** : message fr de la source → 3273 ; « …: 3,273. » → 3273 ; « 12 » → 12 ; message avec `&#160;` et `<b>3.273</b>` → 3273 ; deux nombres, aucun nombre, JSON invalide, `message` absent ou numérique, `raw` `null` → `null` ; `obs.lithiumBonus` 0 gardé tel quel.
+- [x] **Step 2 :** `pnpm --filter @app/shared exec vitest run test/parsers/anomaly-action.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter ; documenter le format au §9.2 et cocher le point du §8.
+- [x] **Step 4 :** même commande → PASS ; `pnpm test`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Read the lithium bonus amount of anomaly reward collects"`
 

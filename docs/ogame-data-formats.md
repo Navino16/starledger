@@ -587,8 +587,8 @@ Planet/target type ids: `1` planet, `2` debris field, `3` moon
 4. **Timezone**: no meta tag; only `serverData.xml` `timezone` / `timezoneOffset` (format unknown)
    and page globals `serverTimeZoneOffsetInMinutes` / `localTimeZoneOffsetInMinutes`.
 5. `data-raw-datetime` format, subtab 25 meaning, type 35 meaning.
-6. **Anomaly page**: a non-null `lithiumBonus`, the Dark Matter collect overlay (9.4) and the
-   markup of premium item rewards in a message 76 (3.9). ~~Lifeform experience and artifact
+6. **Anomaly page**: the Dark Matter collect overlay (9.4) and the markup of premium item rewards
+   in a message 76 (3.9). ~~A non-null `lithiumBonus`~~: captured 2026-11-16 (9.2). ~~Lifeform experience and artifact
    rewards~~: captured 2026-11-13 (3.9).
 
 ---
@@ -651,8 +651,12 @@ observed on the network.
   "Récompenses récupérées"), `canCollectReward` (false once nothing is left), `lithiumBonus`
   (`null` when there is no bonus), `ipiMenuData`, `newAjaxToken`, `components`. **No cost and no
   reward amounts**: the cost comes from the overlay (9.4), the rewards from message 76.
-- `lithiumBonus` is the only refund-like field found; its non-null shape (`{ title, message }` per
-  the script) and where the amount sits are unknown.
+- `lithiumBonus` is the only refund-like field found. Non-null shape `{ title, message }`, shown by
+  the game in a notification box (live page, 2026-11-16): title "Du lithium !", message "Quelle
+  heureuse trouvaille ! Vous avez récupéré un surplus de lithium dans les débris de l`anomalie :
+  3.273." The amount is the only number of the localized message, dot- or comma-grouped; the
+  server reads it from the stored `lithiumBonusRaw`, unknown when the message holds no number or
+  several.
 - No request for deleting a mission was found in the script.
 
 ### 9.3 DOM read on the page
