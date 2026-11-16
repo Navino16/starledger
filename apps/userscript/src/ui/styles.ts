@@ -1,33 +1,40 @@
 //! AGENTS.md §1.7: the box stays in normal flow; only the player-opened dialog uses a fixed backdrop (see ui/panel.ts)
 // Dialog values copied from the game's own jQuery UI dialog, overlay and .btn_blue rules
 export const UI_CSS = `
-.starledger-box{box-sizing:border-box;width:168px;max-width:100%;margin:10px 0 0;padding:4px;font:11px Verdana,Arial,sans-serif;color:#757ba6;background:#0d131b;border-radius:6px}
-.starledger-box strong{color:#b4c8f7;font-weight:bold}
+.starledger-box{box-sizing:border-box;width:168px;max-width:100%;margin:12px 0 0;padding:4px;font:11px Verdana,Arial,sans-serif;color:#858b98;background:#0d131b;border-radius:8px}
+.starledger-box strong{color:#b4c8f7;font-weight:600}
 .starledger-box button{max-width:100%;box-sizing:border-box;font:inherit}
-.starledger-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:2px 6px;margin-bottom:4px;padding:5px 7px;background:linear-gradient(#2a3240,#181c23);border-radius:5px}
-.starledger-state{display:inline-flex;align-items:center;gap:4px;font-size:10px;white-space:nowrap;color:#757ba6}
-.starledger-dot{display:inline-block;width:7px;height:7px;border-radius:50%}
+.starledger-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;margin-bottom:4px;padding:4px 8px;background:#161b23;border-radius:4px}
+.starledger-state{display:inline-flex;align-items:center;gap:4px;font-size:10px;white-space:nowrap;color:#858b98}
+.starledger-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
 .starledger-dot.is-ok{background:#64a69b}
 .starledger-dot.is-pending{background:#e0a030}
 .starledger-dot.is-error{background:#e2574c}
 .starledger-stale{color:#e0a030;font-style:normal;margin-left:4px}
 .starledger-status{margin:0}
-div.starledger-status{margin:6px 0}
+div.starledger-status{margin:8px 4px 4px}
 .starledger-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:100%;margin:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:center;cursor:pointer}
-.starledger-tile{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0;padding:5px 2px;background:linear-gradient(#2d3645,#191c25);border-radius:5px}
-.starledger-tiles:hover .starledger-tile{background:linear-gradient(#3a4558,#20242f)}
-.starledger-wide{grid-column:1/-1;flex-direction:row;justify-content:space-between;padding:4px 7px}
-.starledger-label{font-size:9px;color:#757ba6}
-.starledger-wide .starledger-label{font-size:11px}
-.starledger-value{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:bold;color:#e7e8eb}
+.starledger-tiles:focus-visible{outline:1px solid #b4c8f7;outline-offset:2px}
+.starledger-tile{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;padding:4px 0;background:#161b23;border-radius:4px;transition:background-color .15s}
+.starledger-tiles:hover .starledger-tile{background:#1d2430}
+.starledger-tile .starledger-icon{height:18px}
+.starledger-wide{grid-column:1/-1;flex-direction:row;justify-content:space-between;padding:4px 8px}
+.starledger-label{font-size:11px;color:#858b98}
+.starledger-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.starledger-value{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:400;font-variant-numeric:tabular-nums;color:#e7e8eb}
+.starledger-wide .starledger-value{font-weight:600}
 .starledger-tile[data-tile=metal] .starledger-value,.starledger-dialog .starledger-amount[data-res=metal]{color:#9899be}
 .starledger-tile[data-tile=crystal] .starledger-value,.starledger-dialog .starledger-amount[data-res=crystal]{color:#95c1dd}
 .starledger-tile[data-tile=deuterium] .starledger-value,.starledger-dialog .starledger-amount[data-res=deuterium]{color:#64a69b}
 .starledger-tile[data-tile=darkMatter] .starledger-value{color:#b88ce8}
 .starledger-tile[data-tile=artefacts] .starledger-value{color:#e3b955}
+.starledger-tile[data-tile=lithium] .starledger-value{color:#e58fb1}
 .starledger-tile[data-tile=msu] .starledger-value,.starledger-dialog .starledger-amount[data-res=msu]{color:#e7e8eb}
-.starledger-cta{display:block;width:100%;padding:7px;color:#64a69b;font-weight:bold;background:linear-gradient(#2d3645,#191c25);border:0;border-radius:5px;cursor:pointer}
-.starledger-cta:hover{background:linear-gradient(#3a4558,#20242f);color:#8fd4c7}
+.starledger-box .starledger-value.is-negative{color:#e2574c}
+.starledger-box .starledger-value.is-zero{color:#5b6270}
+.starledger-partial{margin-left:1px;font-size:10px;color:#5b6270}
+.starledger-cta{display:block;width:100%;padding:8px;color:#e7e8eb;background:#161b23;border:0;border-radius:4px;cursor:pointer;transition:background-color .15s}
+.starledger-cta:hover{background:#1d2430}
 .starledger-warning{color:#e0a030}
 .starledger-backdrop{position:fixed;inset:0;z-index:100000;display:flex;align-items:flex-start;justify-content:center;padding:8vh 8px 8px;box-sizing:border-box;overflow-y:auto;background:rgba(20,26,30,.8)}
 .starledger-dialog{box-sizing:border-box;width:720px;max-width:100%;font:11px/14px Verdana,Arial,Helvetica,sans-serif;color:#848484;box-shadow:5px 8px 15px #000}

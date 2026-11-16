@@ -2,7 +2,8 @@ import type { ApiError, StatsResponse } from '@app/shared';
 import { errorKey, type MessageKey, type T } from '../i18n';
 import type { SyncState } from '../sync/queue';
 import { configureBoxContent, el, mountBox } from './dom';
-import { formatAmount, formatPartial, formatTime } from './format';
+import { amountParts, formatPartial, formatTime } from './format';
+import { type IconKind, resourceIcon } from './icons';
 
 export type BoxModel = {
   state: SyncState;
@@ -27,22 +28,29 @@ const TILES = [
 
 const TILE_ORDER = ['metal', 'crystal', 'deuterium', 'darkMatter', 'artefacts', 'lithium', 'msu'];
 
-function tile(doc: Document, label: string, value: string): HTMLElement {
-  return el(
-    doc,
-    'span',
-    { className: 'starledger-tile' },
-    el(doc, 'span', { className: 'starledger-label', textContent: label }),
-    el(doc, 'span', { className: 'starledger-value', textContent: value }),
-  );
+// Same figures, format and colours as the detail table, so the box and the detail read alike
+function value(doc: Document, n: number | null, unknown = 0): HTMLElement {
+  const { value: num, unit } = amountParts(n);
+  const node = el(doc, 'span', { className: 'starledger-value', textContent: num });
+  if (unit) node.append(el(doc, 'span', { className: 'starledger-unit', textContent: unit }));
+  if (unknown > 0)
+    node.append(el(doc, 'span', { className: 'starledger-partial', textContent: '+?' }));
+  if (n === null || num === '0') node.classList.add('is-zero');
+  else if (n < 0) node.classList.add('is-negative');
+  return node;
 }
 
-function lithiumValue(stats: StatsResponse | null): string {
-  const lithium = stats?.summary.anomalies?.lithium;
-  return formatPartial(
-    lithium?.net ?? null,
-    (lithium?.spentUnknown ?? 0) + (lithium?.refundUnknown ?? 0),
-  );
+function tile(doc: Document, key: string, label: string, figure: HTMLElement): HTMLElement {
+  const name = el(doc, 'span', { className: 'starledger-label', textContent: label });
+  const node = el(doc, 'span', { className: 'starledger-tile' });
+  node.dataset.tile = key;
+  if (key === 'msu') {
+    node.append(name, figure);
+    return node;
+  }
+  name.classList.add('starledger-sr');
+  node.append(resourceIcon(doc, key as IconKind, label), name, figure);
+  return node;
 }
 
 const DOT_CLASS = { up_to_date: 'is-ok', pending: 'is-pending', error: 'is-error' } as const;
@@ -76,13 +84,18 @@ export function renderBox(container: HTMLElement, model: BoxModel, handlers: Box
   });
   const nodes = new Map<string, HTMLElement>();
   for (const [key, label] of TILES) {
-    const node = tile(doc, t(label), formatAmount(stats ? stats.summary.tiles[key] : null));
-    node.dataset.tile = key;
-    nodes.set(key, node);
+    nodes.set(key, tile(doc, key, t(label), value(doc, stats ? stats.summary.tiles[key] : null)));
   }
-  const lithium = tile(doc, t('tileLithium'), lithiumValue(stats));
-  lithium.dataset.tile = 'lithium';
-  nodes.set('lithium', lithium);
+  const lithium = stats?.summary.anomalies?.lithium;
+  const lithiumUnknown = (lithium?.spentUnknown ?? 0) + (lithium?.refundUnknown ?? 0);
+  const lithiumTile = tile(
+    doc,
+    'lithium',
+    t('tileLithium'),
+    value(doc, lithium?.net ?? null, lithiumUnknown),
+  );
+  if (lithiumUnknown > 0) lithiumTile.title = formatPartial(lithium?.net ?? null, lithiumUnknown);
+  nodes.set('lithium', lithiumTile);
   nodes.get('msu')?.classList.add('starledger-wide');
   // Fuel has no tile: it is already deducted from the deuterium tile and shown in the detail
   for (const key of TILE_ORDER) {

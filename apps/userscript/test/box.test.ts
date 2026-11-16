@@ -97,12 +97,40 @@ describe('formatAmount', () => {
 describe('renderBox', () => {
   it('renders the six tiles', () => {
     const { box } = render(model());
-    expect(tile(box, 'metal')).toBe('1.5M');
+    expect(tile(box, 'metal')).toBe('1.50M');
     expect(tile(box, 'crystal')).toBe('2.5k');
     expect(tile(box, 'deuterium')).toBe('-300');
     expect(tile(box, 'darkMatter')).toBe('0');
     expect(tile(box, 'artefacts')).toBe('3');
-    expect(tile(box, 'msu')).toBe('1M');
+    expect(tile(box, 'msu')).toBe('1.00M');
+  });
+
+  it('shows the game icon of each resource, keeping the label for screen readers', () => {
+    const { box } = render(model());
+    const metal = box.querySelector('[data-tile="metal"]');
+    expect(metal?.querySelector('.starledger-icon')?.getAttribute('title')).toBe('Metal');
+    expect(metal?.querySelector('.starledger-label')?.classList.contains('starledger-sr')).toBe(
+      true,
+    );
+    expect(box.querySelector('[data-tile="lithium"] .starledger-icon')).not.toBeNull();
+    const msu = box.querySelector('[data-tile="msu"]');
+    expect(msu?.querySelector('.starledger-icon')).toBeNull();
+    expect(msu?.querySelector('.starledger-label')?.classList.contains('starledger-sr')).toBe(
+      false,
+    );
+  });
+
+  it('greys zero and unknown values and marks losses like the detail', () => {
+    const { box } = render(model());
+    const value = (name: string) => box.querySelector(`[data-tile="${name}"] .starledger-value`);
+    expect(value('darkMatter')?.classList.contains('is-zero')).toBe(true);
+    expect(value('deuterium')?.classList.contains('is-negative')).toBe(true);
+    expect(value('metal')?.classList.contains('is-zero')).toBe(false);
+    expect(value('metal')?.querySelector('.starledger-unit')?.textContent).toBe('M');
+    const empty = render(model({ stats: null, statsAt: null })).box;
+    expect(
+      empty.querySelector('[data-tile="metal"] .starledger-value')?.classList.contains('is-zero'),
+    ).toBe(true);
   });
 
   it('shows ? tiles without stats', () => {
@@ -138,7 +166,7 @@ describe('renderBox', () => {
 
   it('marks partial lithium and shows ? without anomalies or stats', () => {
     const partial = statsOf({}, { net: -1500, spentUnknown: 1, refundUnknown: 1 });
-    expect(tile(render(model({ stats: partial })).box, 'lithium')).toBe('-1.5k + ? (2)');
+    expect(tile(render(model({ stats: partial })).box, 'lithium')).toBe('-1.5k+?');
     const dmOnly = statsOf({}, { net: -1500, darkMatterUnknown: 4 });
     expect(tile(render(model({ stats: dmOnly })).box, 'lithium')).toBe('-1.5k');
     expect(tile(render(model()).box, 'lithium')).toBe('?');
@@ -186,8 +214,8 @@ describe('renderBox', () => {
   });
 
   it('labels the CTA in both languages', () => {
-    expect(MESSAGES.en.configureSync).toBe('⚙ Configure sync');
-    expect(MESSAGES.fr.configureSync).toBe('⚙ Configurer la synchro');
+    expect(MESSAGES.en.configureSync).toBe('Configure sync');
+    expect(MESSAGES.fr.configureSync).toBe('Configurer la synchro');
     expect(
       render(model({ consent: false })).box.querySelector('.starledger-cta')?.textContent,
     ).toBe(t('configureSync'));
@@ -373,7 +401,7 @@ describe('box in the page', () => {
       /serverId=808&lang=en&playerId=42&period=day&today=\d{4}-\d{2}-\d{2}/,
     );
     expect(document.querySelector('[data-tile="metal"] .starledger-value')?.textContent).toBe(
-      '1.5M',
+      '1.50M',
     );
     expect(document.getElementById('starledger-box')?.textContent).not.toContain(t('stale'));
     expect(loadStatsCache(gm, ACCOUNT)).not.toBeNull();
@@ -390,7 +418,7 @@ describe('box in the page', () => {
     expect(text).toContain(t('stale'));
     expect(text).toContain('Invalid key');
     expect(document.querySelector('[data-tile="metal"] .starledger-value')?.textContent).toBe(
-      '1.5M',
+      '1.50M',
     );
   });
 
