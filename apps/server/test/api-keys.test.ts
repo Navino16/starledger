@@ -227,10 +227,16 @@ describe('api keys', () => {
 });
 
 describe('account api key routes', () => {
+  beforeEach(async () => {
+    await t.db.updateTable('api_keys').set({ revoked_at: new Date() }).execute();
+  });
+
+  const keyIn = (body: string) => /slk_[\w-]{43}/.exec(body)?.[0] as string;
+
   it('redirects anonymous users to /login', async () => {
     const get = await app.inject({ method: 'GET', url: '/account' });
     expect(get.statusCode).toBe(302);
-    for (const url of ['/account/api-key', '/account/api-key/revoke']) {
+    for (const url of ['/account/api-keys', `/account/api-keys/${randomUUID()}/revoke`]) {
       const res = await app.inject({ method: 'POST', url, headers: form, payload: '' });
       expect(res.statusCode).toBe(302);
       expect(res.headers.location).toBe('/login');
@@ -239,38 +245,90 @@ describe('account api key routes', () => {
 
   it('rejects both POSTs without a CSRF token', async () => {
     const cookie = await login('alice');
-    for (const url of ['/account/api-key', '/account/api-key/revoke']) {
-      const res = await post(url, {}, cookie);
+    const { id } = await createApiKey(t.db, aliceId, 'PC');
+    for (const url of ['/account/api-keys', `/account/api-keys/${id}/revoke`]) {
+      const res = await post(url, { name: 'PC' }, cookie);
       expect(res.statusCode).toBe(403);
     }
   });
 
-  it('shows the key once with no-store, then only its prefix', async () => {
+  it('creates two keys, shows each once, and revokes one', async () => {
     const cookie = await login('alice');
     const before = await accountPage(cookie);
     expect(before.res.body).toContain('No active API key');
 
-    const created = await post('/account/api-key', { _csrf: before.token }, before.cookie);
-    expect(created.statusCode).toBe(200);
-    expect(created.headers['cache-control']).toBe('no-store');
-    const key = /slk_[\w-]{43}/.exec(created.body)?.[0] as string;
-    expect(key).toBeDefined();
-    expect(await authenticateApiKey(t.db, key)).toEqual({ userId: aliceId });
+    const first = await post(
+      '/account/api-keys',
+      { name: 'PC', _csrf: before.token },
+      before.cookie,
+    );
+    expect(first.statusCode).toBe(200);
+    expect(first.headers['cache-control']).toBe('no-store');
+    const pcKey = keyIn(first.body);
+    const second = await post(
+      '/account/api-keys',
+      { name: 'Phone', _csrf: csrfOf(first.body) },
+      before.cookie,
+    );
+    const phoneKey = keyIn(second.body);
+    expect(await authenticateApiKey(t.db, pcKey)).toEqual({ userId: aliceId });
+    expect(await authenticateApiKey(t.db, phoneKey)).toEqual({ userId: aliceId });
 
-    const after = await accountPage(cookie);
-    expect(after.res.body).not.toContain(key);
-    expect(after.res.body).toContain(key.slice(0, 8));
+    const listed = await accountPage(cookie);
+    expect(listed.res.body).not.toContain(pcKey);
+    expect(listed.res.body).toContain('PC');
+    expect(listed.res.body).toContain('Phone');
+    expect(listed.res.body).toContain(pcKey.slice(0, 8));
 
-    const revoked = await post('/account/api-key/revoke', { _csrf: after.token }, after.cookie);
+    const pcId = (await listApiKeys(t.db, aliceId)).find((k) => k.name === 'PC')?.id;
+    const revoked = await post(
+      `/account/api-keys/${pcId}/revoke`,
+      { _csrf: listed.token },
+      listed.cookie,
+    );
     expect(revoked.statusCode).toBe(302);
     expect(revoked.headers.location).toBe('/account');
-    expect(await authenticateApiKey(t.db, key)).toBeNull();
-    expect((await accountPage(cookie)).res.body).toContain('No active API key');
+    expect(await authenticateApiKey(t.db, pcKey)).toBeNull();
+    expect(await authenticateApiKey(t.db, phoneKey)).toEqual({ userId: aliceId });
   });
 
-  it('renders the account page in French', async () => {
+  it("answers 404 when revoking another user's key", async () => {
+    const bob = await createApiKey(t.db, bobId, 'PC');
+    const cookie = await login('alice');
+    const page = await accountPage(cookie);
+    const res = await post(
+      `/account/api-keys/${bob.id}/revoke`,
+      { _csrf: page.token },
+      page.cookie,
+    );
+    expect(res.statusCode).toBe(404);
+    expect(await authenticateApiKey(t.db, bob.key)).toEqual({ userId: bobId });
+  });
+
+  it('rejects an empty name with 400', async () => {
+    const cookie = await login('alice');
+    const page = await accountPage(cookie);
+    const res = await post('/account/api-keys', { name: '  ', _csrf: page.token }, page.cookie);
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toContain('1 to 64 characters');
+    expect(await listApiKeys(t.db, aliceId)).toHaveLength(0);
+  });
+
+  it('renders the account page in French with unnamed and unused keys', async () => {
+    await t.db
+      .insertInto('api_keys')
+      .values({
+        id: randomUUID(),
+        user_id: bobId,
+        key_hash: 'b'.repeat(64),
+        key_prefix: 'slk_bbbb',
+      })
+      .execute();
     const cookie = await login('bob');
     const { res } = await accountPage(cookie);
-    expect(res.body).toContain('Aucune clé API active');
+    expect(res.body).toContain('Sans nom');
+    expect(res.body).toContain('jamais');
+    await t.db.updateTable('api_keys').set({ revoked_at: new Date() }).execute();
+    expect((await accountPage(cookie)).res.body).toContain('Aucune clé API active');
   });
 });

@@ -46,7 +46,7 @@
 | 17 | Période personnalisée | ✅ |
 | 18 | XP et artefacts des récompenses d'anomalie | ✅ |
 | 19 | Surplus de lithium des récompenses | ✅ |
-| 20 | Clés API multiples | ☐ |
+| 20 | Clés API multiples | ✅ |
 | 21 | Mots de passe | ☐ |
 | 22 | API JSON du site | ☐ |
 | 23 | App web : socle et pages publiques | ☐ |
@@ -1505,11 +1505,11 @@ Branche : `feature/multiple-api-keys`. Spec web, « Clés API ».
   - `revokeApiKey(db, userId: string, keyId: string): Promise<boolean>` : `false` si la clé n'existe pas, est déjà révoquée ou appartient à un autre ; `keyId` non UUID → `false` sans requête ;
   - `authenticateApiKey` : met `last_used_at = now()` quand il est nul ou antérieur à `now() - interval '5 minutes'`, dans une seule requête `UPDATE … RETURNING user_id`.
 
-- [ ] **Step 1 : tests** : deux clés créées pour un utilisateur s'authentifient toutes deux ; en révoquer une laisse l'autre valable ; `revokeApiKey` sur la clé d'un autre → `false` et la clé reste valable ; `'not-a-uuid'` → `false` ; nom `'  PC  '` stocké `'PC'` ; `''`, `'   '`, 65 caractères → `ApiKeyNameError` ; `listApiKeys` exclut les révoquées, ordre décroissant ; `last_used_at` nul → posé à l'authentification ; posé à `now() - 1 min` → inchangé ; à `now() - 6 min` → mis à jour. Migration : une clé active créée avant 0003 reste valable avec `name` nul.
-- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run test/api-keys.test.ts test/migrations.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** même commande → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Allow several named API keys per user"`
+- [x] **Step 1 : tests** : deux clés créées pour un utilisateur s'authentifient toutes deux ; en révoquer une laisse l'autre valable ; `revokeApiKey` sur la clé d'un autre → `false` et la clé reste valable ; `'not-a-uuid'` → `false` ; nom `'  PC  '` stocké `'PC'` ; `''`, `'   '`, 65 caractères → `ApiKeyNameError` ; `listApiKeys` exclut les révoquées, ordre décroissant ; `last_used_at` nul → posé à l'authentification ; posé à `now() - 1 min` → inchangé ; à `now() - 6 min` → mis à jour. Migration : une clé active créée avant 0003 reste valable avec `name` nul.
+- [x] **Step 2 :** `pnpm --filter @app/server exec vitest run test/api-keys.test.ts test/migrations.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** même commande → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Allow several named API keys per user"`
 
 ### Tâche 20.2 : Page compte Eta provisoire
 
@@ -1521,11 +1521,11 @@ Les pages Eta disparaissent au scope 24 ; on les adapte au minimum pour que les 
 - Routes : `POST /account/api-keys` (champ `name`) remplace `/account/api-key` ; `POST /account/api-keys/:id/revoke` remplace `/account/api-key/revoke` (clé inconnue ou d'un autre → page 404). Nom invalide → page compte en 400 avec `account.keyNameInvalid`.
 - Page : formulaire nom + « Créer une clé », clé créée affichée une fois, tableau nom (« Sans nom » si nul), préfixe, création, dernière utilisation (« jamais »), bouton révoquer par ligne.
 
-- [ ] **Step 1 : tests** : créer deux clés via le formulaire → les deux listées ; révoquer la première → seule la seconde listée ; révoquer l'id d'un autre utilisateur → 404 ; nom vide → 400 ; sans CSRF → 403.
-- [ ] **Step 2 :** lancer le fichier de test → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** `pnpm test`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Manage several API keys from the account page"`
+- [x] **Step 1 : tests** : créer deux clés via le formulaire → les deux listées ; révoquer la première → seule la seconde listée ; révoquer l'id d'un autre utilisateur → 404 ; nom vide → 400 ; sans CSRF → 403.
+- [x] **Step 2 :** lancer le fichier de test → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** `pnpm test`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Manage several API keys from the account page"`
 
 ## Scope 21 — Mots de passe
 

@@ -1,7 +1,13 @@
 import { LANG_PATTERN, MAX_SERVER_ID } from '@app/shared';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Kysely } from 'kysely';
-import { generateApiKey, getActiveApiKey, revokeApiKey } from '../auth/api-keys';
+import {
+  ApiKeyNameError,
+  createApiKey,
+  listApiKeys,
+  MAX_KEY_NAME_LENGTH,
+  revokeApiKey,
+} from '../auth/api-keys';
 import type { Database } from '../db/schema';
 import {
   getValuationSettings,
@@ -34,10 +40,23 @@ export async function accountRoutes(app: FastifyInstance, opts: { db: Kysely<Dat
     newKey: string | null,
     failed: FailedSave | null = null,
     status = 200,
+    keyError: string | null = null,
   ) => {
     const user = request.user as WebUser;
     const t = translator(user.locale);
-    const active = await getActiveApiKey(db, user.id);
+    const formatDate = (date: Date) =>
+      date.toLocaleString(user.locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'UTC',
+      });
+    const keys = (await listApiKeys(db, user.id)).map((key) => ({
+      id: key.id,
+      name: key.name,
+      prefix: key.prefix,
+      createdAt: key.createdAt.toLocaleDateString(user.locale, { timeZone: 'UTC' }),
+      lastUsedAt: key.lastUsedAt && formatDate(key.lastUsedAt),
+    }));
     const universes = await db
       .selectFrom('accounts')
       .select(['server_id', 'lang'])
@@ -86,10 +105,8 @@ export async function accountRoutes(app: FastifyInstance, opts: { db: Kysely<Dat
         title: t('account.title'),
         username: user.username,
         isAdmin: user.isAdmin,
-        apiKey: active && {
-          prefix: active.prefix,
-          createdAt: active.createdAt.toLocaleDateString(user.locale, { timeZone: 'UTC' }),
-        },
+        keys,
+        keyError,
         newKey,
         settings,
       },
@@ -101,16 +118,34 @@ export async function accountRoutes(app: FastifyInstance, opts: { db: Kysely<Dat
     accountPage(request, reply, null),
   );
 
-  app.post('/account/api-key', withCsrf, async (request, reply) => {
-    const key = await generateApiKey(db, (request.user as WebUser).id);
-    reply.header('Cache-Control', 'no-store');
-    return accountPage(request, reply, key);
+  app.post('/account/api-keys', withCsrf, async (request, reply) => {
+    const user = request.user as WebUser;
+    try {
+      const { key } = await createApiKey(
+        db,
+        user.id,
+        text((request.body ?? {}) as Record<string, unknown>, 'name'),
+      );
+      reply.header('Cache-Control', 'no-store');
+      return accountPage(request, reply, key);
+    } catch (error) {
+      if (!(error instanceof ApiKeyNameError)) throw error;
+      const message = translator(user.locale)('account.keyNameInvalid', {
+        max: String(MAX_KEY_NAME_LENGTH),
+      });
+      return accountPage(request, reply, null, null, 400, message);
+    }
   });
 
-  app.post('/account/api-key/revoke', withCsrf, async (request, reply) => {
-    await revokeApiKey(db, (request.user as WebUser).id);
-    return reply.redirect('/account');
-  });
+  app.post<{ Params: { id: string } }>(
+    '/account/api-keys/:id/revoke',
+    withCsrf,
+    async (request, reply) => {
+      const revoked = await revokeApiKey(db, (request.user as WebUser).id, request.params.id);
+      if (!revoked) return renderError(request, reply, 404, 'errors.notFound');
+      return reply.redirect('/account');
+    },
+  );
 
   app.post('/account/settings/:serverId/:lang', withCsrf, async (request, reply) => {
     const user = request.user as WebUser;

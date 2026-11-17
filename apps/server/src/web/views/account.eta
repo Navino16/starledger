@@ -5,20 +5,36 @@
 <% if (it.newKey) { %>
 <p><%= it.t('account.keyCreated') %></p>
 <p><code><%= it.newKey %></code></p>
-<% } else if (it.apiKey) { %>
-<p><%= it.t('account.keyPrefix', { prefix: it.apiKey.prefix, date: it.apiKey.createdAt }) %></p>
-<% } else { %>
-<p><%= it.t('account.noKey') %></p>
 <% } %>
-<form method="post" action="/account/api-key">
+<form method="post" action="/account/api-keys">
+  <% if (it.keyError) { %><p class="error" role="alert"><%= it.keyError %></p><% } %>
   <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
-  <button type="submit"><%= it.apiKey ? it.t('account.regenerate') : it.t('account.generate') %></button>
+  <label for="key-name"><%= it.t('account.keyName') %></label>
+  <input id="key-name" name="name" type="text" required maxlength="64" placeholder="<%= it.t('account.keyNamePlaceholder') %>">
+  <button type="submit"><%= it.t('account.createKey') %></button>
 </form>
-<% if (it.apiKey) { %>
-<form method="post" action="/account/api-key/revoke">
-  <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
-  <button type="submit"><%= it.t('account.revoke') %></button>
-</form>
+<% if (it.keys.length === 0) { %>
+<p><%= it.t('account.noKey') %></p>
+<% } else { %>
+<table>
+  <thead><tr><th><%= it.t('account.keyName') %></th><th><%= it.t('account.keyColumn') %></th><th><%= it.t('account.keyCreatedAt') %></th><th><%= it.t('account.keyLastUsed') %></th><th></th></tr></thead>
+  <tbody>
+  <% for (const key of it.keys) { %>
+    <tr>
+      <td><%= key.name ?? it.t('account.unnamedKey') %></td>
+      <td><code><%= key.prefix %>…</code></td>
+      <td><%= key.createdAt %></td>
+      <td><%= key.lastUsedAt ?? it.t('account.neverUsed') %></td>
+      <td>
+        <form method="post" action="/account/api-keys/<%= key.id %>/revoke">
+          <input type="hidden" name="_csrf" value="<%= it.csrfToken %>">
+          <button type="submit"><%= it.t('account.revoke') %></button>
+        </form>
+      </td>
+    </tr>
+  <% } %>
+  </tbody>
+</table>
 <% } %>
 <h2><%= it.t('account.settingsTitle') %></h2>
 <% if (it.settings.length === 0) { %>

@@ -114,7 +114,9 @@ describe('migration 0003', () => {
     await down(t.db);
     const active = await sql<{
       key_hash: string;
-    }>`select key_hash from api_keys where user_id = ${userId} and revoked_at is null`.execute(t.db);
+    }>`select key_hash from api_keys where user_id = ${userId} and revoked_at is null`.execute(
+      t.db,
+    );
     expect(active.rows.map((r) => r.key_hash)).toEqual(['k2']);
     await up(t.db);
   });
