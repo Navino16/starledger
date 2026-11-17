@@ -49,7 +49,7 @@
 | 20 | Clés API multiples | ✅ |
 | 21 | Mots de passe | ✅ |
 | 22 | API JSON du site | ✅ |
-| 23 | App web : socle et pages publiques | ☐ |
+| 23 | App web : socle et pages publiques | ✅ |
 | 24 | Pages connectées et bascule | ☐ |
 
 ## Global Constraints
@@ -1642,11 +1642,11 @@ Branche : `feature/web-app`. Spec web, « Architecture », « Apparence », « L
 - `styles.css` : `@import "tailwindcss";` puis `@theme` avec **toutes** les variables `:root` de `docs/web-design/starledger.css` (couleurs, rayons, polices, `--ease`) ; CSS hors utilitaires listé dans `docs/web-design.md` § Implémentation (fiches des clés au téléphone, résumé des `<details>` ouverts, marqueur du `<summary>`).
 - `app.tsx` : `<App />` avec le routeur ; routes vides pour l'instant, page introuvable par défaut.
 
-- [ ] **Step 1 : test** : `render(<App />)` sur `/nope` affiche le titre de la page introuvable.
-- [ ] **Step 2 :** `pnpm --filter @app/web test` → FAIL.
-- [ ] **Step 3 :** créer le paquet (dépendances à la dernière version via `npx npm-check-updates`), le thème et le routeur.
-- [ ] **Step 4 :** `pnpm --filter @app/web test`, `pnpm --filter @app/web build` → PASS ; `wc -l apps/web/dist/assets/*.js` donne des milliers de lignes (bundle non minifié) ; `pnpm test:coverage` inclut `apps/web`.
-- [ ] **Step 5 : commit.** `git commit -m "Scaffold the web app with Vite, React and the Tailwind theme"`
+- [x] **Step 1 : test** : `render(<App />)` sur `/nope` affiche le titre de la page introuvable.
+- [x] **Step 2 :** `pnpm --filter @app/web test` → FAIL.
+- [x] **Step 3 :** créer le paquet (dépendances à la dernière version via `npx npm-check-updates`), le thème et le routeur.
+- [x] **Step 4 :** `pnpm --filter @app/web test`, `pnpm --filter @app/web build` → PASS ; `wc -l apps/web/dist/assets/*.js` donne des milliers de lignes (bundle non minifié) ; `pnpm test:coverage` inclut `apps/web`.
+- [x] **Step 5 : commit.** `git commit -m "Scaffold the web app with Vite, React and the Tailwind theme"`
 
 ### Tâche 23.2 : Client API, session, langue
 
@@ -1654,14 +1654,14 @@ Branche : `feature/web-app`. Spec web, « Architecture », « Apparence », « L
 
 **Interfaces :**
 - `api.ts` : `class ApiError extends Error { status: number; code: SiteErrorCode | 'network' }` ; `apiFetch<T>(path: string, init?: { method?: string; body?: unknown; schema?: ZodType<T> }): Promise<T>` : préfixe `/api/site`, JSON, `credentials: 'same-origin'`, en-tête `x-csrf-token` (jeton tenu par `setCsrfToken(token)`), 204 → `undefined`, réponse non OK → `ApiError` avec le code du corps.
-- `session.tsx` : `SessionProvider` charge `GET /session` au montage, expose `useSession(): { user: SiteUser | null; locale; openSignup; refresh(): Promise<void> }` ; `RequireUser` (redirige vers `/login`) et `RequireAdmin` (page Erreur « accès interdit »).
+- `session.tsx` : `SessionProvider` charge `GET /session` au montage, expose `useSession(): { user: SiteUser | null; locale; openSignup; unavailable; refresh(): Promise<void> }` ; `RequireUser` (redirige vers `/login`) et `RequireAdmin` (page Erreur « accès interdit ») vivent dans `apps/web/src/guards.tsx` pour éviter un import circulaire avec les pages.
 - `i18n.ts` : `t(key, params?)` comme `apps/server/src/web/i18n.ts` (même syntaxe `{param}`), catalogues repris des locales serveur et complétés des libellés des maquettes ; `useT()` lit la langue de la session ; `formatDate(date, locale)` → « 16 nov. 2026, 14:32 » en fr.
 
-- [ ] **Step 1 : tests** : `apiFetch` envoie le jeton, transforme `{ error: 'csrf_invalid' }` 403 en `ApiError('csrf_invalid', 403)`, 204 → `undefined`, panne réseau → code `network` ; `SessionProvider` anonyme : `RequireUser` redirige vers `/login` ; `t('settings.universe', { serverId: '285', lang: 'fr' })` → « Univers 285 (fr) » ; clé absente → la clé ; `formatDate` fr et en.
-- [ ] **Step 2 :** lancer → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** lancer → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add the web API client, session and translations"`
+- [x] **Step 1 : tests** : `apiFetch` envoie le jeton, transforme `{ error: 'csrf_invalid' }` 403 en `ApiError('csrf_invalid', 403)`, 204 → `undefined`, panne réseau → code `network` ; `SessionProvider` anonyme : `RequireUser` redirige vers `/login` ; `t('settings.universe', { serverId: '285', lang: 'fr' })` → « Univers 285 (fr) » ; clé absente → la clé ; `formatDate` fr et en.
+- [x] **Step 2 :** lancer → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** lancer → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add the web API client, session and translations"`
 
 ### Tâche 23.3 : Composants
 
@@ -1674,11 +1674,11 @@ Branche : `feature/web-app`. Spec web, « Architecture », « Apparence », « L
 - `SecretNotice({ message, secret })` (`role="status"`) : secret en mono, `user-select: all` ; bouton « Copier » rendu seulement si `navigator.clipboard` existe, passe à « Copié » après succès ; refus du presse-papiers → bouton revenu à « Copier », secret toujours sélectionnable ;
 - `AuthCard({ title, children })` : carte de 400 px centrée avec « Starledger ».
 
-- [ ] **Step 1 : tests** : `Field` avec erreur → `aria-invalid="true"` et message relié ; `SecretNotice` sans `navigator.clipboard` → pas de bouton ; avec → clic appelle `writeText(secret)` puis « Copié » ; `writeText` rejeté → « Copier » ; `Alert` a `role="alert"`.
-- [ ] **Step 2 :** lancer → FAIL.
-- [ ] **Step 3 :** implémenter avec les utilitaires du thème ; aucun style propre aux écrans.
-- [ ] **Step 4 :** lancer → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add the web UI components"`
+- [x] **Step 1 : tests** : `Field` avec erreur → `aria-invalid="true"` et message relié ; `SecretNotice` sans `navigator.clipboard` → pas de bouton ; avec → clic appelle `writeText(secret)` puis « Copié » ; `writeText` rejeté → « Copier » ; `Alert` a `role="alert"`.
+- [x] **Step 2 :** lancer → FAIL.
+- [x] **Step 3 :** implémenter avec les utilitaires du thème ; aucun style propre aux écrans.
+- [x] **Step 4 :** lancer → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add the web UI components"`
 
 ### Tâche 23.4 : Pages publiques
 
@@ -1689,11 +1689,11 @@ Branche : `feature/web-app`. Spec web, « Architecture », « Apparence », « L
 - Après connexion, inscription ou réinitialisation : `refresh()` puis navigation vers `/account`. Utilisateur déjà connecté sur `/login` → `/account`.
 - Erreurs d'API rendues selon les maquettes : `invalid_credentials` en alerte ; `username_*` et `password_short` sous le champ concerné.
 
-- [ ] **Step 1 : tests** (fetch simulé) : login invalide → alerte « Identifiants invalides » ; login valide → navigation `/account` ; invitation expirée → page Erreur ; `username_taken` → erreur sous Identifiant ; reset affiche « Compte : vega » et soumet `{ password }` ; `/signup` avec `openSignup: false` → introuvable.
-- [ ] **Step 2 :** lancer → FAIL.
-- [ ] **Step 3 :** implémenter d'après les maquettes `login`, `signup`, `reset-password`.
-- [ ] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; contrôle visuel bureau (1280 px) et téléphone (390 px) contre `docs/web-design/screenshots/` avec `pnpm --filter @app/web dev` et le serveur local.
-- [ ] **Step 5 : commit.** `git commit -m "Add the public pages of the web app"`
+- [x] **Step 1 : tests** (fetch simulé) : login invalide → alerte « Identifiants invalides » ; login valide → navigation `/account` ; invitation expirée → page Erreur ; `username_taken` → erreur sous Identifiant ; reset affiche « Compte : vega » et soumet `{ password }` ; `/signup` avec `openSignup: false` → introuvable.
+- [x] **Step 2 :** lancer → FAIL.
+- [x] **Step 3 :** implémenter d'après les maquettes `login`, `signup`, `reset-password`.
+- [x] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; contrôle visuel bureau (1280 px) et téléphone (390 px) contre `docs/web-design/screenshots/` avec `pnpm --filter @app/web dev` et le serveur local.
+- [x] **Step 5 : commit.** `git commit -m "Add the public pages of the web app"`
 
 ## Scope 24 — Pages connectées et bascule
 
