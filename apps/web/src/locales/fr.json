@@ -1,0 +1,48 @@
+{
+  "appName": "Starledger",
+  "login": {
+    "title": "Connexion",
+    "username": "Identifiant",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "invalid": "Identifiants invalides"
+  },
+  "signup": {
+    "title": "Créer un compte",
+    "submit": "Créer le compte",
+    "passwordHint": "{min} caractères minimum",
+    "haveAccount": "Déjà un compte ?",
+    "signIn": "Se connecter"
+  },
+  "fieldErrors": {
+    "username_invalid": "L'identifiant doit contenir de 3 à 32 caractères parmi a-z, 0-9, « _ », « . » et « - ».",
+    "username_taken": "Cet identifiant est déjà pris.",
+    "password_short": "Le mot de passe doit contenir au moins {min} caractères."
+  },
+  "reset": {
+    "title": "Nouveau mot de passe",
+    "account": "Compte : {username}",
+    "newPassword": "Nouveau mot de passe",
+    "submit": "Enregistrer le mot de passe"
+  },
+  "errorPage": {
+    "title": "Erreur",
+    "notFoundTitle": "Page introuvable",
+    "notFound": "Cette page n'existe pas.",
+    "invitationInvalid": "Cette invitation n'est plus valide : elle est inconnue, expirée ou déjà utilisée.",
+    "resetInvalid": "Ce lien n'est plus valide : il est inconnu, expiré ou déjà utilisé.",
+    "forbidden": "Vous n'avez pas accès à cette page.",
+    "unavailable": "Le serveur ne répond pas. Rechargez la page dans un instant.",
+    "backToLogin": "Connexion"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue. Réessayez dans un instant.",
+    "network": "Le serveur est injoignable. Réessayez dans un instant.",
+    "rateLimited": "Trop de tentatives. Réessayez dans une minute.",
+    "csrf": "Votre session a changé. Rechargez la page et réessayez."
+  },
+  "copy": {
+    "copy": "Copier",
+    "copied": "Copié"
+  }
+}
