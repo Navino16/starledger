@@ -1,0 +1,53 @@
+@import "tailwindcss";
+
+/* Tokens from docs/web-design/starledger.css; Tailwind turns them into bg-page, text-muted, rounded-card… */
+@theme {
+  --color-page: #0d1014;
+  --color-card: #161b23;
+  --color-raised: #1b212b;
+  --color-hover: #252d3a;
+  --color-line: #2a3240;
+  --color-control: #687082;
+  --color-ink: #e7e8eb;
+  --color-body: #c9cdd6;
+  --color-muted: #858b98;
+  --color-disabled: #5b6270;
+  --color-gold: #e3b955;
+  --color-on-gold: #0d1014;
+  --color-danger: #e2574c;
+  --color-success: #64a69b;
+  --color-focus: #b4c8f7;
+  --color-gain: #4f8f7a;
+  --color-metal: #9899be;
+  --color-crystal: #95c1dd;
+  --color-deuterium: #64a69b;
+  --color-dark-matter: #b88ce8;
+  --radius-card: 10px;
+  --radius-control: 6px;
+  --radius-chip: 2px;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  /* The guide's --ease; Tailwind needs the --ease-* namespace for the ease-standard utility. */
+  --ease-standard: cubic-bezier(0.22, 1, 0.36, 1);
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: var(--ease-standard);
+}
+
+@layer base {
+  body {
+    margin: 0;
+    background: var(--color-page);
+    color: var(--color-body);
+    font: 14px/20px var(--font-sans);
+  }
+  a {
+    color: var(--color-ink);
+  }
+  a:hover {
+    color: var(--color-gold);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+  }
+}
