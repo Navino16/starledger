@@ -1,10 +1,12 @@
-import { DEFAULT_VALUATION, type ValuationSettings } from '@app/shared';
+import {
+  DEFAULT_VALUATION,
+  MAX_MSU_RATIO,
+  MIN_MSU_RATIO,
+  type ValuationSettings,
+} from '@app/shared';
 import type { Kysely } from 'kysely';
 import { z } from 'zod';
 import type { Database } from '../db/schema';
-
-const MIN_MSU_RATIO = 0.01;
-const MAX_MSU_RATIO = 100;
 
 export async function getValuationSettings(
   db: Kysely<Database>,
