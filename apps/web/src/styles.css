@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
 /* Tokens from docs/web-design/starledger.css; Tailwind turns them into bg-page, text-muted, rounded-card… */
-@theme {
+/* static: charts read the tokens through var(), which Tailwind does not see as usage. */
+@theme static {
   --color-page: #0d1014;
   --color-card: #161b23;
   --color-raised: #1b212b;

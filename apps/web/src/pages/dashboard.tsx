@@ -10,7 +10,7 @@ import { useSession } from '../session';
 import { Alert } from '../ui/alert';
 import { Page } from '../ui/app-shell';
 import { Button } from '../ui/button';
-import { INPUT_CLASSES } from '../ui/field';
+import { CONTROL_CLASSES } from '../ui/field';
 import { ChevronIcon } from '../ui/icons';
 
 const PERIODS: DashboardPeriod[] = ['day', 'week', 'month', 'all'];
@@ -31,7 +31,7 @@ export function DashboardPage() {
       </label>
       <select
         id="dashboard-account"
-        className={`${INPUT_CLASSES} w-auto min-w-[200px] max-sm:w-full`}
+        className={`${CONTROL_CLASSES} min-w-[200px] max-sm:w-full`}
         value={accountKey(account)}
         onChange={(e) => dashboard.selectAccount(e.target.value)}
       >
@@ -54,7 +54,7 @@ export function DashboardPage() {
         >
           <ChevronIcon className="rotate-90" />
         </Button>
-        <fieldset className="m-0 flex gap-1 rounded-lg border-0 bg-card p-1 max-sm:flex-1">
+        <fieldset className="m-0 flex min-w-0 gap-1 rounded-lg border-0 bg-card p-1 max-sm:flex-1">
           <legend className="sr-only">{t('dashboard.periodLabel')}</legend>
           {PERIODS.map((p) => (
             <button
