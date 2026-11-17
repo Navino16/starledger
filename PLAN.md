@@ -50,7 +50,7 @@
 | 21 | Mots de passe | ✅ |
 | 22 | API JSON du site | ✅ |
 | 23 | App web : socle et pages publiques | ✅ |
-| 24 | Pages connectées et bascule | ☐ |
+| 24 | Pages connectées et bascule | ✅ |
 
 ## Global Constraints
 
@@ -1755,4 +1755,4 @@ Branche : `feature/web-switchover`.
 
 ### Tâche 24.5 : Vérification (utilisateur)
 
-- [ ] Sur le serveur local : créer une clé pour le téléphone sans toucher à celle du PC ; le userscript des deux appareils synchronise toujours ; la dernière utilisation de chaque clé se met à jour.
+- [x] Sur le serveur local : créer une clé pour le téléphone sans toucher à celle du PC ; le userscript des deux appareils synchronise toujours ; la dernière utilisation de chaque clé se met à jour.
