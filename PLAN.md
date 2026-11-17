@@ -48,7 +48,7 @@
 | 19 | Surplus de lithium des récompenses | ✅ |
 | 20 | Clés API multiples | ✅ |
 | 21 | Mots de passe | ✅ |
-| 22 | API JSON du site | ☐ |
+| 22 | API JSON du site | ✅ |
 | 23 | App web : socle et pages publiques | ☐ |
 | 24 | Pages connectées et bascule | ☐ |
 
@@ -1587,11 +1587,11 @@ Branche : `feature/site-api`. Spec web, « Architecture ».
 - Shared : `siteUserSchema` (`{ username, isAdmin, locale: 'fr' | 'en' }`), `sessionResponseSchema` (`{ user: SiteUser | null; locale: 'fr' | 'en'; csrfToken: string; openSignup: boolean }`), `loginRequestSchema` (`{ username: string; password: string }`), `SiteErrorCode` (union des codes), types inférés exportés.
 - Routes : `GET /session` (locale = `user.locale` sinon `negotiateLocale`) ; `POST /login` (10/min/IP, `invalid_credentials` 401, sinon `startSession` et `{ user }`) ; `POST /logout` → 204 et session supprimée.
 
-- [ ] **Step 1 : tests** : `GET /session` anonyme → `user: null`, `csrfToken` non vide, `locale` d'`Accept-Language: fr` = `fr` ; login correct avec jeton → `{ user }` et cookie, puis `GET /session` connecté ; mauvais mot de passe → 401 `invalid_credentials` ; login sans `x-csrf-token` → 403 `csrf_invalid` en JSON ; 11ᵉ tentative dans la minute → 429 `rate_limited` ; corps non conforme → 400 `invalid_payload` ; `GET /api/site/nope` → 404 JSON ; logout → 204 puis `user: null`.
-- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run test/site-session.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** même commande → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add the site JSON API with session and login"`
+- [x] **Step 1 : tests** : `GET /session` anonyme → `user: null`, `csrfToken` non vide, `locale` d'`Accept-Language: fr` = `fr` ; login correct avec jeton → `{ user }` et cookie, puis `GET /session` connecté ; mauvais mot de passe → 401 `invalid_credentials` ; login sans `x-csrf-token` → 403 `csrf_invalid` en JSON ; 11ᵉ tentative dans la minute → 429 `rate_limited` ; corps non conforme → 400 `invalid_payload` ; `GET /api/site/nope` → 404 JSON ; logout → 204 puis `user: null`.
+- [x] **Step 2 :** `pnpm --filter @app/server exec vitest run test/site-session.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** même commande → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add the site JSON API with session and login"`
 
 ### Tâche 22.2 : Inscription, invitations, réinitialisation
 
@@ -1604,11 +1604,11 @@ Branche : `feature/site-api`. Spec web, « Architecture ».
   - `POST /signup` (seulement si `openSignup`, sinon 404) → mêmes réponses sans 410 ;
   - `GET /password-resets/:token` → `{ username }` ou 410 `reset_invalid` ; `POST /password-resets/:token` → 200 `{ user }` et session ouverte avec la nouvelle version, 410 `reset_invalid`, 400 `password_short`.
 
-- [ ] **Step 1 : tests** : parcours invitation complet ; jeton déjà utilisé → 410 ; `/signup` 404 quand `openSignup` est faux, 201 quand vrai ; réinitialisation : `GET` donne l'identifiant, `POST` ouvre une session, une autre session ouverte avant devient anonyme, réutilisation → 410 ; les logs capturés (`logStream`) ne contiennent jamais le jeton en clair pour les quatre routes.
-- [ ] **Step 2 :** lancer le fichier → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** même commande → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add signup, invitation and password reset to the site API"`
+- [x] **Step 1 : tests** : parcours invitation complet ; jeton déjà utilisé → 410 ; `/signup` 404 quand `openSignup` est faux, 201 quand vrai ; réinitialisation : `GET` donne l'identifiant, `POST` ouvre une session, une autre session ouverte avant devient anonyme, réutilisation → 410 ; les logs capturés (`logStream`) ne contiennent jamais le jeton en clair pour les quatre routes.
+- [x] **Step 2 :** lancer le fichier → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** même commande → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add signup, invitation and password reset to the site API"`
 
 ### Tâche 22.3 : Compte, réglages, administration
 
@@ -1622,11 +1622,11 @@ Branche : `feature/site-api`. Spec web, « Architecture ».
   - `GET /settings` → `{ universes }` (univers de `accounts`, ordre serveur puis langue) ; `PUT /settings/:serverId/:lang` → 200 `{ settings }`, 400 `settings_invalid`, 404 si l'univers n'est pas à l'utilisateur ou les paramètres sont mal formés (mêmes contrôles que la route Eta) ;
 - Routes admin (403 `forbidden` sinon) : `POST /admin/invitations` → 201 `{ url }` ; `POST /admin/password-resets` → 201 `{ url, username }`, 404 `unknown_user`.
 
-- [ ] **Step 1 : tests** : clés : créer, lister, supprimer, supprimer celle d'un autre → 404 ; changement de mot de passe : la session courante reste connectée, une seconde session devient anonyme, mauvais actuel → 400 `current_invalid` ; réglages : lecture, écriture valide relue, `msuRatio` à 0 → 400, univers d'un autre → 404, `serverId` `abc` → 404 ; admin : non-admin → 403, invitation et lien de réinitialisation créés, identifiant inconnu → 404 ; anonyme sur chaque route → 401.
-- [ ] **Step 2 :** lancer les fichiers → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add account, settings and admin endpoints to the site API"`
+- [x] **Step 1 : tests** : clés : créer, lister, supprimer, supprimer celle d'un autre → 404 ; changement de mot de passe : la session courante reste connectée, une seconde session devient anonyme, mauvais actuel → 400 `current_invalid` ; réglages : lecture, écriture valide relue, `msuRatio` à 0 → 400, univers d'un autre → 404, `serverId` `abc` → 404 ; admin : non-admin → 403, invitation et lien de réinitialisation créés, identifiant inconnu → 404 ; anonyme sur chaque route → 401.
+- [x] **Step 2 :** lancer les fichiers → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add account, settings and admin endpoints to the site API"`
 
 ## Scope 23 — App web : socle et pages publiques
 
