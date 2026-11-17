@@ -52,7 +52,7 @@
 | 22 | API JSON du site | ✅ |
 | 23 | App web : socle et pages publiques | ✅ |
 | 24 | Pages connectées et bascule | ✅ |
-| 25 | API du dashboard | ☐ |
+| 25 | API du dashboard | ✅ |
 | 26 | Page Dashboard | ☐ |
 | 27 | En-têtes de sécurité | ☐ |
 
@@ -1794,11 +1794,11 @@ Branche : `feature/dashboard-api`. Spec dashboard, « Serveur » et « Sécurit�
 
 **Interfaces :** un hook `onSend` dans `sitePlugin` pose `Cache-Control: no-store` sur toute réponse de `/api/site`, erreurs comprises.
 
-- [ ] **Step 1 : test** : `GET /api/site/session`, `GET /api/site/api-keys` (connecté), `GET /api/site/nope` et un `POST` sans CSRF répondent tous avec `cache-control: no-store`.
-- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run --no-file-parallelism test/site-security.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** même commande → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Never cache site API responses"`
+- [x] **Step 1 : test** : `GET /api/site/session`, `GET /api/site/api-keys` (connecté), `GET /api/site/nope` et un `POST` sans CSRF répondent tous avec `cache-control: no-store`.
+- [x] **Step 2 :** `pnpm --filter @app/server exec vitest run --no-file-parallelism test/site-security.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** même commande → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Never cache site API responses"`
 
 ### Tâche 25.2 : Comptes et stats pour le site
 
@@ -1810,11 +1810,11 @@ Branche : `feature/dashboard-api`. Spec dashboard, « Serveur » et « Sécurit�
 - `GET /api/site/accounts` (session) : comptes de l'utilisateur, triés `server_id`, `lang`, `player_id`.
 - `GET /api/site/stats` (session) : même requête et même réponse (`StatsResponse`) que `GET /api/v1/stats` ; paramètre invalide → 400 `invalid_payload` ; limite `API_RATE_LIMIT_PER_MINUTE` par utilisateur.
 
-- [ ] **Step 1 : tests** : `accounts` liste les deux comptes de Vega triés, `playerName` nul conservé, sans ceux d'Orion ; anonyme → 401 ; `stats` d'un compte de Vega, période `month`, renvoie le même corps que `/api/v1/stats` avec la clé de Vega (hors `generatedAt`) ; Orion demandant le compte de Vega → résumé vide (`expeditions.count` 0) ; `period=year`, `today=2026-02-31`, `serverId=abc` → 400 `invalid_payload` ; la requête n° `API_RATE_LIMIT_PER_MINUTE + 1` → 429 `rate_limited`.
-- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run --no-file-parallelism test/site-stats.test.ts test/stats-api.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter ; `/api/v1/stats` garde son comportement.
-- [ ] **Step 4 :** même commande → PASS ; suite serveur complète, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Serve accounts and stats to the web app"`
+- [x] **Step 1 : tests** : `accounts` liste les deux comptes de Vega triés, `playerName` nul conservé, sans ceux d'Orion ; anonyme → 401 ; `stats` d'un compte de Vega, période `month`, renvoie le même corps que `/api/v1/stats` avec la clé de Vega (hors `generatedAt`) ; Orion demandant le compte de Vega → résumé vide (`expeditions.count` 0) ; `period=year`, `today=2026-02-31`, `serverId=abc` → 400 `invalid_payload` ; la requête n° `API_RATE_LIMIT_PER_MINUTE + 1` → 429 `rate_limited`.
+- [x] **Step 2 :** `pnpm --filter @app/server exec vitest run --no-file-parallelism test/site-stats.test.ts test/stats-api.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter ; `/api/v1/stats` garde son comportement.
+- [x] **Step 4 :** même commande → PASS ; suite serveur complète, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Serve accounts and stats to the web app"`
 
 ## Scope 26 — Page Dashboard
 

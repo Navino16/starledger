@@ -32,9 +32,6 @@ export const requireSiteAdmin: preHandlerAsyncHookHandler = async (request, repl
   if (!request.user.isAdmin) return sendSiteError(reply, 403, 'forbidden');
 };
 
-// Secrets shown once (keys, invitation and reset links) must not be cached.
-export const noStore = (reply: FastifyReply) => reply.header('Cache-Control', 'no-store');
-
 export const LOGIN_MAX_PER_MINUTE = 10;
 export const perMinute = (max: number) => ({
   config: { rateLimit: { max, timeWindow: '1 minute' } },

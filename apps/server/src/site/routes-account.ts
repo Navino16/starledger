@@ -12,7 +12,7 @@ import type { Database } from '../db/schema';
 import { getValuationSettings, saveValuationSettings } from '../settings/settings';
 import { CurrentPasswordError, changePassword } from '../users/passwords';
 import { UserInputError } from '../users/users';
-import { currentUser, noStore, parseBody, perMinute, requireSiteUser, sendSiteError } from './http';
+import { currentUser, parseBody, perMinute, requireSiteUser, sendSiteError } from './http';
 
 const PASSWORD_MAX_PER_MINUTE = 10;
 const SERVER_ID_PATTERN = /^\d{1,10}$/;
@@ -38,7 +38,7 @@ export async function accountRoutes(app: FastifyInstance, opts: { db: Kysely<Dat
     const { name } = parseBody(createKeyRequestSchema, request.body);
     try {
       const created = await createApiKey(db, currentUser(request).id, name);
-      return noStore(reply).status(201).send(created);
+      return reply.status(201).send(created);
     } catch (error) {
       if (error instanceof ApiKeyNameError) return sendSiteError(reply, 400, 'name_invalid');
       throw error;

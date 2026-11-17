@@ -5,7 +5,7 @@ import type { Config } from '../config';
 import type { Database } from '../db/schema';
 import { createInvitation } from '../users/invitations';
 import { createPasswordReset, UnknownUserError } from '../users/passwords';
-import { currentUser, noStore, parseBody, requireSiteAdmin, sendSiteError } from './http';
+import { currentUser, parseBody, requireSiteAdmin, sendSiteError } from './http';
 
 export async function adminRoutes(
   app: FastifyInstance,
@@ -16,7 +16,7 @@ export async function adminRoutes(
 
   app.post('/admin/invitations', async (request, reply) => {
     const { url } = await createInvitation(db, currentUser(request).id, config.publicUrl);
-    return noStore(reply).status(201).send({ url });
+    return reply.status(201).send({ url });
   });
 
   app.post('/admin/password-resets', async (request, reply) => {
@@ -28,7 +28,7 @@ export async function adminRoutes(
         username,
         config.publicUrl,
       );
-      return noStore(reply).status(201).send(link);
+      return reply.status(201).send(link);
     } catch (error) {
       if (error instanceof UnknownUserError) return sendSiteError(reply, 404, 'unknown_user');
       throw error;
