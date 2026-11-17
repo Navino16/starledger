@@ -95,3 +95,16 @@ describe('web app hosting', () => {
     await bare.close();
   });
 });
+
+describe('security headers', () => {
+  it.each(['/', '/assets/a.js', '/healthz', '/api/site/session', '/api/v1/nope'])(
+    'are sent on %s',
+    async (url) => {
+      const res = await get(url);
+      expect(res.headers['content-security-policy']).toContain("frame-ancestors 'none'");
+      expect(res.headers['content-security-policy']).toContain("default-src 'self'");
+      expect(res.headers['x-content-type-options']).toBe('nosniff');
+      expect(res.headers['referrer-policy']).toBe('same-origin');
+    },
+  );
+});
