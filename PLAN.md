@@ -53,7 +53,7 @@
 | 23 | App web : socle et pages publiques | ✅ |
 | 24 | Pages connectées et bascule | ✅ |
 | 25 | API du dashboard | ✅ |
-| 26 | Page Dashboard | ☐ |
+| 26 | Page Dashboard | ✅ |
 | 27 | En-têtes de sécurité | ✅ |
 | 28 | Icônes du jeu dans le dashboard | ✅ |
 
@@ -1887,7 +1887,7 @@ Branche : `feature/web-dashboard`. Spec dashboard, « Sélection du compte et de
 ### Tâche 26.5 : Vérification
 
 - [x] Captures bureau (1280 px) et téléphone (390 px) avec l'API simulée (Playwright isolé), comparées à `docs/web-design/screenshots/dashboard*.png` ; pas de défilement horizontal.
-- [ ] Conteneur local reconstruit : mêmes chiffres que la fenêtre détail du userscript pour le même compte et la même période (utilisateur).
+- [x] Conteneur local reconstruit : mêmes chiffres que la fenêtre détail du userscript pour le même compte et la même période (utilisateur).
 
 ## Scope 27 — En-têtes de sécurité
 
