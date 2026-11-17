@@ -1,0 +1,48 @@
+{
+  "appName": "Starledger",
+  "login": {
+    "title": "Sign in",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "invalid": "Invalid credentials"
+  },
+  "signup": {
+    "title": "Create an account",
+    "submit": "Create the account",
+    "passwordHint": "At least {min} characters",
+    "haveAccount": "Already have an account?",
+    "signIn": "Sign in"
+  },
+  "fieldErrors": {
+    "username_invalid": "The username must be 3 to 32 characters among a-z, 0-9, \"_\", \".\" and \"-\".",
+    "username_taken": "This username is already taken.",
+    "password_short": "The password must be at least {min} characters."
+  },
+  "reset": {
+    "title": "New password",
+    "account": "Account: {username}",
+    "newPassword": "New password",
+    "submit": "Save the password"
+  },
+  "errorPage": {
+    "title": "Error",
+    "notFoundTitle": "Page not found",
+    "notFound": "This page does not exist.",
+    "invitationInvalid": "This invitation is no longer valid: it is unknown, expired or already used.",
+    "resetInvalid": "This link is no longer valid: it is unknown, expired or already used.",
+    "forbidden": "You do not have access to this page.",
+    "unavailable": "The server is not responding. Reload the page in a moment.",
+    "backToLogin": "Sign in"
+  },
+  "errors": {
+    "generic": "Something went wrong. Try again in a moment.",
+    "network": "The server cannot be reached. Try again in a moment.",
+    "rateLimited": "Too many attempts. Try again in a minute.",
+    "csrf": "Your session changed. Reload the page and try again."
+  },
+  "copy": {
+    "copy": "Copy",
+    "copied": "Copied"
+  }
+}
