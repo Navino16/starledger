@@ -14,6 +14,7 @@
 - Serveur : Fastify 5, Kysely + `pg`, PostgreSQL 17, zod 4, Eta (`@fastify/view`), `@fastify/secure-session`, `@fastify/csrf-protection`, `@fastify/formbody`, `@fastify/rate-limit`, `@node-rs/argon2`
 - Userscript : vite-plugin-monkey, jsdom (tests)
 - App web (scopes 23 et 24) : Vite, React, React Router, Tailwind CSS v4, Testing Library ; remplace Eta et `@fastify/view` au scope 24
+- Dashboard (scope 26) : Recharts
 - Tests base de données : `@testcontainers/postgresql`
 - Docker Compose
 
@@ -51,6 +52,9 @@
 | 22 | API JSON du site | ✅ |
 | 23 | App web : socle et pages publiques | ✅ |
 | 24 | Pages connectées et bascule | ✅ |
+| 25 | API du dashboard | ☐ |
+| 26 | Page Dashboard | ☐ |
+| 27 | En-têtes de sécurité | ☐ |
 
 ## Global Constraints
 
@@ -1756,3 +1760,148 @@ Branche : `feature/web-switchover`.
 ### Tâche 24.5 : Vérification (utilisateur)
 
 - [x] Sur le serveur local : créer une clé pour le téléphone sans toucher à celle du PC ; le userscript des deux appareils synchronise toujours ; la dernière utilisation de chaque clé se met à jour.
+
+---
+
+## Dashboard web (scopes 25 à 27)
+
+**Spec** : `docs/superpowers/specs/2026-11-17-web-dashboard-design.md` (fait foi, ci-après « spec dashboard ») ; apparence : `docs/web-design.md` (tokens, graphiques, rédaction, accessibilité) et la maquette indicative `docs/web-design/mockups/dashboard.html`.
+
+**Ordre** : 25 (API) puis 26 (page). 27 (en-têtes de sécurité) est indépendant et peut passer avant ou après.
+
+**Contraintes communes :**
+- Aucun nouveau calcul de stats : tout chiffre vient de `computeStats` via `getStats` ; le front ne fait que mettre en forme (spec dashboard, non-objectifs).
+- Aucun changement de `/api/v1` ni du userscript.
+- Inconnu ≠ 0 : un carburant inconnu ou un rapport non reconnu est signalé, jamais affiché comme 0.
+- Unités jamais additionnées entre elles, sauf la valorisation libellée « MSU ».
+- Graphiques : Recharts, sans animation (`isAnimationActive={false}`), couleurs des tokens, axes en mono `muted`, chaque graphique dans un conteneur `role="img"` avec un `aria-label` qui résume ses données.
+- Bundle non minifié, aucune ressource externe ; dépendance à la dernière version (`npx npm-check-updates --workspaces --root`) et `pnpm audit` sans alerte haute.
+
+**Review Focus (dashboard) :**
+1. Compte d'un autre utilisateur passé dans l'URL ou en paramètre de `/api/site/stats` : réponse vide, aucune donnée de l'autre (test en 25.2).
+2. `account` absent, mal formé ou plus suivi dans l'URL : premier compte de la liste, pas d'écran blanc (test en 26.2).
+3. Période sans aucun événement : chaque carte affiche « Aucune donnée sur cette période », pas un graphique vide ni des 0 (test en 26.3 et 26.4).
+4. Réponse de stats arrivée après un changement de compte plus récent : l'ancienne réponse n'écrase pas la nouvelle (test en 26.2).
+5. Nom de joueur contenant du HTML (`<b>x</b>`) : affiché tel quel en texte (test en 26.2).
+
+## Scope 25 — API du dashboard
+
+Branche : `feature/dashboard-api`. Spec dashboard, « Serveur » et « Sécurité ».
+
+### Tâche 25.1 : `no-store` sur toute l'API du site
+
+**Files :** Modify `apps/server/src/site/plugin.ts`, `apps/server/src/site/http.ts` (`noStore` devient inutile : le retirer des routes) ; Test `apps/server/test/site-security.test.ts`.
+
+**Interfaces :** un hook `onSend` dans `sitePlugin` pose `Cache-Control: no-store` sur toute réponse de `/api/site`, erreurs comprises.
+
+- [ ] **Step 1 : test** : `GET /api/site/session`, `GET /api/site/api-keys` (connecté), `GET /api/site/nope` et un `POST` sans CSRF répondent tous avec `cache-control: no-store`.
+- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run --no-file-parallelism test/site-security.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Never cache site API responses"`
+
+### Tâche 25.2 : Comptes et stats pour le site
+
+**Files :** Create `apps/server/src/site/routes-stats.ts`, `apps/server/src/stats/stats-query.ts` ; Modify `apps/server/src/api/routes-stats.ts` (importe le schéma déplacé), `apps/server/src/site/plugin.ts`, `packages/shared/src/site.ts` ; Test `apps/server/test/site-stats.test.ts`.
+
+**Interfaces :**
+- `stats-query.ts` : `export const statsQuerySchema` (déplacé tel quel de `api/routes-stats.ts`) et `export function toStatsQuery(data): StatsQuery` (la conversion `from`/`to` → `custom` aujourd'hui dans la route).
+- `packages/shared/src/site.ts` : `siteAccountSchema = z.object({ serverId: z.number(), lang: z.string(), playerId: z.number(), playerName: z.string().nullable() })`, `accountsResponseSchema = z.object({ accounts: z.array(siteAccountSchema) })`.
+- `GET /api/site/accounts` (session) : comptes de l'utilisateur, triés `server_id`, `lang`, `player_id`.
+- `GET /api/site/stats` (session) : même requête et même réponse (`StatsResponse`) que `GET /api/v1/stats` ; paramètre invalide → 400 `invalid_payload` ; limite `API_RATE_LIMIT_PER_MINUTE` par utilisateur.
+
+- [ ] **Step 1 : tests** : `accounts` liste les deux comptes de Vega triés, `playerName` nul conservé, sans ceux d'Orion ; anonyme → 401 ; `stats` d'un compte de Vega, période `month`, renvoie le même corps que `/api/v1/stats` avec la clé de Vega (hors `generatedAt`) ; Orion demandant le compte de Vega → résumé vide (`expeditions.count` 0) ; `period=year`, `today=2026-02-31`, `serverId=abc` → 400 `invalid_payload` ; la requête n° `API_RATE_LIMIT_PER_MINUTE + 1` → 429 `rate_limited`.
+- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run --no-file-parallelism test/site-stats.test.ts test/stats-api.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter ; `/api/v1/stats` garde son comportement.
+- [ ] **Step 4 :** même commande → PASS ; suite serveur complète, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Serve accounts and stats to the web app"`
+
+## Scope 26 — Page Dashboard
+
+Branche : `feature/web-dashboard`. Spec dashboard, « Sélection du compte et de la période », « Les blocs », « Formats ».
+
+### Tâche 26.1 : Recharts et outils de mise en forme
+
+**Files :** Modify `apps/web/package.json`, `apps/web/src/i18n.ts`, `apps/web/src/styles.css`, `apps/web/src/locales/{fr,en}.json`, `apps/web/test/setup.ts` ; Create `apps/web/src/dashboard/format.ts` ; Test `apps/web/test/dashboard-format.test.ts`.
+
+**Interfaces :**
+- Dépendance `recharts` (dernière version, `pnpm audit`).
+- `test/setup.ts` : un `ResizeObserver` minimal et une taille fixe pour `ResponsiveContainer`, afin que Recharts dessine sous jsdom.
+- `formatCompact(value: number, locale: SiteLocale): string` dans `i18n.ts` : une décimale, unités k, M, G, séparateur de la langue, signe moins typographique (`−`) ; 0 → « 0 ».
+- `styles.css` : couleurs des résultats d'expédition en tokens `--color-outcome-<résultat>` (valeurs de `apps/userscript/src/ui/details/donut.ts`).
+- `dashboard/format.ts` : `parseAccountKey(raw: string | null): { serverId: number; lang: string; playerId: number } | null` (`^(\d{1,10})-([a-z]{2,3})-(\d{1,16})$`), `accountKey(a)`, `shiftDay(day: string, period: 'day' | 'week' | 'month' | 'all', delta: 1 | -1): string`, `periodTitle(t, locale, period, day): string`.
+- Catalogues : `nav.dashboard`, `dashboard.*` (titres des blocs, résultats d'expédition et catégories repris du userscript, noms des 17 vaisseaux 202 à 219 en fr et en, textes vides et bandeau).
+
+- [ ] **Step 1 : tests** : `formatCompact(30_612_345, 'fr')` → `30,6 M` ; `(-2_000_000, 'fr')` → `−2 M` ; `(950, 'en')` → `950` ; `(1_250, 'en')` → `1.3k` ; `parseAccountKey('285-fr-123')` → `{ 285, 'fr', 123 }` ; `'285-FR-1'`, `'x'`, `null` → `null` ; `shiftDay('2026-01-31', 'month', 1)` → `2026-02-28` ; `('2026-11-17', 'week', -1)` → `2026-11-10` ; `periodTitle` fr : month → « Novembre 2026 », week → « Semaine du 16 nov. 2026 », all → « Tout l'historique ».
+- [ ] **Step 2 :** `pnpm --filter @app/web exec vitest run test/dashboard-format.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add Recharts and the dashboard formatting helpers"`
+
+### Tâche 26.2 : Page, sélection et chiffres clés
+
+**Files :** Create `apps/web/src/pages/dashboard.tsx`, `apps/web/src/dashboard/use-dashboard.ts`, `apps/web/src/dashboard/key-figures.tsx` ; Modify `apps/web/src/app.tsx`, `apps/web/src/ui/app-shell.tsx` (onglet Dashboard en premier ; `Page` accepte `wide`), `apps/web/src/pages/{login,signup,reset-password}.tsx` (arrivée sur `/dashboard`) ; Test `apps/web/test/dashboard.test.tsx`, tests existants qui attendent `/account` après connexion.
+
+**Interfaces :**
+- Route `/dashboard` sous `RequireUser` ; `/` → `/dashboard`.
+- `useDashboard()` : lit et écrit `account`, `period` (`day` | `week` | `month` | `all`, défaut `month`), `day` (défaut : date locale du navigateur) dans l'URL ; charge `/accounts` une fois, puis `/stats` à chaque changement en ignorant les réponses périmées ; mémorise le dernier compte choisi (`localStorage`, clé `starledger.dashboardAccount`, lecture et écriture dans un `try`).
+- En-tête de page : titre `periodTitle`, sélecteur « Univers 285 (fr) · Orion » (« Joueur 123 » sans nom), boutons Jour, Semaine, Mois, Tout (`aria-pressed`), flèches ‹ › (`aria-label` « Période précédente » / « Période suivante »).
+- `KeyFigures({ summary })` : métal, cristal, deutérium, antimatière, artefacts, bilan MSU signé, carburant (« + N départs inconnus » si `fuel.unknownCount > 0`).
+- Bandeau de données partielles : `counts.unrecognized` (libellé « dans tout l'historique »), `summary.conflictCount`, `fuel.unknownCount`, affiché seulement si l'un est non nul.
+
+- [ ] **Step 1 : tests** : connexion → `/dashboard` ; `/` → `/dashboard` ; onglet Dashboard `aria-current` ; sans `account`, le premier compte est choisi et l'URL le porte ; `account=999-fr-1` (inconnu) → premier compte ; choisir le second compte → `GET /stats?serverId=…` du second et URL mise à jour ; deux réponses dans le désordre (la première retardée) → les chiffres du second compte restent ; ‹ en Mois depuis `2026-11-17` → `day=2026-10-17` et titre « Octobre 2026 » ; aucun compte → texte vide, aucun appel `/stats` ; `fuel.unknownCount` 3 → « + 3 départs inconnus » ; bandeau absent si tout est nul ; nom `<b>x</b>` affiché en texte dans le sélecteur.
+- [ ] **Step 2 :** `pnpm --filter @app/web exec vitest run test/dashboard.test.tsx` → FAIL.
+- [ ] **Step 3 :** implémenter d'après la maquette `dashboard.html` (barre du haut, pleine largeur).
+- [ ] **Step 4 :** `pnpm --filter @app/web exec vitest run` → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add the dashboard page with account and period selection"`
+
+### Tâche 26.3 : Bilan MSU par jour et résultats d'expédition
+
+**Files :** Create `apps/web/src/dashboard/daily-chart.tsx`, `apps/web/src/dashboard/outcomes.tsx` ; Modify `apps/web/src/pages/dashboard.tsx` ; Test `apps/web/test/dashboard-charts.test.tsx`.
+
+**Interfaces :**
+- `DailyChart({ days, selected, onSelectDay })` : `BarChart` Recharts, une barre par entrée de `days`, couleur `gain` si ≥ 0, `danger` sinon ; barres hors période sélectionnée atténuées ; clic → `onSelectDay(day)` (la page passe en période Jour sur ce jour) ; infobulle date courte + MSU compact ; `aria-label` « Bilan MSU par jour, <mois> : total <x> MSU, <n> jours actifs ».
+- `Outcomes({ outcomes })` : liste HTML (pas Recharts) comme la maquette, triée par nombre décroissant, pastille de couleur, barre neutre, nombre et pourcentage fr (« 43,4 % »), total en tête ; résultats à 0 masqués.
+
+- [ ] **Step 1 : tests** : `days` avec un jour à −2 M → une barre `danger` ; clic sur le 5 → URL `period=day&day=…-05` ; `aria-label` contient le total ; outcomes `{ resources: 412, nothing: 208, … }` → première ligne « Ressources », « 43,4 % » ; outcomes tous à 0 → « Aucune donnée sur cette période ».
+- [ ] **Step 2 :** `pnpm --filter @app/web exec vitest run test/dashboard-charts.test.tsx` → FAIL.
+- [ ] **Step 3 :** implémenter ; disposition 2/3 – 1/3, une colonne sous 640 px.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add the daily balance chart and expedition outcomes"`
+
+### Tâche 26.4 : Gains et pertes par catégorie, vaisseaux
+
+**Files :** Create `apps/web/src/dashboard/balance-chart.tsx`, `apps/web/src/dashboard/ships-chart.tsx` ; Modify `apps/web/src/pages/dashboard.tsx` ; Test `apps/web/test/dashboard-charts.test.tsx`.
+
+**Interfaces :**
+- `BalanceChart({ summary, settings })` : `BarChart` horizontal, une ligne par catégorie de `summary.balance` dont gain ou perte est non nul, plus « Échanges » si `settings.includeTradesInBalance` (reçus en gain, livrés en perte) ; gain `toMsu(gains, settings.msuRatio)` à droite en `gain`, perte en négatif à gauche en `danger` ; infobulle : métal, cristal, deutérium bruts.
+- `ShipsChart({ ships })` : `BarChart` horizontal, une ligne par type de vaisseau trouvé ou perdu, deux barres (trouvés `gain`, perdus `danger`), en nombre de vaisseaux ; noms des vaisseaux du catalogue.
+
+- [ ] **Step 1 : tests** : balance avec expéditions et combats seulement → deux lignes ; `includeTradesInBalance` vrai avec des échanges → ligne « Échanges » ; faux → pas de ligne ; ships `{ found: { '202': 5 }, lost: { '204': 2 } }` → lignes « Petit transporteur » et « Chasseur léger » ; tout vide → « Aucune donnée sur cette période » dans chaque carte.
+- [ ] **Step 2 :** même commande que 26.3 → FAIL.
+- [ ] **Step 3 :** implémenter ; disposition 2/3 – 1/3.
+- [ ] **Step 4 :** suite web, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add the balance by category and ships charts"`
+
+### Tâche 26.5 : Vérification
+
+- [ ] Captures bureau (1280 px) et téléphone (390 px) avec l'API simulée (Playwright isolé), comparées à `docs/web-design/screenshots/dashboard*.png` ; pas de défilement horizontal.
+- [ ] Conteneur local reconstruit : mêmes chiffres que la fenêtre détail du userscript pour le même compte et la même période (utilisateur).
+
+## Scope 27 — En-têtes de sécurité
+
+Branche : `feature/security-headers`. Spec dashboard, « Sécurité », dernier point.
+
+### Tâche 27.1 : En-têtes sur toutes les réponses
+
+**Files :** Modify `apps/server/src/app.ts` ; Test `apps/server/test/web-static.test.ts`.
+
+**Interfaces :** un hook `onSend` global pose, sans dépendance :
+- `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'` (`'unsafe-inline'` pour les attributs `style` de Recharts) ;
+- `X-Content-Type-Options: nosniff` ; `Referrer-Policy: same-origin`.
+
+- [ ] **Step 1 : tests** : `index.html`, un asset, `/healthz` et `/api/site/session` portent les trois en-têtes ; la CSP contient `frame-ancestors 'none'`.
+- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run test/web-static.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** même commande → PASS ; conteneur local reconstruit : aucune erreur CSP dans la console sur Connexion, Compte, Réglages, Administration et Dashboard.
+- [ ] **Step 5 : commit.** `git commit -m "Send security headers on every response"`
