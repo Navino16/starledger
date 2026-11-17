@@ -151,7 +151,6 @@
     },
     "outcomes": {
       "title": "Expedition results",
-      "total": "{n} expeditions",
       "resources": "Resources",
       "darkmatter": "Dark matter",
       "nothing": "Nothing",
@@ -162,7 +161,8 @@
       "early": "Early return",
       "late": "Late return",
       "pirates": "Pirates",
-      "aliens": "Aliens"
+      "aliens": "Aliens",
+      "unit": "expeditions"
     },
     "balance": {
       "title": "Gains and losses by category",

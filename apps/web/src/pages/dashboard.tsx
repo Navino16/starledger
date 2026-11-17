@@ -1,5 +1,7 @@
+import { DailyChart } from '../dashboard/daily-chart';
 import { accountKey, type DashboardPeriod, periodTitle } from '../dashboard/format';
 import { KeyFigures, PartialData } from '../dashboard/key-figures';
+import { OutcomesList } from '../dashboard/outcomes';
 import { useDashboard } from '../dashboard/use-dashboard';
 import { useT } from '../i18n';
 import { useSession } from '../session';
@@ -88,6 +90,15 @@ export function DashboardPage() {
         <>
           <PartialData stats={stats} />
           <KeyFigures summary={stats.summary} />
+          <div className="grid grid-cols-3 items-start gap-6 max-lg:grid-cols-1 max-sm:gap-4">
+            <DailyChart
+              days={stats.days}
+              range={stats.range}
+              refDay={day}
+              onSelectDay={dashboard.selectDay}
+            />
+            <OutcomesList outcomes={stats.summary.expeditions.outcomes} />
+          </div>
         </>
       )}
     </Page>

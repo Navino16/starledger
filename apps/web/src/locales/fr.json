@@ -151,7 +151,6 @@
     },
     "outcomes": {
       "title": "Résultats des expéditions",
-      "total": "{n} expéditions",
       "resources": "Ressources",
       "darkmatter": "Matière noire",
       "nothing": "Rien",
@@ -162,7 +161,8 @@
       "early": "Retour anticipé",
       "late": "Retour tardif",
       "pirates": "Pirates",
-      "aliens": "Aliens"
+      "aliens": "Aliens",
+      "unit": "expéditions"
     },
     "balance": {
       "title": "Gains et pertes par catégorie",
