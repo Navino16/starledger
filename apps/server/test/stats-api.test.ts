@@ -9,7 +9,7 @@ import {
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app';
-import { generateApiKey } from '../src/auth/api-keys';
+import { createApiKey } from '../src/auth/api-keys';
 import type { Config } from '../src/config';
 import { ingestBatch } from '../src/ingest/ingest';
 import { saveValuationSettings } from '../src/settings/settings';
@@ -103,8 +103,8 @@ beforeAll(async () => {
   const bob = await mk('bob');
   aliceId = alice.id;
   bobId = bob.id;
-  aliceKey = await generateApiKey(t.db, alice.id);
-  bobKey = await generateApiKey(t.db, bob.id);
+  aliceKey = (await createApiKey(t.db, alice.id, 'test')).key;
+  bobKey = (await createApiKey(t.db, bob.id, 'test')).key;
   app = buildApp(config, t.db);
   await app.ready();
 }, 120_000);

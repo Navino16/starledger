@@ -9,7 +9,7 @@ import {
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app';
-import { generateApiKey, revokeApiKey } from '../src/auth/api-keys';
+import { createApiKey, revokeApiKey } from '../src/auth/api-keys';
 import type { Config } from '../src/config';
 import { createUser } from '../src/users/users';
 import { startTestDb, type TestDb } from './helpers/db';
@@ -42,7 +42,7 @@ beforeAll(async () => {
     isAdmin: false,
     locale: 'en',
   });
-  aliceKey = await generateApiKey(t.db, alice.id);
+  aliceKey = (await createApiKey(t.db, alice.id, 'test')).key;
   app = buildApp(config, t.db);
   await app.ready();
 }, 120_000);
@@ -123,9 +123,9 @@ describe('GET /api/v1/ping', () => {
       isAdmin: false,
       locale: 'en',
     });
-    const key = await generateApiKey(t.db, bob.id);
+    const { id, key } = await createApiKey(t.db, bob.id, 'test');
     expect((await ping(authed(key))).statusCode).toBe(200);
-    await revokeApiKey(t.db, bob.id);
+    await revokeApiKey(t.db, bob.id, id);
     const res = await ping(authed(key));
     expect(res.statusCode).toBe(401);
     expect(res.json().error).toBe('invalid_key');
@@ -224,7 +224,7 @@ describe('rate limiting', () => {
       isAdmin: false,
       locale: 'en',
     });
-    const key = await generateApiKey(t.db, carol.id);
+    const key = (await createApiKey(t.db, carol.id, 'test')).key;
     for (let i = 0; i < API_RATE_LIMIT_PER_MINUTE; i++) {
       expect((await ping(authed(key))).statusCode).toBe(200);
     }
