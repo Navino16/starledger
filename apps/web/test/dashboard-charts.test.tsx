@@ -82,3 +82,58 @@ describe('expedition results', () => {
     expect(within(section).getByText('Aucune donnée sur cette période')).toBeInTheDocument();
   });
 });
+
+const res = (metal: number, crystal = 0, deuterium = 0) => ({ metal, crystal, deuterium });
+
+describe('balance by category', () => {
+  it('shows one line per category with activity', async () => {
+    open((s) => {
+      s.summary.balance.expeditions = { gains: res(3_000_000), losses: res(0) };
+      s.summary.balance.combats = { gains: res(0), losses: res(600_000) };
+    });
+    const section = await card('Gains et pertes par catégorie');
+    const label = within(section).getByRole('img').getAttribute('aria-label') ?? '';
+    expect(label).toContain('Expéditions +3 M');
+    expect(label).toContain('Combats +0 −600 k');
+    expect(label).not.toContain('Recyclages');
+    expect(label).not.toContain('Échanges');
+  });
+
+  it('adds trades when the universe counts them', async () => {
+    open((s) => {
+      s.settings = { ...s.settings, includeTradesInBalance: true };
+      s.summary.trades.received = res(300_000);
+    });
+    const section = await card('Gains et pertes par catégorie');
+    expect(within(section).getByRole('img')).toHaveAttribute(
+      'aria-label',
+      expect.stringContaining('Échanges +300 k'),
+    );
+  });
+
+  it('leaves trades out otherwise', async () => {
+    open((s) => {
+      s.summary.trades.received = res(300_000);
+    });
+    const section = await card('Gains et pertes par catégorie');
+    expect(within(section).getByText('Aucune donnée sur cette période')).toBeInTheDocument();
+  });
+});
+
+describe('ships found and lost', () => {
+  it('names each ship type with its counts', async () => {
+    open((s) => {
+      s.summary.ships = { found: { '202': 5 }, lost: { '204': 2 } };
+    });
+    const section = await card('Vaisseaux trouvés et perdus');
+    const label = within(section).getByRole('img').getAttribute('aria-label') ?? '';
+    expect(label).toContain('Petit transporteur Trouvés 5, Perdus 0');
+    expect(label).toContain('Chasseur léger Trouvés 0, Perdus 2');
+  });
+
+  it('says when no ship moved', async () => {
+    open(() => {});
+    const section = await card('Vaisseaux trouvés et perdus');
+    expect(within(section).getByText('Aucune donnée sur cette période')).toBeInTheDocument();
+  });
+});

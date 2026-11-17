@@ -1,6 +1,9 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
+
+// The first Recharts render of a file can exceed the default 1 s on a loaded CI runner.
+configure({ asyncUtilTimeout: 3000 });
 
 // jsdom has no layout: Recharts' ResponsiveContainer measures its box once, so give it a size.
 class ResizeObserverStub {
