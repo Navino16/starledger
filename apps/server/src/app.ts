@@ -9,6 +9,7 @@ import { type Kysely, sql } from 'kysely';
 import { apiPlugin } from './api/plugin';
 import type { Config } from './config';
 import type { Database } from './db/schema';
+import { sitePlugin } from './site/plugin';
 import { loadUser } from './web/auth';
 import { accountRoutes } from './web/routes-account';
 import { authRoutes, redactUrl, registerErrorPages } from './web/routes-auth';
@@ -39,6 +40,7 @@ async function webRoutes(app: FastifyInstance, opts: { db: Kysely<Database>; con
   await app.register(authRoutes, { db: opts.db });
   await app.register(accountRoutes, { db: opts.db });
   await app.register(inviteRoutes, opts);
+  await app.register(sitePlugin, { ...opts, prefix: '/api/site' });
 }
 
 export function buildApp(
