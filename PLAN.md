@@ -1832,11 +1832,11 @@ Branche : `feature/web-dashboard`. Spec dashboard, « Sélection du compte et de
 - `dashboard/format.ts` : `parseAccountKey(raw: string | null): { serverId: number; lang: string; playerId: number } | null` (`^(\d{1,10})-([a-z]{2,3})-(\d{1,16})$`), `accountKey(a)`, `shiftDay(day: string, period: 'day' | 'week' | 'month' | 'all', delta: 1 | -1): string`, `periodTitle(t, locale, period, day): string`.
 - Catalogues : `nav.dashboard`, `dashboard.*` (titres des blocs, résultats d'expédition et catégories repris du userscript, noms des 17 vaisseaux 202 à 219 en fr et en, textes vides et bandeau).
 
-- [ ] **Step 1 : tests** : `formatCompact(30_612_345, 'fr')` → `30,6 M` ; `(-2_000_000, 'fr')` → `−2 M` ; `(950, 'en')` → `950` ; `(1_250, 'en')` → `1.3k` ; `parseAccountKey('285-fr-123')` → `{ 285, 'fr', 123 }` ; `'285-FR-1'`, `'x'`, `null` → `null` ; `shiftDay('2026-01-31', 'month', 1)` → `2026-02-28` ; `('2026-11-17', 'week', -1)` → `2026-11-10` ; `periodTitle` fr : month → « Novembre 2026 », week → « Semaine du 16 nov. 2026 », all → « Tout l'historique ».
-- [ ] **Step 2 :** `pnpm --filter @app/web exec vitest run test/dashboard-format.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** même commande → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add Recharts and the dashboard formatting helpers"`
+- [x] **Step 1 : tests** : `formatCompact(30_612_345, 'fr')` → `30,6 M` ; `(-2_000_000, 'fr')` → `−2 M` ; `(950, 'en')` → `950` ; `(1_250, 'en')` → `1.3k` ; `parseAccountKey('285-fr-123')` → `{ 285, 'fr', 123 }` ; `'285-FR-1'`, `'x'`, `null` → `null` ; `shiftDay('2026-01-31', 'month', 1)` → `2026-02-28` ; `('2026-11-17', 'week', -1)` → `2026-11-10` ; `periodTitle` fr : month → « Novembre 2026 », week → « Semaine du 16 nov. 2026 », all → « Tout l'historique ».
+- [x] **Step 2 :** `pnpm --filter @app/web exec vitest run test/dashboard-format.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** même commande → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add Recharts and the dashboard formatting helpers"`
 
 ### Tâche 26.2 : Page, sélection et chiffres clés
 
@@ -1849,11 +1849,11 @@ Branche : `feature/web-dashboard`. Spec dashboard, « Sélection du compte et de
 - `KeyFigures({ summary })` : métal, cristal, deutérium, antimatière, artefacts, bilan MSU signé, carburant (« + N départs inconnus » si `fuel.unknownCount > 0`).
 - Bandeau de données partielles : `counts.unrecognized` (libellé « dans tout l'historique »), `summary.conflictCount`, `fuel.unknownCount`, affiché seulement si l'un est non nul.
 
-- [ ] **Step 1 : tests** : connexion → `/dashboard` ; `/` → `/dashboard` ; onglet Dashboard `aria-current` ; sans `account`, le premier compte est choisi et l'URL le porte ; `account=999-fr-1` (inconnu) → premier compte ; choisir le second compte → `GET /stats?serverId=…` du second et URL mise à jour ; deux réponses dans le désordre (la première retardée) → les chiffres du second compte restent ; ‹ en Mois depuis `2026-11-17` → `day=2026-10-17` et titre « Octobre 2026 » ; aucun compte → texte vide, aucun appel `/stats` ; `fuel.unknownCount` 3 → « + 3 départs inconnus » ; bandeau absent si tout est nul ; nom `<b>x</b>` affiché en texte dans le sélecteur.
-- [ ] **Step 2 :** `pnpm --filter @app/web exec vitest run test/dashboard.test.tsx` → FAIL.
-- [ ] **Step 3 :** implémenter d'après la maquette `dashboard.html` (barre du haut, pleine largeur).
-- [ ] **Step 4 :** `pnpm --filter @app/web exec vitest run` → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add the dashboard page with account and period selection"`
+- [x] **Step 1 : tests** : connexion → `/dashboard` ; `/` → `/dashboard` ; onglet Dashboard `aria-current` ; sans `account`, le premier compte est choisi et l'URL le porte ; `account=999-fr-1` (inconnu) → premier compte ; choisir le second compte → `GET /stats?serverId=…` du second et URL mise à jour ; deux réponses dans le désordre (la première retardée) → les chiffres du second compte restent ; ‹ en Mois depuis `2026-11-17` → `day=2026-10-17` et titre « Octobre 2026 » ; aucun compte → texte vide, aucun appel `/stats` ; `fuel.unknownCount` 3 → « + 3 départs inconnus » ; bandeau absent si tout est nul ; nom `<b>x</b>` affiché en texte dans le sélecteur.
+- [x] **Step 2 :** `pnpm --filter @app/web exec vitest run test/dashboard.test.tsx` → FAIL.
+- [x] **Step 3 :** implémenter d'après la maquette `dashboard.html` (barre du haut, pleine largeur).
+- [x] **Step 4 :** `pnpm --filter @app/web exec vitest run` → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add the dashboard page with account and period selection"`
 
 ### Tâche 26.3 : Bilan MSU par jour et résultats d'expédition
 
@@ -1863,11 +1863,11 @@ Branche : `feature/web-dashboard`. Spec dashboard, « Sélection du compte et de
 - `DailyChart({ days, selected, onSelectDay })` : `BarChart` Recharts, une barre par entrée de `days`, couleur `gain` si ≥ 0, `danger` sinon ; barres hors période sélectionnée atténuées ; clic → `onSelectDay(day)` (la page passe en période Jour sur ce jour) ; infobulle date courte + MSU compact ; `aria-label` « Bilan MSU par jour, <mois> : total <x> MSU, <n> jours actifs ».
 - `Outcomes({ outcomes })` : liste HTML (pas Recharts) comme la maquette, triée par nombre décroissant, pastille de couleur, barre neutre, nombre et pourcentage fr (« 43,4 % »), total en tête ; résultats à 0 masqués.
 
-- [ ] **Step 1 : tests** : `days` avec un jour à −2 M → une barre `danger` ; clic sur le 5 → URL `period=day&day=…-05` ; `aria-label` contient le total ; outcomes `{ resources: 412, nothing: 208, … }` → première ligne « Ressources », « 43,4 % » ; outcomes tous à 0 → « Aucune donnée sur cette période ».
-- [ ] **Step 2 :** `pnpm --filter @app/web exec vitest run test/dashboard-charts.test.tsx` → FAIL.
-- [ ] **Step 3 :** implémenter ; disposition 2/3 – 1/3, une colonne sous 640 px.
-- [ ] **Step 4 :** même commande → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add the daily balance chart and expedition outcomes"`
+- [x] **Step 1 : tests** : `days` avec un jour à −2 M → une barre `danger` ; clic sur le 5 → URL `period=day&day=…-05` ; `aria-label` contient le total ; outcomes `{ resources: 412, nothing: 208, … }` → première ligne « Ressources », « 43,4 % » ; outcomes tous à 0 → « Aucune donnée sur cette période ».
+- [x] **Step 2 :** `pnpm --filter @app/web exec vitest run test/dashboard-charts.test.tsx` → FAIL.
+- [x] **Step 3 :** implémenter ; disposition 2/3 – 1/3, une colonne sous 640 px.
+- [x] **Step 4 :** même commande → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add the daily balance chart and expedition outcomes"`
 
 ### Tâche 26.4 : Gains et pertes par catégorie, vaisseaux
 
@@ -1877,15 +1877,15 @@ Branche : `feature/web-dashboard`. Spec dashboard, « Sélection du compte et de
 - `BalanceChart({ summary, settings })` : `BarChart` horizontal, une ligne par catégorie de `summary.balance` dont gain ou perte est non nul, plus « Échanges » si `settings.includeTradesInBalance` (reçus en gain, livrés en perte) ; gain `toMsu(gains, settings.msuRatio)` à droite en `gain`, perte en négatif à gauche en `danger` ; infobulle : métal, cristal, deutérium bruts.
 - `ShipsChart({ ships })` : `BarChart` horizontal, une ligne par type de vaisseau trouvé ou perdu, deux barres (trouvés `gain`, perdus `danger`), en nombre de vaisseaux ; noms des vaisseaux du catalogue.
 
-- [ ] **Step 1 : tests** : balance avec expéditions et combats seulement → deux lignes ; `includeTradesInBalance` vrai avec des échanges → ligne « Échanges » ; faux → pas de ligne ; ships `{ found: { '202': 5 }, lost: { '204': 2 } }` → lignes « Petit transporteur » et « Chasseur léger » ; tout vide → « Aucune donnée sur cette période » dans chaque carte.
-- [ ] **Step 2 :** même commande que 26.3 → FAIL.
-- [ ] **Step 3 :** implémenter ; disposition 2/3 – 1/3.
-- [ ] **Step 4 :** suite web, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add the balance by category and ships charts"`
+- [x] **Step 1 : tests** : balance avec expéditions et combats seulement → deux lignes ; `includeTradesInBalance` vrai avec des échanges → ligne « Échanges » ; faux → pas de ligne ; ships `{ found: { '202': 5 }, lost: { '204': 2 } }` → lignes « Petit transporteur » et « Chasseur léger » ; tout vide → « Aucune donnée sur cette période » dans chaque carte.
+- [x] **Step 2 :** même commande que 26.3 → FAIL.
+- [x] **Step 3 :** implémenter ; disposition 2/3 – 1/3.
+- [x] **Step 4 :** suite web, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add the balance by category and ships charts"`
 
 ### Tâche 26.5 : Vérification
 
-- [ ] Captures bureau (1280 px) et téléphone (390 px) avec l'API simulée (Playwright isolé), comparées à `docs/web-design/screenshots/dashboard*.png` ; pas de défilement horizontal.
+- [x] Captures bureau (1280 px) et téléphone (390 px) avec l'API simulée (Playwright isolé), comparées à `docs/web-design/screenshots/dashboard*.png` ; pas de défilement horizontal.
 - [ ] Conteneur local reconstruit : mêmes chiffres que la fenêtre détail du userscript pour le même compte et la même période (utilisateur).
 
 ## Scope 27 — En-têtes de sécurité
