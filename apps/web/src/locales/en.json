@@ -42,6 +42,7 @@
     "csrf": "Your session changed. Reload the page and try again."
   },
   "nav": {
+    "dashboard": "Dashboard",
     "label": "Main menu",
     "account": "Account",
     "settings": "Settings",
@@ -108,6 +109,99 @@
     "createResetLink": "Create a link",
     "resetCreated": "Reset link created for {username}. Copy it now: it is valid for 24 hours, can be used once, and will not be shown again.",
     "unknownUser": "No account with this username"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "weekOf": "Week of {date}",
+    "allTime": "All time",
+    "account": "Tracked account",
+    "accountLabel": "Universe {serverId} ({lang}) · {player}",
+    "unnamedPlayer": "Player {id}",
+    "periods": {
+      "day": "Day",
+      "week": "Week",
+      "month": "Month",
+      "all": "All"
+    },
+    "periodLabel": "Period",
+    "previous": "Previous period",
+    "next": "Next period",
+    "noAccount": "The dashboard fills up once the userscript has sent data for an account.",
+    "noData": "No data for this period",
+    "partial": {
+      "title": "Partial data",
+      "unrecognized": "{n} unrecognized reports in the whole history",
+      "conflicts": "{n} conflicting reports",
+      "fuelUnknown": "{n} departures with unknown fuel"
+    },
+    "figures": {
+      "metal": "Metal",
+      "crystal": "Crystal",
+      "deuterium": "Deuterium",
+      "darkMatter": "Dark matter",
+      "artefacts": "Artefacts",
+      "msu": "MSU balance",
+      "fuel": "Known fuel",
+      "fuelUnknown": "+ {n} unknown departures"
+    },
+    "daily": {
+      "title": "Daily MSU balance",
+      "summary": "Daily MSU balance, {month}: total {total} MSU, {active} active days",
+      "unit": "MSU"
+    },
+    "outcomes": {
+      "title": "Expedition results",
+      "total": "{n} expeditions",
+      "resources": "Resources",
+      "darkmatter": "Dark matter",
+      "nothing": "Nothing",
+      "ships": "Ships",
+      "trader": "Trader",
+      "item": "Item",
+      "blackhole": "Black hole",
+      "early": "Early return",
+      "late": "Late return",
+      "pirates": "Pirates",
+      "aliens": "Aliens"
+    },
+    "balance": {
+      "title": "Gains and losses by category",
+      "gains": "Gains",
+      "losses": "Losses",
+      "summary": "Gains and losses in MSU by category: {rows}",
+      "expeditions": "Expeditions",
+      "combats": "Combats",
+      "recycling": "Recycling",
+      "wreckfields": "Wreck fields",
+      "anomalies": "Anomalies",
+      "fuel": "Fuel",
+      "trades": "Trades"
+    },
+    "ships": {
+      "title": "Ships found and lost",
+      "found": "Found",
+      "lost": "Lost",
+      "summary": "Ships found and lost: {rows}"
+    }
+  },
+  "shipNames": {
+    "202": "Small Cargo",
+    "203": "Large Cargo",
+    "204": "Light Fighter",
+    "205": "Heavy Fighter",
+    "206": "Cruiser",
+    "207": "Battleship",
+    "208": "Colony Ship",
+    "209": "Recycler",
+    "210": "Espionage Probe",
+    "211": "Bomber",
+    "212": "Solar Satellite",
+    "213": "Destroyer",
+    "214": "Deathstar",
+    "215": "Battlecruiser",
+    "217": "Crawler",
+    "218": "Reaper",
+    "219": "Pathfinder"
   },
   "copy": {
     "copy": "Copy",

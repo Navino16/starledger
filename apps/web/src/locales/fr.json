@@ -42,6 +42,7 @@
     "csrf": "Votre session a changé. Rechargez la page et réessayez."
   },
   "nav": {
+    "dashboard": "Dashboard",
     "label": "Menu principal",
     "account": "Compte",
     "settings": "Réglages",
@@ -108,6 +109,99 @@
     "createResetLink": "Créer un lien",
     "resetCreated": "Lien de réinitialisation créé pour {username}. Copiez-le maintenant : il est valable 24 heures, utilisable une seule fois, et ne sera plus affiché.",
     "unknownUser": "Aucun compte avec cet identifiant"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "weekOf": "Semaine du {date}",
+    "allTime": "Tout l'historique",
+    "account": "Compte suivi",
+    "accountLabel": "Univers {serverId} ({lang}) · {player}",
+    "unnamedPlayer": "Joueur {id}",
+    "periods": {
+      "day": "Jour",
+      "week": "Semaine",
+      "month": "Mois",
+      "all": "Tout"
+    },
+    "periodLabel": "Période",
+    "previous": "Période précédente",
+    "next": "Période suivante",
+    "noAccount": "Le dashboard se remplit une fois que le userscript a envoyé des données pour un compte.",
+    "noData": "Aucune donnée sur cette période",
+    "partial": {
+      "title": "Données partielles",
+      "unrecognized": "{n} rapports non reconnus dans tout l'historique",
+      "conflicts": "{n} rapports en conflit",
+      "fuelUnknown": "{n} départs au carburant inconnu"
+    },
+    "figures": {
+      "metal": "Métal",
+      "crystal": "Cristal",
+      "deuterium": "Deutérium",
+      "darkMatter": "Antimatière",
+      "artefacts": "Artefacts",
+      "msu": "Bilan MSU",
+      "fuel": "Carburant connu",
+      "fuelUnknown": "+ {n} départs inconnus"
+    },
+    "daily": {
+      "title": "Bilan MSU par jour",
+      "summary": "Bilan MSU par jour, {month} : total {total} MSU, {active} jours actifs",
+      "unit": "MSU"
+    },
+    "outcomes": {
+      "title": "Résultats des expéditions",
+      "total": "{n} expéditions",
+      "resources": "Ressources",
+      "darkmatter": "Matière noire",
+      "nothing": "Rien",
+      "ships": "Vaisseaux",
+      "trader": "Marchand",
+      "item": "Objet",
+      "blackhole": "Trou noir",
+      "early": "Retour anticipé",
+      "late": "Retour tardif",
+      "pirates": "Pirates",
+      "aliens": "Aliens"
+    },
+    "balance": {
+      "title": "Gains et pertes par catégorie",
+      "gains": "Gains",
+      "losses": "Pertes",
+      "summary": "Gains et pertes en MSU par catégorie : {rows}",
+      "expeditions": "Expéditions",
+      "combats": "Combats",
+      "recycling": "Recyclages",
+      "wreckfields": "Champs d'épaves",
+      "anomalies": "Anomalies",
+      "fuel": "Carburant",
+      "trades": "Échanges"
+    },
+    "ships": {
+      "title": "Vaisseaux trouvés et perdus",
+      "found": "Trouvés",
+      "lost": "Perdus",
+      "summary": "Vaisseaux trouvés et perdus : {rows}"
+    }
+  },
+  "shipNames": {
+    "202": "Petit transporteur",
+    "203": "Grand transporteur",
+    "204": "Chasseur léger",
+    "205": "Chasseur lourd",
+    "206": "Croiseur",
+    "207": "Vaisseau de bataille",
+    "208": "Vaisseau de colonisation",
+    "209": "Recycleur",
+    "210": "Sonde d'espionnage",
+    "211": "Bombardier",
+    "212": "Satellite solaire",
+    "213": "Destructeur",
+    "214": "Étoile de la mort",
+    "215": "Traqueur",
+    "217": "Foreuse",
+    "218": "Faucheur",
+    "219": "Éclaireur"
   },
   "copy": {
     "copy": "Copier",

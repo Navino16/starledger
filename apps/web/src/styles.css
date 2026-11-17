@@ -22,6 +22,18 @@
   --color-crystal: #95c1dd;
   --color-deuterium: #64a69b;
   --color-dark-matter: #b88ce8;
+  /* Expedition results: the userscript donut colors (apps/userscript/src/ui/details/donut.ts), swatches only. */
+  --color-outcome-resources: #9fe0f5;
+  --color-outcome-darkmatter: #b88ce8;
+  --color-outcome-nothing: #e6e6e6;
+  --color-outcome-ships: #6fcf97;
+  --color-outcome-trader: #5b8def;
+  --color-outcome-item: #c98a5a;
+  --color-outcome-blackhole: #8a8f9c;
+  --color-outcome-early: #ef8fb0;
+  --color-outcome-late: #e2574c;
+  --color-outcome-pirates: #f0d34a;
+  --color-outcome-aliens: #e0903a;
   --radius-card: 10px;
   --radius-control: 6px;
   --radius-chip: 2px;
