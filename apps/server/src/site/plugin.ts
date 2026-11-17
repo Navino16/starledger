@@ -3,12 +3,13 @@ import type { FastifyError, FastifyInstance } from 'fastify';
 import type { Kysely } from 'kysely';
 import type { Config } from '../config';
 import type { Database } from '../db/schema';
-import { redactUrl } from '../web/routes-auth';
+import { redactUrl } from '../redact';
 import { SiteBodyError, sendSiteError } from './http';
 import { accountRoutes } from './routes-account';
 import { adminRoutes } from './routes-admin';
 import { publicRoutes } from './routes-public';
 import { sessionRoutes } from './routes-session';
+import { loadUser } from './session';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
@@ -17,6 +18,8 @@ export async function sitePlugin(
   app: FastifyInstance,
   opts: { db: Kysely<Database>; config: Config },
 ) {
+  app.addHook('onRequest', loadUser(opts.db));
+
   app.setErrorHandler(async (error: FastifyError, request, reply) => {
     if (error instanceof SiteBodyError) return sendSiteError(reply, 400, 'invalid_payload');
     if (error.code?.startsWith('FST_CSRF_')) return sendSiteError(reply, 403, 'csrf_invalid');

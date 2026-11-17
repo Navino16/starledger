@@ -1707,11 +1707,11 @@ Branche : `feature/web-switchover`.
 - `AppShell` : « Starledger », menu Compte, Réglages, Administration (admin seulement), `aria-current="page"` sur l'onglet actif, identifiant et « Déconnexion » (`POST /logout` puis `/login`). Pas d'onglet Dashboard (spec web, non-objectifs). `/` redirige vers `/account`.
 - Compte : carte « Clés API » (formulaire nom, `SecretNotice` de la clé créée, tableau, « Révoquer » par ligne, état vide) et carte « Mot de passe » (actuel, nouveau, champ identifiant caché `autocomplete="username"`).
 
-- [ ] **Step 1 : tests** : liste des clés rendue, « Sans nom » et « jamais » ; créer → `SecretNotice` avec la clé et ligne ajoutée ; nom vide → erreur sous le champ ; révoquer → ligne retirée ; aucune clé → « Aucune clé API active » ; mot de passe actuel faux → alerte « Mot de passe actuel incorrect » ; non-admin → pas d'onglet Administration.
-- [ ] **Step 2 :** lancer → FAIL.
-- [ ] **Step 3 :** implémenter d'après `account.html`.
-- [ ] **Step 4 :** lancer → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add the account page of the web app"`
+- [x] **Step 1 : tests** : liste des clés rendue, « Sans nom » et « jamais » ; créer → `SecretNotice` avec la clé et ligne ajoutée ; nom vide → erreur sous le champ ; révoquer → ligne retirée ; aucune clé → « Aucune clé API active » ; mot de passe actuel faux → alerte « Mot de passe actuel incorrect » ; non-admin → pas d'onglet Administration.
+- [x] **Step 2 :** lancer → FAIL.
+- [x] **Step 3 :** implémenter d'après `account.html`.
+- [x] **Step 4 :** lancer → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add the account page of the web app"`
 
 ### Tâche 24.2 : Page Réglages
 
@@ -1719,11 +1719,11 @@ Branche : `feature/web-switchover`.
 
 **Interfaces :** une carte `<details>` par univers ; `open` sur l'univers en erreur, celui qu'on vient d'enregistrer, ou l'unique univers ; résumé fermé « MSU 3 : 2 : 1 · Expéditions 100 % · Anomalies 100 % » (format fr des nombres) ; ratios MSU avec pastilles ; `PUT` à l'enregistrement ; `settings_invalid` → alerte en tête de la carte ; aucun univers → texte `settings.none`.
 
-- [ ] **Step 1 : tests** : un seul univers ouvert d'office ; deux univers fermés au départ, résumé avec virgule décimale (`2,5`) ; enregistrement invalide → alerte et carte ouverte ; enregistrement valide → carte ouverte avec les nouvelles valeurs ; aucun univers → texte vide.
-- [ ] **Step 2 :** lancer → FAIL.
-- [ ] **Step 3 :** implémenter d'après `settings.html`.
-- [ ] **Step 4 :** lancer → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add the settings page of the web app"`
+- [x] **Step 1 : tests** : un seul univers ouvert d'office ; deux univers fermés au départ, résumé avec virgule décimale (`2,5`) ; enregistrement invalide → alerte et carte ouverte ; enregistrement valide → carte ouverte avec les nouvelles valeurs ; aucun univers → texte vide.
+- [x] **Step 2 :** lancer → FAIL.
+- [x] **Step 3 :** implémenter d'après `settings.html`.
+- [x] **Step 4 :** lancer → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add the settings page of the web app"`
 
 ### Tâche 24.3 : Page Administration
 
@@ -1731,11 +1731,11 @@ Branche : `feature/web-switchover`.
 
 **Interfaces :** route `/admin` sous `RequireAdmin` ; carte « Invitations » (bouton, puis `SecretNotice` du lien, 72 h) ; carte « Réinitialiser un mot de passe » (champ « Identifiant Starledger », bouton « Créer un lien », `SecretNotice` nommant le compte, 24 h ; `unknown_user` → « Aucun compte avec cet identifiant » sous le champ).
 
-- [ ] **Step 1 : tests** : invitation créée → lien affiché ; lien de réinitialisation → message avec l'identifiant ; identifiant inconnu → erreur de champ ; non-admin sur `/admin` → page Erreur.
-- [ ] **Step 2 :** lancer → FAIL.
-- [ ] **Step 3 :** implémenter d'après `admin.html`.
-- [ ] **Step 4 :** lancer → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add the admin page of the web app"`
+- [x] **Step 1 : tests** : invitation créée → lien affiché ; lien de réinitialisation → message avec l'identifiant ; identifiant inconnu → erreur de champ ; non-admin sur `/admin` → page Erreur.
+- [x] **Step 2 :** lancer → FAIL.
+- [x] **Step 3 :** implémenter d'après `admin.html`.
+- [x] **Step 4 :** lancer → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add the admin page of the web app"`
 
 ### Tâche 24.4 : Le serveur sert l'app, les pages Eta disparaissent
 
@@ -1747,11 +1747,11 @@ Branche : `feature/web-switchover`.
 - Fallback : `GET` hors `/api/` et hors `/healthz`, sans fichier correspondant → `index.html` (200). `GET /admin/invitations` → 301 vers `/admin`.
 - Les 404 sous `/api/v1` et `/api/site` restent du JSON.
 
-- [ ] **Step 1 : tests** (`webRoot` = dossier temporaire avec `index.html` et `assets/a.js`) : `/`, `/account`, `/invite/abc` → `index.html` ; `/assets/a.js` → le fichier avec le cache immuable ; `/api/v1/nope` et `/api/site/nope` → 404 JSON ; `/healthz` → JSON ; `/admin/invitations` → 301 `/admin` ; `POST /login` (ancienne route HTML) → 404.
-- [ ] **Step 2 :** lancer → FAIL.
-- [ ] **Step 3 :** implémenter, supprimer Eta et ses dépendances, porter les tests.
-- [ ] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; `docker compose up -d --build app` puis parcours complet sur `http://127.0.0.1:3000` : connexion, clé créée puis révoquée, réglages enregistrés, invitation, lien de réinitialisation, changement de mot de passe ; captures bureau et téléphone comparées à `docs/web-design/screenshots/` (Playwright isolé).
-- [ ] **Step 5 : commit.** `git commit -m "Serve the web app and drop the server-rendered pages"`
+- [x] **Step 1 : tests** (`webRoot` = dossier temporaire avec `index.html` et `assets/a.js`) : `/`, `/account`, `/invite/abc` → `index.html` ; `/assets/a.js` → le fichier avec le cache immuable ; `/api/v1/nope` et `/api/site/nope` → 404 JSON ; `/healthz` → JSON ; `/admin/invitations` → 301 `/admin` ; `POST /login` (ancienne route HTML) → 404.
+- [x] **Step 2 :** lancer → FAIL.
+- [x] **Step 3 :** implémenter, supprimer Eta et ses dépendances, porter les tests.
+- [x] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; `docker compose up -d --build app` puis parcours complet sur `http://127.0.0.1:3000` : connexion, clé créée puis révoquée, réglages enregistrés, invitation, lien de réinitialisation, changement de mot de passe ; captures bureau et téléphone comparées à `docs/web-design/screenshots/` (Playwright isolé).
+- [x] **Step 5 : commit.** `git commit -m "Serve the web app and drop the server-rendered pages"`
 
 ### Tâche 24.5 : Vérification (utilisateur)
 

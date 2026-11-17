@@ -6,8 +6,8 @@ WORKDIR /repo
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 RUN pnpm fetch
 COPY . .
-RUN pnpm install --frozen-lockfile --offline --filter @app/server...
-RUN pnpm --filter @app/server build
+RUN pnpm install --frozen-lockfile --offline --filter @app/server... --filter @app/web...
+RUN pnpm --filter @app/server build && pnpm --filter @app/web build
 RUN pnpm --filter @app/server deploy --prod --legacy /out
 
 FROM node:26-alpine
@@ -16,6 +16,7 @@ WORKDIR /app
 COPY --from=build /out/node_modules ./node_modules
 COPY --from=build /out/package.json ./package.json
 COPY --from=build /repo/apps/server/dist ./dist
+COPY --from=build /repo/apps/web/dist ./public
 USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \

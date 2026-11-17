@@ -10,7 +10,8 @@ Shared stats tracker for OGame: a Tampermonkey userscript collects data the play
 ## Layout
 
 - `packages/shared`: shared zod schemas and pure parsers
-- `apps/server`: Fastify + PostgreSQL API
+- `apps/server`: Fastify + PostgreSQL API; it also serves the web app
+- `apps/web`: web app (Vite + React + Tailwind CSS v4), built without minification
 - `apps/userscript`: Tampermonkey userscript (Vite + vite-plugin-monkey)
 
 ## Commands
@@ -22,6 +23,8 @@ pnpm typecheck   # tsc, all packages
 pnpm lint        # Biome
 pnpm build
 ```
+
+To work on the web app, run the server on port 3000 and `pnpm --filter @app/web dev`: Vite proxies `/api` to it.
 
 Requires Node 26 (`nvm use`) and pnpm 12 (`npm i -g pnpm@12`; pnpm then switches to the `packageManager` version).
 

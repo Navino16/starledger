@@ -66,6 +66,7 @@ export const apiKeySummarySchema = z.object({
 });
 export type ApiKeySummaryDto = z.infer<typeof apiKeySummarySchema>;
 export const apiKeysResponseSchema = z.object({ keys: z.array(apiKeySummarySchema) });
+export const MAX_KEY_NAME_LENGTH = 64;
 export const createKeyRequestSchema = z.object({ name: z.string().max(MAX_PASSWORD_LENGTH) });
 export const createKeyResponseSchema = z.object({ id: z.string(), key: z.string() });
 

@@ -1,7 +1,7 @@
-import type { FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
+import type { SiteLocale } from '@app/shared';
+import type { FastifyRequest } from 'fastify';
 import type { Kysely } from 'kysely';
 import type { Database } from '../db/schema';
-import type { Locale } from './i18n';
 
 declare module '@fastify/secure-session' {
   interface SessionData {
@@ -15,7 +15,7 @@ export interface WebUser {
   id: string;
   username: string;
   isAdmin: boolean;
-  locale: Locale;
+  locale: SiteLocale;
 }
 
 declare module 'fastify' {
@@ -53,10 +53,19 @@ export function loadUser(db: Kysely<Database>) {
   };
 }
 
-export const requireUser: preHandlerAsyncHookHandler = async (request, reply) => {
-  if (!request.user) return reply.redirect('/login');
-};
+export function negotiateLocale(header: string | undefined): SiteLocale {
+  const ranked = (header ?? '')
+    .split(',')
+    .map((part) => {
+      const [tag = '', ...params] = part.trim().split(';');
+      const q = params.map((p) => /^\s*q=([\d.]+)/.exec(p)?.[1]).find(Boolean);
+      return { lang: tag.trim().toLowerCase().split('-')[0], q: q === undefined ? 1 : Number(q) };
+    })
+    .filter((entry) => entry.q > 0)
+    .sort((a, b) => b.q - a.q);
+  const match = ranked.find((entry) => entry.lang === 'fr' || entry.lang === 'en');
+  return match?.lang === 'fr' ? 'fr' : 'en';
+}
 
-export const requireAdmin: preHandlerAsyncHookHandler = async (request) => {
-  if (!request.user?.isAdmin) throw Object.assign(new Error('Forbidden'), { statusCode: 403 });
-};
+export const localeOf = (request: FastifyRequest): SiteLocale =>
+  request.user?.locale ?? negotiateLocale(request.headers['accept-language']);
