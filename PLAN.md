@@ -54,7 +54,7 @@
 | 24 | Pages connectées et bascule | ✅ |
 | 25 | API du dashboard | ✅ |
 | 26 | Page Dashboard | ☐ |
-| 27 | En-têtes de sécurité | ☐ |
+| 27 | En-têtes de sécurité | ✅ |
 
 ## Global Constraints
 
@@ -1900,8 +1900,8 @@ Branche : `feature/security-headers`. Spec dashboard, « Sécurité », dernier 
 - `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'` (`'unsafe-inline'` pour les attributs `style` de Recharts) ;
 - `X-Content-Type-Options: nosniff` ; `Referrer-Policy: same-origin`.
 
-- [ ] **Step 1 : tests** : `index.html`, un asset, `/healthz` et `/api/site/session` portent les trois en-têtes ; la CSP contient `frame-ancestors 'none'`.
-- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run test/web-static.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** même commande → PASS ; conteneur local reconstruit : aucune erreur CSP dans la console sur Connexion, Compte, Réglages, Administration et Dashboard.
-- [ ] **Step 5 : commit.** `git commit -m "Send security headers on every response"`
+- [x] **Step 1 : tests** : `index.html`, un asset, `/healthz` et `/api/site/session` portent les trois en-têtes ; la CSP contient `frame-ancestors 'none'`.
+- [x] **Step 2 :** `pnpm --filter @app/server exec vitest run test/web-static.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** même commande → PASS ; conteneur local reconstruit : aucune erreur CSP dans la console sur Connexion, Compte, Réglages, Administration et Dashboard.
+- [x] **Step 5 : commit.** `git commit -m "Send security headers on every response"`
