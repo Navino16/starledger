@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { MAX_KEY_NAME_LENGTH } from '@app/shared';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app';
@@ -7,7 +8,6 @@ import {
   authenticateApiKey,
   createApiKey,
   listApiKeys,
-  MAX_KEY_NAME_LENGTH,
   revokeApiKey,
 } from '../src/auth/api-keys';
 import type { Config } from '../src/config';

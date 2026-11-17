@@ -51,3 +51,93 @@
     outline-offset: 2px;
   }
 }
+
+/* Key list: a real table on desktop, one card per row under 640 px (docs/web-design.md, Liste des clés). */
+@layer components {
+  .keys-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  .keys-table th {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--color-muted);
+    text-align: left;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .keys-table td {
+    height: 56px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--color-line);
+  }
+  .keys-table :is(th, td):first-child {
+    padding-left: 0;
+  }
+  .keys-table :is(th, td):last-child {
+    padding-right: 0;
+    text-align: right;
+  }
+  .keys-table tr:last-child td {
+    border-bottom: 0;
+  }
+
+  @media (width < 40rem) {
+    .keys-table thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+    .keys-table :is(tbody, td) {
+      display: block;
+    }
+    .keys-table tr {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 4px 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--color-line);
+    }
+    .keys-table tr:last-child {
+      border-bottom: 0;
+    }
+    .keys-table td {
+      height: auto;
+      padding: 0;
+      border: 0;
+      font-size: 13px;
+    }
+    .keys-table td:first-child {
+      grid-column: 1;
+      grid-row: 1;
+      font-size: 14px;
+    }
+    .keys-table td[data-label]::before {
+      content: attr(data-label) " ";
+      color: var(--color-muted);
+    }
+    .keys-table td:nth-child(2) {
+      grid-column: 2;
+      grid-row: 1;
+      text-align: right;
+    }
+    .keys-table td:nth-child(3) {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    .keys-table td:nth-child(4) {
+      grid-column: 1;
+      grid-row: 3;
+    }
+    .keys-table td:last-child {
+      grid-column: 2;
+      grid-row: 2 / span 2;
+      align-self: center;
+      margin-right: -12px;
+    }
+  }
+}

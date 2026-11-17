@@ -21,20 +21,29 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-/** A secret shown once (API key, invitation or reset link), with its copy button. */
-export function SecretNotice({ message, secret }: { message: ReactNode; secret: string }) {
+/** Success banner: confirms the action the user just took. */
+export function Notice({ message, children }: { message: ReactNode; children?: ReactNode }) {
   return (
     <div role="status" className="flex flex-col gap-3 rounded-lg border border-success p-4">
       <p className="m-0 flex items-start gap-3 text-ink">
         <CheckIcon className="mt-px flex-none text-success" />
         <span>{message}</span>
       </p>
+      {children}
+    </div>
+  );
+}
+
+/** A secret shown once (API key, invitation or reset link), with its copy button. */
+export function SecretNotice({ message, secret }: { message: ReactNode; secret: string }) {
+  return (
+    <Notice message={message}>
       <div className="flex flex-wrap items-center gap-2">
         <code className="min-w-0 flex-[1_1_320px] rounded-control border border-line bg-page px-3 py-2.5 font-mono text-[13px] leading-5 break-all text-ink select-all">
           {secret}
         </code>
         <CopyButton text={secret} />
       </div>
-    </div>
+    </Notice>
   );
 }

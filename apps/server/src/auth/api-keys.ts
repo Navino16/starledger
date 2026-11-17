@@ -1,4 +1,5 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { MAX_KEY_NAME_LENGTH } from '@app/shared';
 import { type Kysely, sql } from 'kysely';
 import type { Database } from '../db/schema';
 
@@ -6,8 +7,6 @@ const KEY_PREFIX = 'slk_';
 const KEY_PATTERN = /^slk_[A-Za-z0-9_-]{43}$/;
 const DISPLAY_PREFIX_LENGTH = 8;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-export const MAX_KEY_NAME_LENGTH = 64;
 
 export class ApiKeyNameError extends Error {
   constructor() {
