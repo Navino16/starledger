@@ -277,3 +277,20 @@ describe('redactUrl', () => {
     expect(redactUrl('/account')).toBe('/account');
   });
 });
+
+describe('caching', () => {
+  it('marks every site API response no-store, errors included', async () => {
+    const client = siteClient(app);
+    const anonymous = [
+      await client.call('GET', '/session'),
+      await client.call('GET', '/nope'),
+      await client.call('POST', '/logout', undefined, { csrf: false }),
+    ];
+    await client.login('carol', PASSWORD);
+    const signedIn = await client.call('GET', '/api-keys');
+    for (const res of [...anonymous, signedIn]) {
+      expect(res.headers['cache-control']).toBe('no-store');
+    }
+    expect(anonymous[2]?.statusCode).toBe(403);
+  });
+});
