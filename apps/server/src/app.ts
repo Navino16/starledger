@@ -37,7 +37,8 @@ const SECURITY_HEADERS = {
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data:",
+    // Game icons come from Gameforge's static image CDN (dashboard game icons spec).
+    "img-src 'self' data: https://gf1.geo.gfsrv.net https://gf2.geo.gfsrv.net https://gf3.geo.gfsrv.net",
     "connect-src 'self'",
     "frame-ancestors 'none'",
     "base-uri 'none'",

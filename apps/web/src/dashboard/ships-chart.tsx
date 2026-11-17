@@ -2,13 +2,17 @@ import type { StatsResponse } from '@app/shared';
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { formatNumber, useT } from '../i18n';
 import { useSession } from '../session';
+import { shipImage } from '../ui/game-icon';
 import { ChartCard } from './chart-card';
 
 const AXIS = { fontFamily: 'var(--font-mono)', fontSize: 11, fill: 'var(--color-muted)' };
 const LABEL = { fontSize: 13, fill: 'var(--color-body)' };
 const ROW_HEIGHT = 40;
+const AXIS_WIDTH = 188;
+const LABEL_MAX = 20;
 
 interface Row {
+  id: string;
   label: string;
   found: number;
   lost: number;
@@ -22,6 +26,7 @@ export function ShipsChart({ ships }: { ships: StatsResponse['summary']['ships']
     .filter((id) => (ships.found[id] ?? 0) > 0 || (ships.lost[id] ?? 0) > 0)
     .sort((a, b) => Number(a) - Number(b));
   const rows: Row[] = ids.map((id) => ({
+    id,
     label: t(`shipNames.${id}`),
     found: ships.found[id] ?? 0,
     lost: ships.lost[id] ?? 0,
@@ -63,10 +68,28 @@ export function ShipsChart({ ships }: { ships: StatsResponse['summary']['ships']
             <YAxis
               type="category"
               dataKey="label"
-              tick={LABEL}
               tickLine={false}
               axisLine={false}
-              width={130}
+              interval={0}
+              width={AXIS_WIDTH}
+              tick={({ x, y, payload }) => {
+                const row = rows.find((r) => r.label === payload.value);
+                if (!row) return <g />;
+                const href = shipImage(row.id);
+                const short =
+                  row.label.length > LABEL_MAX
+                    ? `${row.label.slice(0, LABEL_MAX - 1)}…`
+                    : row.label;
+                return (
+                  <g transform={`translate(${Number(x) - AXIS_WIDTH},${y})`}>
+                    <title>{row.label}</title>
+                    {href && <image href={href} x={0} y={-9} width={24} height={18} />}
+                    <text x={32} dy={4} textAnchor="start" {...LABEL}>
+                      {short}
+                    </text>
+                  </g>
+                );
+              }}
             />
             <Tooltip
               cursor={{ fill: 'var(--color-raised)' }}

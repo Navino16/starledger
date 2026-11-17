@@ -2,14 +2,28 @@ import type { StatsResponse } from '@app/shared';
 import type { ReactNode } from 'react';
 import { formatCompact, useT } from '../i18n';
 import { useSession } from '../session';
+import { ResourceIcon } from '../ui/game-icon';
 import { AlertIcon } from '../ui/icons';
 
 type Summary = StatsResponse['summary'];
 
-function Figure({ label, value, note }: { label: string; value: string; note?: ReactNode }) {
+function Figure({
+  label,
+  value,
+  note,
+  icon,
+}: {
+  label: string;
+  value: string;
+  note?: ReactNode;
+  icon?: ReactNode;
+}) {
   return (
     <div className="flex min-w-0 flex-col gap-1 rounded-card bg-card p-4">
-      <span className="text-[13px] leading-5 text-muted">{label}</span>
+      <span className="flex items-center gap-2 text-[13px] leading-5 text-muted">
+        {icon}
+        <span>{label}</span>
+      </span>
       <span className="text-[28px] leading-9 font-medium text-ink tabular-nums max-sm:text-2xl max-sm:leading-8">
         {value}
       </span>
@@ -29,11 +43,31 @@ export function KeyFigures({ summary }: { summary: Summary }) {
       aria-label={t('dashboard.title')}
       className="grid grid-cols-7 gap-4 max-lg:grid-cols-4 max-sm:grid-cols-2 max-sm:gap-3"
     >
-      <Figure label={t('dashboard.figures.metal')} value={compact(tiles.metal)} />
-      <Figure label={t('dashboard.figures.crystal')} value={compact(tiles.crystal)} />
-      <Figure label={t('dashboard.figures.deuterium')} value={compact(tiles.deuterium)} />
-      <Figure label={t('dashboard.figures.darkMatter')} value={compact(tiles.darkMatter)} />
-      <Figure label={t('dashboard.figures.artefacts')} value={compact(tiles.artefacts)} />
+      <Figure
+        label={t('dashboard.figures.metal')}
+        value={compact(tiles.metal)}
+        icon={<ResourceIcon kind="metal" />}
+      />
+      <Figure
+        label={t('dashboard.figures.crystal')}
+        value={compact(tiles.crystal)}
+        icon={<ResourceIcon kind="crystal" />}
+      />
+      <Figure
+        label={t('dashboard.figures.deuterium')}
+        value={compact(tiles.deuterium)}
+        icon={<ResourceIcon kind="deuterium" />}
+      />
+      <Figure
+        label={t('dashboard.figures.darkMatter')}
+        value={compact(tiles.darkMatter)}
+        icon={<ResourceIcon kind="darkMatter" />}
+      />
+      <Figure
+        label={t('dashboard.figures.artefacts')}
+        value={compact(tiles.artefacts)}
+        icon={<ResourceIcon kind="artefacts" />}
+      />
       <Figure label={t('dashboard.figures.msu')} value={signed(tiles.msu)} />
       <Figure
         label={t('dashboard.figures.fuel')}

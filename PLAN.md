@@ -55,6 +55,7 @@
 | 25 | API du dashboard | ✅ |
 | 26 | Page Dashboard | ☐ |
 | 27 | En-têtes de sécurité | ✅ |
+| 28 | Icônes du jeu dans le dashboard | ✅ |
 
 ## Global Constraints
 
@@ -1905,3 +1906,23 @@ Branche : `feature/security-headers`. Spec dashboard, « Sécurité », dernier 
 - [x] **Step 3 :** implémenter.
 - [x] **Step 4 :** même commande → PASS ; conteneur local reconstruit : aucune erreur CSP dans la console sur Connexion, Compte, Réglages, Administration et Dashboard.
 - [x] **Step 5 : commit.** `git commit -m "Send security headers on every response"`
+
+## Scope 28 — Icônes du jeu dans le dashboard
+
+Branche : `feature/dashboard-game-icons`. Spec : `docs/superpowers/specs/2026-11-17-dashboard-game-icons-design.md`.
+
+### Tâche 28.1 : Adresses partagées et icônes du site
+
+**Files :** Create `packages/shared/src/game-icons.ts`, `apps/web/src/ui/game-icon.tsx` ; Modify `packages/shared/src/index.ts`, `apps/userscript/src/ui/icons.ts` (importe les adresses), `apps/web/src/dashboard/key-figures.tsx`, `apps/web/src/dashboard/ships-chart.tsx`, `apps/server/src/app.ts` (CSP) ; Test `apps/web/test/dashboard-charts.test.tsx`, `apps/web/test/dashboard.test.tsx`, `apps/server/test/web-static.test.ts`, tests existants du userscript.
+
+**Interfaces :**
+- `game-icons.ts` : `RESOURCE_SPRITE`, `RESOURCE_SPRITE_INDEX: Record<'metal' | 'crystal' | 'deuterium' | 'darkMatter', number>`, `ARTEFACTS_IMAGE`, `LITHIUM_IMAGE`, `SHIP_IMAGES: Record<string, string>` (valeurs reprises telles quelles de `apps/userscript/src/ui/icons.ts`).
+- `ResourceIcon({ kind })` et `ShipIcon({ id })` : `span` décoratif (`aria-hidden`) en image de fond ; vaisseau inconnu → rien.
+- Graphique des vaisseaux : étiquette d'axe personnalisée, vignette SVG `image` puis nom.
+- CSP : `img-src 'self' data: https://gf1.geo.gfsrv.net https://gf2.geo.gfsrv.net https://gf3.geo.gfsrv.net`.
+
+- [x] **Step 1 : tests** : la carte « Métal » contient une icône dont le fond pointe vers `RESOURCE_SPRITE` ; « Artefacts » vers `ARTEFACTS_IMAGE` ; le graphique des vaisseaux contient une `image` dont `href` vaut `SHIP_IMAGES['202']` ; la CSP contient `img-src 'self' data: https://gf1.geo.gfsrv.net` et pas `*`.
+- [x] **Step 2 :** `pnpm --filter @app/web exec vitest run` et `pnpm --filter @app/server exec vitest run test/web-static.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter ; commentaire de conformité AGENTS.md §4 (images statiques, aucune requête de jeu).
+- [x] **Step 4 :** suites web, serveur et userscript, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; captures bureau et téléphone sans erreur de console.
+- [x] **Step 5 : commit.** `git commit -m "Show the game icons on the dashboard"`

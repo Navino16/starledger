@@ -1,3 +1,4 @@
+import { SHIP_IMAGES } from '@app/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -135,5 +136,16 @@ describe('ships found and lost', () => {
     open(() => {});
     const section = await card('Vaisseaux trouvés et perdus');
     expect(within(section).getByText('Aucune donnée sur cette période')).toBeInTheDocument();
+  });
+});
+
+describe('game icons', () => {
+  it('puts the ship thumbnail next to its name', async () => {
+    open((s) => {
+      s.summary.ships = { found: { '202': 5 }, lost: {} };
+    });
+    const section = await card('Vaisseaux trouvés et perdus');
+    const image = section.querySelector('svg image');
+    expect(image).toHaveAttribute('href', SHIP_IMAGES['202']);
   });
 });

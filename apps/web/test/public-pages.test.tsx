@@ -86,16 +86,19 @@ describe('password reset', () => {
   it('names the account and sends the new password', async () => {
     let sent: unknown;
     const { router } = renderAt('/reset/tok', {
+      'GET /session': () => sessionReply({ user: sent ? VEGA : null }),
       'GET /password-resets/tok': [200, { username: 'vega' }],
       'POST /password-resets/tok': (body) => {
         sent = body;
         return [200, { user: VEGA }];
       },
+      'GET /accounts': [200, { accounts: [] }],
     });
     expect(await screen.findByText('Compte : vega')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('Nouveau mot de passe'), 'another long password');
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le mot de passe' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/dashboard'));
+    expect(await screen.findByText(/se remplit une fois/)).toBeInTheDocument();
+    expect(router.state.location.pathname).toBe('/dashboard');
     expect(sent).toEqual({ password: 'another long password' });
   });
 

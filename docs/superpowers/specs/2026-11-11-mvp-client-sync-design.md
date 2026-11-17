@@ -345,6 +345,7 @@ Ils reprennent la spec §12, restreints au périmètre du MVP :
 4. **Questions aux ToolDevs** (forum Development, posées le 2026-11-11 : https://forum.origin.ogame.gameforge.com/forum/thread/598-gray-area-questions-before-submitting-a-stats-sync-userscript-expeditions-combat/) :
    - peut-on masquer l'encart d'un autre outil toléré ?
    - les rapports de combat bruts contiennent des noms, identifiants et coordonnées d'**autres joueurs**. Peut-on les envoyer et les conserver sur notre serveur, ou faut-il les retirer côté client avant l'envoi ? La réponse peut modifier le principe « on conserve le brut » du §6.3.
+   - **à poser** (ajoutée le 2026-11-17) : le site du serveur affiche les icônes du jeu (ressources, vaisseaux) en les chargeant depuis le CDN d'images de Gameforge, sans les copier. Est-ce admis hors des pages du jeu ? Voir `2026-11-17-dashboard-game-icons-design.md`.
 5. ~~**Nom du projet**~~ : réglé, **Starledger** (2026-11-11).
 
 ## 10. Procédure de tolérance OGame

@@ -3,6 +3,7 @@ export const VERSION = '0.1.0';
 export * from './coords';
 export * from './domain';
 export * from './events';
+export * from './game-icons';
 export * from './observation';
 export {
   isTrackedMessage,
