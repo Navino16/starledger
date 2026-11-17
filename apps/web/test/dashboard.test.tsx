@@ -1,3 +1,4 @@
+import { ARTEFACTS_IMAGE, RESOURCE_SPRITE } from '@app/shared';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
@@ -168,5 +169,17 @@ describe('dashboard', () => {
     expect(
       await screen.findByRole('option', { name: 'Univers 1 (fr) · <b>x</b>' }),
     ).toBeInTheDocument();
+  });
+
+  it('shows the game icon of each resource', async () => {
+    open('/dashboard?account=285-fr-7');
+    const metal = (await screen.findByText('Métal')).closest('div') as HTMLElement;
+    const artefacts = screen.getByText('Artefacts').closest('div') as HTMLElement;
+    expect(metal.querySelector('[aria-hidden="true"]')?.getAttribute('style')).toContain(
+      RESOURCE_SPRITE,
+    );
+    expect(artefacts.querySelector('[aria-hidden="true"]')?.getAttribute('style')).toContain(
+      ARTEFACTS_IMAGE,
+    );
   });
 });

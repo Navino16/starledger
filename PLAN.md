@@ -55,7 +55,7 @@
 | 25 | API du dashboard | ✅ |
 | 26 | Page Dashboard | ☐ |
 | 27 | En-têtes de sécurité | ✅ |
-| 28 | Icônes du jeu dans le dashboard | ☐ |
+| 28 | Icônes du jeu dans le dashboard | ✅ |
 
 ## Global Constraints
 
@@ -1921,8 +1921,8 @@ Branche : `feature/dashboard-game-icons`. Spec : `docs/superpowers/specs/2026-11
 - Graphique des vaisseaux : étiquette d'axe personnalisée, vignette SVG `image` puis nom.
 - CSP : `img-src 'self' data: https://gf1.geo.gfsrv.net https://gf2.geo.gfsrv.net https://gf3.geo.gfsrv.net`.
 
-- [ ] **Step 1 : tests** : la carte « Métal » contient une icône dont le fond pointe vers `RESOURCE_SPRITE` ; « Artefacts » vers `ARTEFACTS_IMAGE` ; le graphique des vaisseaux contient une `image` dont `href` vaut `SHIP_IMAGES['202']` ; la CSP contient `img-src 'self' data: https://gf1.geo.gfsrv.net` et pas `*`.
-- [ ] **Step 2 :** `pnpm --filter @app/web exec vitest run` et `pnpm --filter @app/server exec vitest run test/web-static.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter ; commentaire de conformité AGENTS.md §4 (images statiques, aucune requête de jeu).
-- [ ] **Step 4 :** suites web, serveur et userscript, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; captures bureau et téléphone sans erreur de console.
-- [ ] **Step 5 : commit.** `git commit -m "Show the game icons on the dashboard"`
+- [x] **Step 1 : tests** : la carte « Métal » contient une icône dont le fond pointe vers `RESOURCE_SPRITE` ; « Artefacts » vers `ARTEFACTS_IMAGE` ; le graphique des vaisseaux contient une `image` dont `href` vaut `SHIP_IMAGES['202']` ; la CSP contient `img-src 'self' data: https://gf1.geo.gfsrv.net` et pas `*`.
+- [x] **Step 2 :** `pnpm --filter @app/web exec vitest run` et `pnpm --filter @app/server exec vitest run test/web-static.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter ; commentaire de conformité AGENTS.md §4 (images statiques, aucune requête de jeu).
+- [x] **Step 4 :** suites web, serveur et userscript, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; captures bureau et téléphone sans erreur de console.
+- [x] **Step 5 : commit.** `git commit -m "Show the game icons on the dashboard"`

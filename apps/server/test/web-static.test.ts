@@ -108,3 +108,13 @@ describe('security headers', () => {
     },
   );
 });
+
+describe('image sources', () => {
+  it('allow the Gameforge image CDN and nothing broader', async () => {
+    const csp = String((await get('/')).headers['content-security-policy']);
+    expect(csp).toContain(
+      "img-src 'self' data: https://gf1.geo.gfsrv.net https://gf2.geo.gfsrv.net https://gf3.geo.gfsrv.net",
+    );
+    expect(csp).not.toContain('*');
+  });
+});

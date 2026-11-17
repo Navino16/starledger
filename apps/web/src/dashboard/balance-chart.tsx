@@ -81,6 +81,7 @@ export function BalanceChart({
             <YAxis
               type="category"
               dataKey="label"
+              interval={0}
               tick={LABEL}
               tickLine={false}
               axisLine={false}
