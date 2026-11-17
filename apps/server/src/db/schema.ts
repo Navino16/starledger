@@ -33,6 +33,8 @@ export interface ApiKeysTable {
   user_id: string;
   key_hash: string;
   key_prefix: string;
+  name: string | null;
+  last_used_at: NullableTimestamp;
   revoked_at: NullableTimestamp;
   created_at: Timestamp;
 }
