@@ -53,6 +53,18 @@ const toSettings = (d: Draft) => ({
   ...d.flags,
 });
 
+const isPercent = (v: number) => Number.isInteger(v) && v >= 0 && v <= 100;
+
+// The server only says settings_invalid: the fields to flag are found with the same bounds.
+const outOfRange = (d: Draft) => {
+  const s = toSettings(d);
+  return {
+    msu: s.msuRatio.map((v) => !(v >= MIN_MSU_RATIO && v <= MAX_MSU_RATIO)),
+    expedition: !isPercent(s.expeditionShipRatio),
+    anomaly: !isPercent(s.anomalyShipRatio),
+  };
+};
+
 export function summarize(t: Translate, locale: SiteLocale, s: Settings): string {
   return t('settings.summary', {
     msu: s.msuRatio.map((v) => formatNumber(v, locale)).join(t('settings.ratioSeparator')),
@@ -83,7 +95,7 @@ function UniverseCard({
   const [draft, setDraft] = useState(() => toDraft(universe.settings));
   const [open, setOpen] = useState(initiallyOpen);
   const [error, setError] = useState<string | null>(null);
-  const [invalid, setInvalid] = useState(false);
+  const [bad, setBad] = useState<ReturnType<typeof outOfRange> | null>(null);
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
   const id = `u-${universe.serverId}-${universe.lang}`;
@@ -91,7 +103,7 @@ function UniverseCard({
   const save = async () => {
     setBusy(true);
     setError(null);
-    setInvalid(false);
+    setBad(null);
     setDone(false);
     try {
       const res = await apiFetch(
@@ -103,7 +115,7 @@ function UniverseCard({
       setDone(true);
     } catch (err) {
       const rejected = err instanceof ApiError && err.code === 'settings_invalid';
-      setInvalid(rejected);
+      setBad(rejected ? outOfRange(draft) : null);
       setError(rejected ? t('settings.invalid') : describeError(t, err));
     }
     setOpen(true);
@@ -156,7 +168,7 @@ function UniverseCard({
                 min={MIN_MSU_RATIO}
                 max={MAX_MSU_RATIO}
                 value={draft.msu[index]}
-                aria-invalid={invalid || undefined}
+                aria-invalid={bad?.msu[index] || undefined}
                 onChange={(e) => {
                   const msu = [...draft.msu] as Draft['msu'];
                   msu[index] = e.target.value;
@@ -176,7 +188,7 @@ function UniverseCard({
               min={0}
               max={100}
               value={draft.expedition}
-              aria-invalid={invalid || undefined}
+              aria-invalid={bad?.expedition || undefined}
               onChange={(e) => setDraft({ ...draft, expedition: e.target.value })}
             />
             <Field
@@ -187,7 +199,7 @@ function UniverseCard({
               min={0}
               max={100}
               value={draft.anomaly}
-              aria-invalid={invalid || undefined}
+              aria-invalid={bad?.anomaly || undefined}
               onChange={(e) => setDraft({ ...draft, anomaly: e.target.value })}
             />
           </div>

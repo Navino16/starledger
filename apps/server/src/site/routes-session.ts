@@ -4,9 +4,8 @@ import type { Kysely } from 'kysely';
 import type { Config } from '../config';
 import type { Database } from '../db/schema';
 import { verifyCredentials } from '../users/users';
-import { startSession } from '../web/auth';
-import { localeOf } from '../web/routes-auth';
 import { LOGIN_MAX_PER_MINUTE, parseBody, perMinute, sendSiteError, toSiteUser } from './http';
+import { localeOf, startSession } from './session';
 
 export async function sessionRoutes(
   app: FastifyInstance,

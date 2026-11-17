@@ -38,11 +38,11 @@ docker compose exec app node dist/cli.js create-admin --username admin
 
 The password is read from the terminal without echo. To script it, pipe it instead:
 `printf '%s' "$PASSWORD" | docker compose exec -T app node dist/cli.js create-admin --username admin`.
-Then sign in at `PUBLIC_URL/login` and generate an API key from the account page.
+Then sign in at `PUBLIC_URL/login` and create an API key on the Account page, one per device. Invitations and password reset links are on the Administration page (`PUBLIC_URL/admin`).
 
 ## Reset a password
 
-An admin can create a reset link for a user who forgot their password. The link is valid for 24 hours and works once. Creating a new link cancels the previous one.
+From the Administration page, an admin can create a reset link for a user who forgot their password. The link is valid for 24 hours and works once. Creating a new link cancels the previous one.
 
 If no admin can sign in, reset the password from the server:
 

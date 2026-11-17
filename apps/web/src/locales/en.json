@@ -60,7 +60,7 @@
     "keyColumn": "Key",
     "createdAt": "Created",
     "lastUsed": "Last used",
-    "lastUsedLabel": "Last used:",
+    "lastUsedLabel": "Used:",
     "action": "Action",
     "unnamed": "Unnamed",
     "never": "never",

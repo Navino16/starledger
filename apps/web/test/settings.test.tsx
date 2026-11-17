@@ -57,6 +57,7 @@ describe('settings page', () => {
     expect(await within(details).findByRole('alert')).toHaveTextContent('Réglages invalides');
     expect(details).toHaveAttribute('open');
     expect(crystal).toHaveAttribute('aria-invalid', 'true');
+    expect(within(details).getByLabelText('Métal')).not.toHaveAttribute('aria-invalid');
   });
 
   it('saves and shows the new values in the summary', async () => {

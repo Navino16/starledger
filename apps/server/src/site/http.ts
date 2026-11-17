@@ -2,7 +2,7 @@ import type { SiteErrorCode, SiteUser } from '@app/shared';
 import type { FastifyReply, FastifyRequest, preHandlerAsyncHookHandler } from 'fastify';
 import type { ZodType } from 'zod';
 import type { User } from '../users/users';
-import type { WebUser } from '../web/auth';
+import type { WebUser } from './session';
 
 export class SiteBodyError extends Error {}
 

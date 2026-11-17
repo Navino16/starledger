@@ -13,6 +13,7 @@ import { createApiKey, revokeApiKey } from '../src/auth/api-keys';
 import type { Config } from '../src/config';
 import { createUser } from '../src/users/users';
 import { startTestDb, type TestDb } from './helpers/db';
+import { siteClient } from './helpers/site';
 
 const config: Config = {
   databaseUrl: 'unused',
@@ -156,40 +157,18 @@ describe('GET /api/v1/ping', () => {
   });
 
   it('does not authenticate from a session cookie', async () => {
-    const loginPage = await app.inject({ method: 'GET', url: '/login' });
-    const token = /name="_csrf" value="([^"]+)"/.exec(loginPage.body)?.[1] ?? '';
-    const pageCookies = [loginPage.headers['set-cookie'] ?? []]
-      .flat()
-      .map((c) => String(c).split(';')[0])
-      .join('; ');
-    const login = await app.inject({
-      method: 'POST',
-      url: '/login',
-      headers: { cookie: pageCookies, 'content-type': 'application/x-www-form-urlencoded' },
-      payload: new URLSearchParams({
-        username: 'alice',
-        password: 'correct horse battery',
-        _csrf: token,
-      }).toString(),
-    });
-    expect(login.statusCode).toBe(302);
-    const cookie = [login.headers['set-cookie'] ?? []]
-      .flat()
-      .map((c) => String(c).split(';')[0])
-      .join('; ');
-    const web = await app.inject({ method: 'GET', url: '/account', headers: { cookie } });
-    expect(web.statusCode).toBe(200);
-    const res = await ping({ cookie, 'x-client-version': '0.1.0' });
+    const client = siteClient(app);
+    await client.login('alice', 'correct horse battery');
+    expect((await client.call('GET', '/api-keys')).statusCode).toBe(200);
+    const res = await ping({ cookie: client.cookie(), 'x-client-version': '0.1.0' });
     expect(res.statusCode).toBe(401);
   });
 
-  it('returns JSON 404 for unknown API routes, not the web error page', async () => {
+  it('returns JSON 404 for unknown API routes', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/v1/nope', headers: authed() });
     expect(res.statusCode).toBe(404);
     expect(res.headers['content-type']).toMatch(/application\/json/);
     expect(res.json().error).toBe('not_found');
-    const web = await app.inject({ method: 'GET', url: '/nope' });
-    expect(web.headers['content-type']).toMatch(/text\/html/);
   });
 
   it('answers 401 on an unknown API path without a key', async () => {

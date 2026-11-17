@@ -6,9 +6,8 @@ import type { Database } from '../db/schema';
 import { consumeInvitation, InvitationError, isInvitationUsable } from '../users/invitations';
 import { consumePasswordReset, getPasswordReset, PasswordResetError } from '../users/passwords';
 import { createUser, UserInputError } from '../users/users';
-import { startSession } from '../web/auth';
-import { negotiateLocale } from '../web/i18n';
 import { parseBody, perMinute, sendSiteError, toSiteUser } from './http';
+import { negotiateLocale, startSession } from './session';
 
 const SIGNUP_MAX_PER_MINUTE = 10;
 
