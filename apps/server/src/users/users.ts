@@ -10,6 +10,7 @@ export interface User {
   username: string;
   isAdmin: boolean;
   locale: 'fr' | 'en';
+  sessionVersion: number;
 }
 
 export interface NewUser {
@@ -19,16 +20,23 @@ export interface NewUser {
   locale: 'fr' | 'en';
 }
 
-type UserRow = { id: string; username: string; is_admin: boolean; locale: 'fr' | 'en' };
+export type UserRow = {
+  id: string;
+  username: string;
+  is_admin: boolean;
+  locale: 'fr' | 'en';
+  session_version: number;
+};
 
-const toUser = (row: UserRow): User => ({
+export const toUser = (row: UserRow): User => ({
   id: row.id,
   username: row.username,
   isAdmin: row.is_admin,
   locale: row.locale,
+  sessionVersion: row.session_version,
 });
 
-const normalize = (username: string) => username.trim().toLowerCase();
+export const normalizeUsername = (username: string) => username.trim().toLowerCase();
 
 export type UserInputErrorCode = 'username_invalid' | 'password_short' | 'username_taken';
 
@@ -41,24 +49,28 @@ export class UserInputError extends Error {
   }
 }
 
+export function assertPasswordLength(password: string): void {
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    throw new UserInputError(
+      'password_short',
+      `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+    );
+  }
+}
+
 const USERNAME_PATTERN = /^[a-z0-9_.-]{3,32}$/;
 
 const PG_UNIQUE_VIOLATION = '23505';
 
 export async function createUser(db: Kysely<Database>, input: NewUser): Promise<User> {
-  const username = normalize(input.username);
+  const username = normalizeUsername(input.username);
   if (!USERNAME_PATTERN.test(username)) {
     throw new UserInputError(
       'username_invalid',
       'Username must be 3 to 32 characters among a-z, 0-9, "_", "." and "-"',
     );
   }
-  if (input.password.length < MIN_PASSWORD_LENGTH) {
-    throw new UserInputError(
-      'password_short',
-      `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
-    );
-  }
+  assertPasswordLength(input.password);
   const passwordHash = await hash(input.password);
   try {
     const row = await db
@@ -70,7 +82,7 @@ export async function createUser(db: Kysely<Database>, input: NewUser): Promise<
         is_admin: input.isAdmin,
         locale: input.locale,
       })
-      .returning(['id', 'username', 'is_admin', 'locale'])
+      .returning(['id', 'username', 'is_admin', 'locale', 'session_version'])
       .executeTakeFirstOrThrow();
     return toUser(row);
   } catch (error) {
@@ -91,8 +103,8 @@ export async function verifyCredentials(
 ): Promise<User | null> {
   const row = await db
     .selectFrom('users')
-    .select(['id', 'username', 'is_admin', 'locale', 'password_hash'])
-    .where('username', '=', normalize(username))
+    .select(['id', 'username', 'is_admin', 'locale', 'session_version', 'password_hash'])
+    .where('username', '=', normalizeUsername(username))
     .executeTakeFirst();
   const valid = await verify(row?.password_hash ?? (await DUMMY_HASH_PROMISE), password);
   return row && valid ? toUser(row) : null;

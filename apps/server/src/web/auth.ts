@@ -6,6 +6,8 @@ import type { Locale } from './i18n';
 declare module '@fastify/secure-session' {
   interface SessionData {
     userId: string;
+    // Absent from cookies issued before migration 0004, read as version 0.
+    sessionVersion?: number;
   }
 }
 
@@ -22,9 +24,10 @@ declare module 'fastify' {
   }
 }
 
-export function startSession(request: FastifyRequest, userId: string): void {
+export function startSession(request: FastifyRequest, userId: string, sessionVersion: number) {
   request.session.regenerate();
   request.session.set('userId', userId);
+  request.session.set('sessionVersion', sessionVersion);
 }
 
 // Reloads the session user on every request so deletions, role and locale changes apply immediately.
@@ -34,10 +37,10 @@ export function loadUser(db: Kysely<Database>) {
     if (!id) return;
     const row = await db
       .selectFrom('users')
-      .select(['id', 'username', 'is_admin', 'locale'])
+      .select(['id', 'username', 'is_admin', 'locale', 'session_version'])
       .where('id', '=', id)
       .executeTakeFirst();
-    if (!row) {
+    if (!row || (request.session.get('sessionVersion') ?? 0) !== row.session_version) {
       request.session.delete();
       return;
     }

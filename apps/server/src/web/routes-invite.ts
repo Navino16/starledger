@@ -97,7 +97,7 @@ export async function inviteRoutes(
         password: field(request.body, 'password'),
         locale: negotiateLocale(request.headers['accept-language']),
       });
-      startSession(request, user.id);
+      startSession(request, user.id, user.sessionVersion);
       return reply.redirect('/account');
     } catch (error) {
       if (error instanceof InvitationError) return invalidInvitation(request, reply);
@@ -121,7 +121,7 @@ export async function inviteRoutes(
         isAdmin: false,
         locale: negotiateLocale(request.headers['accept-language']),
       });
-      startSession(request, user.id);
+      startSession(request, user.id, user.sessionVersion);
       return reply.redirect('/account');
     } catch (error) {
       if (error instanceof UserInputError) {

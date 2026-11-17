@@ -6,7 +6,8 @@ import { createDb } from './db/db';
 import { migrateToLatest } from './db/migrate';
 import type { Database } from './db/schema';
 import { reparseEvents } from './ingest/reparse';
-import { createUser } from './users/users';
+import { setPassword } from './users/passwords';
+import { createUser, normalizeUsername } from './users/users';
 
 export interface CliIo {
   stdin: AsyncIterable<string | Uint8Array> & {
@@ -20,6 +21,7 @@ export interface CliIo {
 
 const USAGE = `Usage:
   node dist/cli.js create-admin --username <name>   (pipe the password via stdin)
+  node dist/cli.js reset-password --username <name> (pipe the password via stdin)
   node dist/cli.js migrate
   node dist/cli.js reparse [--user <username>]
 `;
@@ -66,6 +68,17 @@ async function readHidden(stdin: CliIo['stdin'], stderr: CliIo['stderr']): Promi
   }
 }
 
+function usernameArg(args: string[]): string {
+  let username: string | undefined;
+  try {
+    username = parseArgs({ args, options: { username: { type: 'string' } } }).values.username;
+  } catch (error) {
+    throw new UsageError((error as Error).message);
+  }
+  if (!username) throw new UsageError('Missing --username');
+  return username;
+}
+
 const readPassword = (io: CliIo) =>
   io.stdin.isTTY ? readHidden(io.stdin, io.stderr) : readPiped(io.stdin);
 
@@ -78,14 +91,7 @@ export async function runCli(argv: string[], io: CliIo): Promise<number> {
       return 0;
     }
     if (command === 'create-admin') {
-      let username: string | undefined;
-      try {
-        username = parseArgs({ args: rest, options: { username: { type: 'string' } } }).values
-          .username;
-      } catch (error) {
-        throw new UsageError((error as Error).message);
-      }
-      if (!username) throw new UsageError('Missing --username');
+      const username = usernameArg(rest);
       const password = await readPassword(io);
       const user = await createUser(io.db, {
         username,
@@ -94,6 +100,18 @@ export async function runCli(argv: string[], io: CliIo): Promise<number> {
         locale: 'en',
       });
       io.stdout.write(`Admin "${user.username}" created\n`);
+      return 0;
+    }
+    if (command === 'reset-password') {
+      const username = normalizeUsername(usernameArg(rest));
+      const user = await io.db
+        .selectFrom('users')
+        .select('id')
+        .where('username', '=', username)
+        .executeTakeFirst();
+      if (!user) throw new Error(`Unknown user "${username}"`);
+      await setPassword(io.db, user.id, await readPassword(io));
+      io.stdout.write(`Password of "${username}" reset\n`);
       return 0;
     }
     if (command === 'reparse') {
@@ -126,7 +144,7 @@ export async function runCli(argv: string[], io: CliIo): Promise<number> {
 
 async function main(): Promise<void> {
   const argv = process.argv.slice(2);
-  if (argv[0] !== 'migrate' && argv[0] !== 'create-admin' && argv[0] !== 'reparse') {
+  if (!['migrate', 'create-admin', 'reset-password', 'reparse'].includes(argv[0] ?? '')) {
     process.stderr.write(USAGE);
     process.exit(2);
   }

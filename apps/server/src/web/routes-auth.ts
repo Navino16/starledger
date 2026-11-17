@@ -8,10 +8,11 @@ import { startSession } from './auth';
 import { type Locale, negotiateLocale, translator } from './i18n';
 
 const LOGIN_MAX_PER_MINUTE = 10;
-const INVITE_TOKEN_PATH = /^\/invite\/[^/?#]+/;
+const TOKEN_PATH =
+  /^(\/invite|\/reset|\/api\/site\/invitations|\/api\/site\/password-resets)\/[^/?#]+/;
 
-// Invitation tokens are bearer secrets: keep them out of logs.
-export const redactUrl = (url: string) => url.replace(INVITE_TOKEN_PATH, '/invite/[redacted]');
+// Invitation and reset tokens are bearer secrets: keep them out of logs.
+export const redactUrl = (url: string) => url.replace(TOKEN_PATH, '$1/[redacted]');
 
 export const localeOf = (request: FastifyRequest): Locale =>
   request.user?.locale ?? negotiateLocale(request.headers['accept-language']);
@@ -85,7 +86,7 @@ export async function authRoutes(app: FastifyInstance, opts: { db: Kysely<Databa
           error: t('login.invalid'),
         });
       }
-      startSession(request, user.id);
+      startSession(request, user.id, user.sessionVersion);
       return reply.redirect('/account');
     },
   );

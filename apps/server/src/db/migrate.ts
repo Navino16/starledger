@@ -3,12 +3,14 @@ import { type Migration, type MigrationProvider, Migrator } from 'kysely/migrati
 import * as init from './migrations/0001_init';
 import * as anomalyShipRatio from './migrations/0002_anomaly_ship_ratio';
 import * as apiKeyNames from './migrations/0003_api_key_names';
+import * as passwordResets from './migrations/0004_password_resets';
 
 // In-code provider: the server is bundled, so migration files do not exist at runtime.
 const migrations: Record<string, Migration> = {
   '0001_init': init,
   '0002_anomaly_ship_ratio': anomalyShipRatio,
   '0003_api_key_names': apiKeyNames,
+  '0004_password_resets': passwordResets,
 };
 
 const provider: MigrationProvider = {

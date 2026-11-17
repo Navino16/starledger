@@ -240,3 +240,36 @@ describe('runCli create-admin with a TTY', () => {
     expect((await verifyCredentials(t.db, 'tty-eof', PASSWORD))?.isAdmin).toBe(true);
   });
 });
+
+describe('runCli reset-password', () => {
+  const run = (username: string, password: string) => {
+    const out = sink();
+    const err = sink();
+    return runCli(['reset-password', '--username', username], {
+      stdin: Readable.from([`${password}\n`]),
+      stdout: out.stream,
+      stderr: err.stream,
+      db: t.db,
+    }).then((code) => ({ code, out: out.text(), err: err.text() }));
+  };
+
+  it('sets a new password read from stdin', async () => {
+    await createUser(t.db, { username: 'gina', password: PASSWORD, isAdmin: false, locale: 'en' });
+    const res = await run('Gina', 'new-password-123');
+    expect(res.code).toBe(0);
+    expect(res.out).toBe('Password of "gina" reset\n');
+    expect(await verifyCredentials(t.db, 'gina', 'new-password-123')).not.toBeNull();
+    expect(await verifyCredentials(t.db, 'gina', PASSWORD)).toBeNull();
+  });
+
+  it('fails on an unknown user or a short password', async () => {
+    const unknown = await run('nobody', 'new-password-123');
+    expect(unknown.code).toBe(1);
+    expect(unknown.err).toContain('Unknown user "nobody"');
+    await createUser(t.db, { username: 'hank', password: PASSWORD, isAdmin: false, locale: 'en' });
+    const short = await run('hank', 'tiny');
+    expect(short.code).toBe(1);
+    expect(short.err).not.toContain('tiny');
+    expect(await verifyCredentials(t.db, 'hank', PASSWORD)).not.toBeNull();
+  });
+});
