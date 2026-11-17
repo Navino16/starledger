@@ -4,7 +4,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../src/app';
 import type { Config } from '../src/config';
 import { createDb } from '../src/db/db';
+import { setPassword } from '../src/users/passwords';
 import { createUser } from '../src/users/users';
+import { redactUrl } from '../src/web/routes-auth';
 import { startTestDb, type TestDb } from './helpers/db';
 
 const PASSWORD = 'correct horse battery';
@@ -306,5 +308,62 @@ describe('proxy trust', () => {
     });
     expect(String(login.headers['set-cookie'])).toMatch(/Secure/i);
     await probe.close();
+  });
+});
+
+describe('session versions', () => {
+  async function login(username: string) {
+    const page = await loginPage();
+    const res = await postLogin(
+      { username, password: PASSWORD, _csrf: page.token },
+      { cookie: page.cookie, headers: form, remoteAddress: '10.9.0.1' },
+    );
+    expect(res.statusCode).toBe(302);
+    return cookieOf(res);
+  }
+
+  it('signs out other sessions after a password change', async () => {
+    const user = await createUser(t.db, {
+      username: 'erin',
+      password: PASSWORD,
+      isAdmin: false,
+      locale: 'en',
+    });
+    const cookie = await login('erin');
+    expect(
+      (await app.inject({ method: 'GET', url: '/account', headers: { cookie } })).statusCode,
+    ).toBe(200);
+    await setPassword(t.db, user.id, PASSWORD);
+    const after = await app.inject({ method: 'GET', url: '/account', headers: { cookie } });
+    expect(after.statusCode).toBe(302);
+    expect(after.headers.location).toBe('/login');
+  });
+
+  it('accepts a cookie issued before session versions existed', async () => {
+    const user = await createUser(t.db, {
+      username: 'frank',
+      password: PASSWORD,
+      isAdmin: false,
+      locale: 'en',
+    });
+    const legacy = app.encodeSecureSession(app.createSecureSession({ userId: user.id }));
+    const res = await app.inject({
+      method: 'GET',
+      url: '/account',
+      headers: { cookie: `session=${encodeURIComponent(legacy)}` },
+    });
+    expect(res.statusCode).toBe(200);
+  });
+});
+
+describe('redactUrl', () => {
+  it('hides invitation and reset tokens, keeping the query string', () => {
+    expect(redactUrl('/invite/abc_DEF-1?x=1')).toBe('/invite/[redacted]?x=1');
+    expect(redactUrl('/reset/abc_DEF-1')).toBe('/reset/[redacted]');
+    expect(redactUrl('/api/site/invitations/abc')).toBe('/api/site/invitations/[redacted]');
+    expect(redactUrl('/api/site/password-resets/abc?y=2')).toBe(
+      '/api/site/password-resets/[redacted]?y=2',
+    );
+    expect(redactUrl('/account')).toBe('/account');
   });
 });

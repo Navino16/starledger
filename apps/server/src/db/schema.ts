@@ -15,6 +15,17 @@ export interface UsersTable {
   password_hash: string;
   is_admin: Generated<boolean>;
   locale: Generated<'fr' | 'en'>;
+  session_version: Generated<number>;
+  created_at: Timestamp;
+}
+
+export interface PasswordResetsTable {
+  id: string;
+  user_id: string;
+  token_hash: string;
+  created_by: string;
+  expires_at: Timestamp;
+  used_at: NullableTimestamp;
   created_at: Timestamp;
 }
 
@@ -104,6 +115,7 @@ export interface UniverseSettingsTable {
 export interface Database {
   users: UsersTable;
   invitations: InvitationsTable;
+  password_resets: PasswordResetsTable;
   api_keys: ApiKeysTable;
   accounts: AccountsTable;
   devices: DevicesTable;

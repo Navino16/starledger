@@ -1,5 +1,6 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { type Kysely, sql } from 'kysely';
+import { hashToken, newToken } from '../auth/tokens';
 import type { Database } from '../db/schema';
 import { createUser, type User } from './users';
 
@@ -9,20 +10,18 @@ export class InvitationError extends Error {
   }
 }
 
-const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
-
 export async function createInvitation(
   db: Kysely<Database>,
   adminId: string,
   publicUrl: string,
   ttlHours = 72,
 ): Promise<{ url: string }> {
-  const token = randomBytes(32).toString('base64url');
+  const { token, hash } = newToken();
   await db
     .insertInto('invitations')
     .values({
       id: randomUUID(),
-      token_hash: hashToken(token),
+      token_hash: hash,
       created_by: adminId,
       expires_at: new Date(Date.now() + ttlHours * 3_600_000),
     })
