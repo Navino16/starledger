@@ -47,7 +47,7 @@
 | 18 | XP et artefacts des récompenses d'anomalie | ✅ |
 | 19 | Surplus de lithium des récompenses | ✅ |
 | 20 | Clés API multiples | ✅ |
-| 21 | Mots de passe | ☐ |
+| 21 | Mots de passe | ✅ |
 | 22 | API JSON du site | ☐ |
 | 23 | App web : socle et pages publiques | ☐ |
 | 24 | Pages connectées et bascule | ☐ |
@@ -1547,11 +1547,11 @@ Branche : `feature/passwords`. Spec web, « Mots de passe ».
   - `consumePasswordReset(db, token, password: string): Promise<{ user: User; sessionVersion: number }>` : réclamation par `UPDATE … WHERE used_at IS NULL AND expires_at > now() RETURNING` dans une transaction (comme `consumeInvitation`), sinon `PasswordResetError` ; mot de passe trop court → `UserInputError` et le lien reste utilisable (rollback).
 - `web/auth.ts` : `startSession(request, userId, sessionVersion: number)` stocke `sessionVersion` ; `loadUser` lit `session_version` et supprime la session si la version du cookie diffère ; **cookie sans `sessionVersion` = version 0**. Tous les appelants actuels de `startSession` passent la version lue en base.
 
-- [ ] **Step 1 : tests** (`passwords.test.ts`) : changement réussi → l'ancien mot de passe échoue à `verifyCredentials`, le nouveau passe, version +1 ; mauvais mot de passe actuel → `CurrentPasswordError`, rien ne change ; nouveau de 11 caractères → `UserInputError` ; réinitialisation : lien créé pour `'  Vega '` → `username` `'vega'` ; inconnu → `UnknownUserError` ; second lien → le premier renvoie `null` à `getPasswordReset` ; consommation → nouveau mot de passe valable, version +1, ancien mot de passe valable jusque-là ; deux `consumePasswordReset` en parallèle → un succès, un `PasswordResetError` ; lien expiré (`expires_at` dans le passé) → `PasswordResetError` ; mot de passe trop court → erreur puis le lien marche encore. `web-auth.test.ts` : session ouverte, puis `setPassword` → requête suivante redirigée vers `/login` ; cookie forgé sans `sessionVersion` pour un utilisateur en version 0 → accepté.
-- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run test/passwords.test.ts test/web-auth.test.ts test/invitations.test.ts` → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** même commande → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add password change, admin reset links and session versions"`
+- [x] **Step 1 : tests** (`passwords.test.ts`) : changement réussi → l'ancien mot de passe échoue à `verifyCredentials`, le nouveau passe, version +1 ; mauvais mot de passe actuel → `CurrentPasswordError`, rien ne change ; nouveau de 11 caractères → `UserInputError` ; réinitialisation : lien créé pour `'  Vega '` → `username` `'vega'` ; inconnu → `UnknownUserError` ; second lien → le premier renvoie `null` à `getPasswordReset` ; consommation → nouveau mot de passe valable, version +1, ancien mot de passe valable jusque-là ; deux `consumePasswordReset` en parallèle → un succès, un `PasswordResetError` ; lien expiré (`expires_at` dans le passé) → `PasswordResetError` ; mot de passe trop court → erreur puis le lien marche encore. `web-auth.test.ts` : session ouverte, puis `setPassword` → requête suivante redirigée vers `/login` ; cookie forgé sans `sessionVersion` pour un utilisateur en version 0 → accepté.
+- [x] **Step 2 :** `pnpm --filter @app/server exec vitest run test/passwords.test.ts test/web-auth.test.ts test/invitations.test.ts` → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** même commande → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add password change, admin reset links and session versions"`
 
 ### Tâche 21.2 : Commande `reset-password` et logs
 
@@ -1562,11 +1562,11 @@ Branche : `feature/passwords`. Spec web, « Mots de passe ».
 - `redactUrl` masque `/invite/<t>`, `/reset/<t>`, `/api/site/invitations/<t>` et `/api/site/password-resets/<t>` (en préparation du scope 22).
 - `docs/deploy.md` : section « Reset a password » (commande et lien admin).
 
-- [ ] **Step 1 : tests** : CLI avec stdin `'new-password-123\n'` → code 0 et `verifyCredentials` passe ; utilisateur inconnu → code 1 ; mot de passe court → code 1 ; `redactUrl` sur les quatre formes → `[redacted]`, querystring conservée hors jeton.
-- [ ] **Step 2 :** lancer les fichiers de test → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** `pnpm test`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
-- [ ] **Step 5 : commit.** `git commit -m "Add the reset-password command and redact reset tokens"`
+- [x] **Step 1 : tests** : CLI avec stdin `'new-password-123\n'` → code 0 et `verifyCredentials` passe ; utilisateur inconnu → code 1 ; mot de passe court → code 1 ; `redactUrl` sur les quatre formes → `[redacted]`, querystring conservée hors jeton.
+- [x] **Step 2 :** lancer les fichiers de test → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** `pnpm test`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
+- [x] **Step 5 : commit.** `git commit -m "Add the reset-password command and redact reset tokens"`
 
 ## Scope 22 — API JSON du site
 

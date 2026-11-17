@@ -40,6 +40,18 @@ The password is read from the terminal without echo. To script it, pipe it inste
 `printf '%s' "$PASSWORD" | docker compose exec -T app node dist/cli.js create-admin --username admin`.
 Then sign in at `PUBLIC_URL/login` and generate an API key from the account page.
 
+## Reset a password
+
+An admin can create a reset link for a user who forgot their password. The link is valid for 24 hours and works once. Creating a new link cancels the previous one.
+
+If no admin can sign in, reset the password from the server:
+
+```sh
+docker compose exec app node dist/cli.js reset-password --username admin
+```
+
+The password is read like `create-admin`. A reset signs the user out of their other sessions. Their API keys keep working.
+
 ## Reparse
 
 After a parser update, re-interpret stored events from their raw observations (unrecognized events, and events stored by an older parser):
