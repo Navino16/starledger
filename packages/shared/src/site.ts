@@ -97,3 +97,12 @@ export const savedSettingsResponseSchema = z.object({ settings: valuationSetting
 export const createResetRequestSchema = z.object({ username });
 export const linkResponseSchema = z.object({ url: z.string() });
 export const resetLinkResponseSchema = z.object({ url: z.string(), username: z.string() });
+
+export const siteAccountSchema = z.object({
+  serverId: z.number(),
+  lang: z.string(),
+  playerId: z.number(),
+  playerName: z.string().nullable(),
+});
+export type SiteAccount = z.infer<typeof siteAccountSchema>;
+export const accountsResponseSchema = z.object({ accounts: z.array(siteAccountSchema) });

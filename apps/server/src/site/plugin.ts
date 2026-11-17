@@ -9,6 +9,7 @@ import { accountRoutes } from './routes-account';
 import { adminRoutes } from './routes-admin';
 import { publicRoutes } from './routes-public';
 import { sessionRoutes } from './routes-session';
+import { statsRoutes } from './routes-stats';
 import { loadUser } from './session';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
@@ -55,4 +56,5 @@ export async function sitePlugin(
   await app.register(publicRoutes, deps);
   await app.register(accountRoutes, deps);
   await app.register(adminRoutes, deps);
+  await app.register(statsRoutes, deps);
 }
