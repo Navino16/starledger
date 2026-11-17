@@ -31,6 +31,22 @@ const logSerializers = {
   }),
 };
 
+// 'unsafe-inline' styles: Recharts sets style attributes on its SVG (spec dashboard, Sécurité).
+const SECURITY_HEADERS = {
+  'Content-Security-Policy': [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data:",
+    "connect-src 'self'",
+    "frame-ancestors 'none'",
+    "base-uri 'none'",
+    "form-action 'self'",
+  ].join('; '),
+  'X-Content-Type-Options': 'nosniff',
+  'Referrer-Policy': 'same-origin',
+};
+
 const isAppRoute = (request: FastifyRequest) => {
   const path = request.url.split('?')[0] ?? '';
   return (
@@ -70,6 +86,9 @@ export function buildApp(
   });
 
   app.decorateRequest('user', null);
+  app.addHook('onSend', async (_request, reply) => {
+    reply.headers(SECURITY_HEADERS);
+  });
   app.register(fastifySecureSession, {
     key: Buffer.from(config.sessionSecret, 'hex'),
     // secure 'auto' follows request.protocol, which honors X-Forwarded-Proto under trustProxy.
