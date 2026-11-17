@@ -19,7 +19,7 @@ En même temps, on permet d'**ajouter un appareil plus tard sans reconfigurer le
 - Utilisable sur téléphone. Interface en français et en anglais, comme aujourd'hui.
 
 ## Non-objectifs
-- Les dashboards de stats eux-mêmes : chantier suivant, sur cette base.
+- Les dashboards de stats eux-mêmes : chantier suivant, sur cette base. L'onglet Dashboard des maquettes n'apparaît pas encore ; d'ici là, la page d'arrivée après connexion est Compte (décision de l'utilisateur).
 - Toute autre fonctionnalité : pas de liste des invitations ni des comptes, pas de sélecteur de langue, pas de thème clair, pas d'e-mail.
 - Pas de rattachement des appareils (`devices`) à une clé, ni de page appareils : c'est la « gestion des appareils » de la spec §13, pour plus tard.
 - Aucun changement de l'API du userscript (`/api/v1`) ni du userscript : il garde une clé par appareil.
@@ -52,6 +52,7 @@ En même temps, on permet d'**ajouter un appareil plus tard sans reconfigurer le
 - Les écritures de l'API du site sont protégées contre le CSRF, comme les formulaires aujourd'hui.
 - Les limitations de tentatives existantes (login, inscription) s'appliquent aux nouveaux endpoints.
 - Les pages Eta, `@fastify/view`, `eta` et les routes HTML actuelles sont **supprimées** à la fin de la migration. Les URL visibles existantes restent : `/login`, `/signup`, `/invite/:token`, `/account`. S'ajoutent `/settings`, `/admin` (`/admin/invitations` y redirige) et `/reset/:token`.
+- `/signup` n'existe que si l'inscription libre est activée (`OPEN_SIGNUP`, désactivée par défaut), comme aujourd'hui, et reprend l'écran « Créer un compte » des maquettes (décision de l'utilisateur).
 
 ### Style (validé sur maquette, style A)
 - Celui de la fenêtre détail du userscript. Fond `#0d1014`, cartes `#161b23` à coins arrondis, fond secondaire `#1b212b`, lignes `#2a3240`, texte `#e7e8eb` / `#c9cdd6`, secondaire `#858b98`, désactivé `#5b6270`, accent doré `#e3b955` (bouton principal, onglet actif), erreur `#e2574c`, succès `#64a69b`. Couleurs des ressources : métal `#9899be`, cristal `#95c1dd`, deutérium `#64a69b`, antimatière `#b88ce8`. Police système.
@@ -72,10 +73,11 @@ En même temps, on permet d'**ajouter un appareil plus tard sans reconfigurer le
 - Révoquer une clé qui n'appartient pas à l'utilisateur connecté répond 404.
 
 ### Mots de passe
-- **Changer** (page compte) : mot de passe actuel et nouveau, 12 caractères minimum comme à l'inscription. Les clés API ne changent pas.
-- **Réinitialiser par lien** (page administration) : l'admin saisit l'identifiant Starledger du compte (« Aucun compte avec cet identifiant » s'il n'existe pas) et obtient un lien `/reset/:token`. Le lien est à usage unique, valable 24 heures, affiché une seule fois. Comme pour les invitations, on ne stocke que l'empreinte du token, et on la rattache au compte. L'ancien mot de passe reste valable tant que le lien n'a pas servi.
+- **Changer** (page compte) : mot de passe actuel et nouveau, 12 caractères minimum comme à l'inscription. Mot de passe actuel faux : alerte « Mot de passe actuel incorrect », rien ne change. Les clés API ne changent pas.
+- **Réinitialiser par lien** (page administration) : l'admin saisit l'identifiant Starledger du compte (« Aucun compte avec cet identifiant » s'il n'existe pas) et obtient un lien `/reset/:token`. Le lien est à usage unique, valable 24 heures, affiché une seule fois. Comme pour les invitations, on ne stocke que l'empreinte du token, et on la rattache au compte. L'ancien mot de passe reste valable tant que le lien n'a pas servi. Créer un nouveau lien pour le même compte invalide le précédent encore ouvert. Les tokens `/reset/` sont masqués dans les logs, comme ceux de `/invite/`. Un lien inconnu, expiré ou déjà utilisé mène à la page Erreur.
 - **Réinitialiser en ligne de commande** : `reset-password --username <nom>`, sur le modèle de `create-admin` (mot de passe lu sur l'entrée standard). C'est le secours de l'admin.
 - Les limitations de tentatives s'appliquent au changement et à la réinitialisation.
+- Après un changement ou une réinitialisation (lien ou ligne de commande), **les autres sessions du compte sont fermées** ; la session qui vient de changer le mot de passe reste ouverte. La session étant un cookie chiffré sans état, le cookie porte une version de session stockée dans `users`, incrémentée à chaque changement et comparée par `loadUser` (décision du rédacteur).
 
 ### Langue
 - On garde la langue de l'utilisateur (`users.locale`) pour les pages connectées, et la négociation `Accept-Language` actuelle hors connexion.
@@ -87,7 +89,6 @@ En même temps, on permet d'**ajouter un appareil plus tard sans reconfigurer le
 - Façon dont le serveur sert les fichiers statiques et le fallback `index.html`, en-têtes de cache.
 - Façon dont le front connaît l'utilisateur courant (endpoint « moi » au chargement, par exemple) et redirige vers `/login`.
 - Longueur maximale du nom d'une clé.
-- Déconnecter ou non les autres sessions après un changement de mot de passe. La session est un cookie chiffré sans état côté serveur : il faudrait, par exemple, une version de session dans `users`.
 - Ordre de migration des pages, du moment que chaque étape garde le site utilisable.
 - Configuration de dev (proxy Vite vers Fastify).
 - Tests : les tests actuels des routes web (`web-auth`, `invitations`, `settings`, `api-keys`) sont portés vers l'API du site ; le front a ses propres tests de composants.

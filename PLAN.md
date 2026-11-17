@@ -13,6 +13,7 @@
 - Node 26 (LTS), pnpm 12, TypeScript 7 (strict), Vitest 5, Biome 2
 - Serveur : Fastify 5, Kysely + `pg`, PostgreSQL 17, zod 4, Eta (`@fastify/view`), `@fastify/secure-session`, `@fastify/csrf-protection`, `@fastify/formbody`, `@fastify/rate-limit`, `@node-rs/argon2`
 - Userscript : vite-plugin-monkey, jsdom (tests)
+- App web (scopes 23 et 24) : Vite, React, React Router, Tailwind CSS v4, Testing Library ; remplace Eta et `@fastify/view` au scope 24
 - Tests base de données : `@testcontainers/postgresql`
 - Docker Compose
 
@@ -45,6 +46,11 @@
 | 17 | Période personnalisée | ✅ |
 | 18 | XP et artefacts des récompenses d'anomalie | ✅ |
 | 19 | Surplus de lithium des récompenses | ✅ |
+| 20 | Clés API multiples | ☐ |
+| 21 | Mots de passe | ☐ |
+| 22 | API JSON du site | ☐ |
+| 23 | App web : socle et pages publiques | ☐ |
+| 24 | Pages connectées et bascule | ☐ |
 
 ## Global Constraints
 
@@ -1456,3 +1462,297 @@ Branche : `feature/lithium-bonus`. **Source** : page des anomalies d'un joueur (
 - [x] **Step 4 :** même commande → PASS ; `pnpm test`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
 - [x] **Step 5 : commit.** `git commit -m "Read the lithium bonus amount of anomaly reward collects"`
 
+
+---
+
+## Front web et clés API multiples (scopes 20 à 24)
+
+**Spec** : `docs/superpowers/specs/2026-11-16-web-front-design.md` (fait foi, ci-après « spec web ») ; apparence : `docs/web-design.md` et ses maquettes `docs/web-design/` (tokens, composants, rédaction, accessibilité).
+
+**Ordre** : 20 et 21 (serveur) sont indépendants ; 22 (API du site) dépend des deux ; 23 (socle de l'app) dépend de 22 ; 24 (pages connectées et bascule) termine. Jusqu'à 24, les pages Eta restent servies : chaque scope garde le site utilisable.
+
+**Contraintes communes :**
+- Aucun appel au jeu, aucun changement du userscript ni de `/api/v1` hors `last_used_at` (spec web, non-objectifs).
+- Clés API et jetons (invitation, réinitialisation) : empreinte SHA-256 seule en base, valeur affichée une fois, réponse `Cache-Control: no-store`.
+- Tout jeton dans une URL (`/invite/`, `/reset/`, et leurs équivalents sous `/api/site/`) est masqué dans les logs par `redactUrl`.
+- Bundle de `apps/web` produit avec `build.minify: false` ; aucune ressource externe (CDN, police, analytics).
+- Toute dépendance ajoutée prend la dernière version (`npx npm-check-updates --workspaces --root`) ; une version plus ancienne gardée exprès est dite et justifiée dans la PR.
+- Libellés de l'interface : FR et EN, règles de rédaction de `docs/web-design.md` (majuscule initiale seulement, pas de point final aux libellés d'une phrase).
+
+**Review Focus (front web) :**
+1. Cookie de session émis avant la migration 0004 (sans version) : toujours valable, lu comme version 0 (test en 21.1).
+2. Lien de réinitialisation utilisé deux fois en parallèle : un seul succès, l'autre 410 (test en 21.1).
+3. Requête JSON d'écriture sans en-tête CSRF : 403 JSON `csrf_invalid`, jamais la page d'erreur HTML (test en 22.1).
+4. Jetons dans les chemins `/api/site/invitations/:token` et `/api/site/password-resets/:token` : masqués dans les logs (test en 22.2).
+5. Fallback de la SPA : `/api/v1/inconnu`, `/api/site/inconnu` et `/healthz` ne renvoient jamais `index.html` (test en 24.4).
+
+## Scope 20 — Clés API multiples
+
+Branche : `feature/multiple-api-keys`. Spec web, « Clés API ».
+
+### Tâche 20.1 : Plusieurs clés nommées
+
+**Files :** Create `apps/server/src/db/migrations/0003_api_key_names.ts` ; Modify `apps/server/src/db/migrate.ts`, `apps/server/src/db/schema.ts`, `apps/server/src/auth/api-keys.ts` ; Test `apps/server/test/api-keys.test.ts`, `apps/server/test/migrations.test.ts`.
+
+**Interfaces :**
+- Migration : supprime l'index `api_keys_one_active_per_user` ; ajoute `name text` (nullable) et `last_used_at timestamptz` (nullable). `down` recrée l'index après avoir révoqué toutes les clés actives sauf la plus récente par utilisateur.
+- Produit (`api-keys.ts`, remplace `generateApiKey` et `getActiveApiKey`) :
+  - `export const MAX_KEY_NAME_LENGTH = 64` ;
+  - `export class ApiKeyNameError extends Error` ;
+  - `createApiKey(db, userId: string, name: string): Promise<{ id: string; key: string }>` : nom `trim()`, 1 à 64 caractères, sinon `ApiKeyNameError` ; ne touche à aucune autre clé ;
+  - `export interface ApiKeySummary { id: string; name: string | null; prefix: string; createdAt: Date; lastUsedAt: Date | null }` ;
+  - `listApiKeys(db, userId): Promise<ApiKeySummary[]>` : clés actives seulement, plus récente d'abord ;
+  - `revokeApiKey(db, userId: string, keyId: string): Promise<boolean>` : `false` si la clé n'existe pas, est déjà révoquée ou appartient à un autre ; `keyId` non UUID → `false` sans requête ;
+  - `authenticateApiKey` : met `last_used_at = now()` quand il est nul ou antérieur à `now() - interval '5 minutes'`, dans une seule requête `UPDATE … RETURNING user_id`.
+
+- [ ] **Step 1 : tests** : deux clés créées pour un utilisateur s'authentifient toutes deux ; en révoquer une laisse l'autre valable ; `revokeApiKey` sur la clé d'un autre → `false` et la clé reste valable ; `'not-a-uuid'` → `false` ; nom `'  PC  '` stocké `'PC'` ; `''`, `'   '`, 65 caractères → `ApiKeyNameError` ; `listApiKeys` exclut les révoquées, ordre décroissant ; `last_used_at` nul → posé à l'authentification ; posé à `now() - 1 min` → inchangé ; à `now() - 6 min` → mis à jour. Migration : une clé active créée avant 0003 reste valable avec `name` nul.
+- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run test/api-keys.test.ts test/migrations.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Allow several named API keys per user"`
+
+### Tâche 20.2 : Page compte Eta provisoire
+
+Les pages Eta disparaissent au scope 24 ; on les adapte au minimum pour que les clés multiples servent dès maintenant.
+
+**Files :** Modify `apps/server/src/web/routes-account.ts`, `apps/server/src/web/views/account.eta`, `apps/server/src/web/locales/{fr,en}.json` ; Test `apps/server/test/api-keys.test.ts` (partie web) ou `apps/server/test/web-auth.test.ts`, selon où sont les tests actuels de `/account/api-key`.
+
+**Interfaces :**
+- Routes : `POST /account/api-keys` (champ `name`) remplace `/account/api-key` ; `POST /account/api-keys/:id/revoke` remplace `/account/api-key/revoke` (clé inconnue ou d'un autre → page 404). Nom invalide → page compte en 400 avec `account.keyNameInvalid`.
+- Page : formulaire nom + « Créer une clé », clé créée affichée une fois, tableau nom (« Sans nom » si nul), préfixe, création, dernière utilisation (« jamais »), bouton révoquer par ligne.
+
+- [ ] **Step 1 : tests** : créer deux clés via le formulaire → les deux listées ; révoquer la première → seule la seconde listée ; révoquer l'id d'un autre utilisateur → 404 ; nom vide → 400 ; sans CSRF → 403.
+- [ ] **Step 2 :** lancer le fichier de test → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** `pnpm test`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Manage several API keys from the account page"`
+
+## Scope 21 — Mots de passe
+
+Branche : `feature/passwords`. Spec web, « Mots de passe ».
+
+### Tâche 21.1 : Changement, réinitialisation et version de session
+
+**Files :** Create `apps/server/src/db/migrations/0004_password_resets.ts`, `apps/server/src/auth/tokens.ts`, `apps/server/src/users/passwords.ts` ; Modify `apps/server/src/db/migrate.ts`, `apps/server/src/db/schema.ts`, `apps/server/src/users/invitations.ts` (utilise `tokens.ts`), `apps/server/src/web/auth.ts` ; Test `apps/server/test/passwords.test.ts`, `apps/server/test/web-auth.test.ts`.
+
+**Interfaces :**
+- Migration : `users.session_version integer not null default 0` ; table `password_resets` (`id uuid pk`, `user_id uuid not null → users`, `token_hash text not null unique`, `created_by uuid not null → users`, `expires_at timestamptz not null`, `used_at timestamptz`, `created_at timestamptz not null default now()`).
+- `tokens.ts` : `newToken(): { token: string; hash: string }` (32 octets base64url) et `hashToken(token: string): string`, repris d'`invitations.ts`.
+- `passwords.ts` :
+  - `export class CurrentPasswordError extends Error` ; `export class PasswordResetError extends Error` (« unknown, expired or already used ») ; `export class UnknownUserError extends Error` ;
+  - `changePassword(db, userId, current: string, next: string): Promise<{ sessionVersion: number }>` : `current` faux → `CurrentPasswordError` ; `next` trop court → `UserInputError('password_short')` ; sinon nouveau hash et `session_version + 1` ;
+  - `setPassword(db, userId, next): Promise<{ sessionVersion: number }>` : même règle de longueur, `session_version + 1` (sert à la CLI et à la réinitialisation) ;
+  - `createPasswordReset(db, adminId, username: string, publicUrl: string, ttlHours = 24): Promise<{ url: string; username: string }>` : identifiant normalisé comme `createUser` ; inconnu → `UnknownUserError` ; les liens encore ouverts de ce compte passent `expires_at = now()` ; URL `${publicUrl}/reset/${token}` ;
+  - `getPasswordReset(db, token): Promise<{ username: string } | null>` ;
+  - `consumePasswordReset(db, token, password: string): Promise<{ user: User; sessionVersion: number }>` : réclamation par `UPDATE … WHERE used_at IS NULL AND expires_at > now() RETURNING` dans une transaction (comme `consumeInvitation`), sinon `PasswordResetError` ; mot de passe trop court → `UserInputError` et le lien reste utilisable (rollback).
+- `web/auth.ts` : `startSession(request, userId, sessionVersion: number)` stocke `sessionVersion` ; `loadUser` lit `session_version` et supprime la session si la version du cookie diffère ; **cookie sans `sessionVersion` = version 0**. Tous les appelants actuels de `startSession` passent la version lue en base.
+
+- [ ] **Step 1 : tests** (`passwords.test.ts`) : changement réussi → l'ancien mot de passe échoue à `verifyCredentials`, le nouveau passe, version +1 ; mauvais mot de passe actuel → `CurrentPasswordError`, rien ne change ; nouveau de 11 caractères → `UserInputError` ; réinitialisation : lien créé pour `'  Vega '` → `username` `'vega'` ; inconnu → `UnknownUserError` ; second lien → le premier renvoie `null` à `getPasswordReset` ; consommation → nouveau mot de passe valable, version +1, ancien mot de passe valable jusque-là ; deux `consumePasswordReset` en parallèle → un succès, un `PasswordResetError` ; lien expiré (`expires_at` dans le passé) → `PasswordResetError` ; mot de passe trop court → erreur puis le lien marche encore. `web-auth.test.ts` : session ouverte, puis `setPassword` → requête suivante redirigée vers `/login` ; cookie forgé sans `sessionVersion` pour un utilisateur en version 0 → accepté.
+- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run test/passwords.test.ts test/web-auth.test.ts test/invitations.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add password change, admin reset links and session versions"`
+
+### Tâche 21.2 : Commande `reset-password` et logs
+
+**Files :** Modify `apps/server/src/cli.ts`, `apps/server/src/web/routes-auth.ts` (`redactUrl`), `docs/deploy.md` ; Test `apps/server/test/cli.test.ts` (ou le fichier qui teste `create-admin`), `apps/server/test/web-auth.test.ts`.
+
+**Interfaces :**
+- `node dist/cli.js reset-password --username <name>` : mot de passe lu comme `create-admin` (`readPassword`), `setPassword`, sortie `Password of "<username>" reset\n`, code 0 ; inconnu → `Error: Unknown user "<name>"`, code 1 ; ajouté à `USAGE` et au filtre de `main()`.
+- `redactUrl` masque `/invite/<t>`, `/reset/<t>`, `/api/site/invitations/<t>` et `/api/site/password-resets/<t>` (en préparation du scope 22).
+- `docs/deploy.md` : section « Reset a password » (commande et lien admin).
+
+- [ ] **Step 1 : tests** : CLI avec stdin `'new-password-123\n'` → code 0 et `verifyCredentials` passe ; utilisateur inconnu → code 1 ; mot de passe court → code 1 ; `redactUrl` sur les quatre formes → `[redacted]`, querystring conservée hors jeton.
+- [ ] **Step 2 :** lancer les fichiers de test → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** `pnpm test`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add the reset-password command and redact reset tokens"`
+
+## Scope 22 — API JSON du site
+
+Branche : `feature/site-api`. Spec web, « Architecture ».
+
+**Conventions :**
+- Préfixe `/api/site`, plugin Fastify enregistré **dans** `webRoutes` (après le hook `loadUser`), avec ses propres `setErrorHandler`/`setNotFoundHandler` JSON.
+- Erreurs : `{ "error": <code> }`, codes : `unauthenticated` (401), `forbidden` (403), `csrf_invalid` (403), `not_found` (404), `rate_limited` (429), `invalid_payload` (400), `server_error` (500), plus les codes métier de chaque route.
+- CSRF : `@fastify/csrf-protection` existant ; le jeton est renvoyé par `GET /api/site/session` et lu dans l'en-tête `x-csrf-token` (lecture par défaut du plugin). Toute méthode autre que `GET` l'exige.
+- Dates en ISO 8601. Réponses contenant un secret : `Cache-Control: no-store`.
+- Contrats zod dans `packages/shared/src/site.ts` (exporté par `index.ts`), utilisés par le serveur pour valider et par l'app pour typer.
+
+### Tâche 22.1 : Socle, session, connexion
+
+**Files :** Create `packages/shared/src/site.ts`, `apps/server/src/site/plugin.ts`, `apps/server/src/site/routes-session.ts` ; Modify `packages/shared/src/index.ts`, `apps/server/src/app.ts` ; Test `apps/server/test/site-session.test.ts`.
+
+**Interfaces :**
+- Shared : `siteUserSchema` (`{ username, isAdmin, locale: 'fr' | 'en' }`), `sessionResponseSchema` (`{ user: SiteUser | null; locale: 'fr' | 'en'; csrfToken: string; openSignup: boolean }`), `loginRequestSchema` (`{ username: string; password: string }`), `SiteErrorCode` (union des codes), types inférés exportés.
+- Routes : `GET /session` (locale = `user.locale` sinon `negotiateLocale`) ; `POST /login` (10/min/IP, `invalid_credentials` 401, sinon `startSession` et `{ user }`) ; `POST /logout` → 204 et session supprimée.
+
+- [ ] **Step 1 : tests** : `GET /session` anonyme → `user: null`, `csrfToken` non vide, `locale` d'`Accept-Language: fr` = `fr` ; login correct avec jeton → `{ user }` et cookie, puis `GET /session` connecté ; mauvais mot de passe → 401 `invalid_credentials` ; login sans `x-csrf-token` → 403 `csrf_invalid` en JSON ; 11ᵉ tentative dans la minute → 429 `rate_limited` ; corps non conforme → 400 `invalid_payload` ; `GET /api/site/nope` → 404 JSON ; logout → 204 puis `user: null`.
+- [ ] **Step 2 :** `pnpm --filter @app/server exec vitest run test/site-session.test.ts` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add the site JSON API with session and login"`
+
+### Tâche 22.2 : Inscription, invitations, réinitialisation
+
+**Files :** Create `apps/server/src/site/routes-public.ts` ; Modify `packages/shared/src/site.ts`, `apps/server/src/site/plugin.ts` ; Test `apps/server/test/site-public.test.ts`.
+
+**Interfaces :**
+- Shared : `signupRequestSchema` (`{ username, password }`), `resetInfoResponseSchema` (`{ username }`), `resetRequestSchema` (`{ password }`).
+- Routes (10/min/IP pour les `POST`) :
+  - `GET /invitations/:token` → 204 ou 410 `invitation_invalid` ; `POST /invitations/:token` → 201 `{ user }` et session, 410 `invitation_invalid`, 400 `username_invalid` | `password_short` | `username_taken` ;
+  - `POST /signup` (seulement si `openSignup`, sinon 404) → mêmes réponses sans 410 ;
+  - `GET /password-resets/:token` → `{ username }` ou 410 `reset_invalid` ; `POST /password-resets/:token` → 200 `{ user }` et session ouverte avec la nouvelle version, 410 `reset_invalid`, 400 `password_short`.
+
+- [ ] **Step 1 : tests** : parcours invitation complet ; jeton déjà utilisé → 410 ; `/signup` 404 quand `openSignup` est faux, 201 quand vrai ; réinitialisation : `GET` donne l'identifiant, `POST` ouvre une session, une autre session ouverte avant devient anonyme, réutilisation → 410 ; les logs capturés (`logStream`) ne contiennent jamais le jeton en clair pour les quatre routes.
+- [ ] **Step 2 :** lancer le fichier → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** même commande → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add signup, invitation and password reset to the site API"`
+
+### Tâche 22.3 : Compte, réglages, administration
+
+**Files :** Create `apps/server/src/site/routes-account.ts`, `apps/server/src/site/routes-admin.ts` ; Modify `packages/shared/src/site.ts`, `apps/server/src/settings/settings.ts` (validation partagée), `apps/server/src/site/plugin.ts` ; Test `apps/server/test/site-account.test.ts`, `apps/server/test/site-admin.test.ts`.
+
+**Interfaces :**
+- Shared : `apiKeySummarySchema` (`{ id, name: string | null, prefix, createdAt, lastUsedAt: string | null }`), `createKeyRequestSchema` (`{ name }`), `createKeyResponseSchema` (`{ id, key }`), `changePasswordRequestSchema` (`{ current, next }`), `valuationSettingsSchema` (bornes actuelles : MSU 0,01 à 100, ratios entiers 0 à 100 ; `parseValuationForm` s'appuie dessus), `universeSettingsSchema` (`{ serverId, lang, settings }`), `createResetRequestSchema` (`{ username }`), `linkResponseSchema` (`{ url }`), `resetLinkResponseSchema` (`{ url, username }`).
+- Routes connectées (401 sinon) :
+  - `GET /api-keys` → `{ keys }` ; `POST /api-keys` → 201 `{ id, key }` (no-store), 400 `name_invalid` ; `DELETE /api-keys/:id` → 204 ou 404 ;
+  - `POST /password` (10/min/utilisateur) → 204 et cookie mis à jour avec la nouvelle version, 400 `current_invalid` | `password_short` ;
+  - `GET /settings` → `{ universes }` (univers de `accounts`, ordre serveur puis langue) ; `PUT /settings/:serverId/:lang` → 200 `{ settings }`, 400 `settings_invalid`, 404 si l'univers n'est pas à l'utilisateur ou les paramètres sont mal formés (mêmes contrôles que la route Eta) ;
+- Routes admin (403 `forbidden` sinon) : `POST /admin/invitations` → 201 `{ url }` ; `POST /admin/password-resets` → 201 `{ url, username }`, 404 `unknown_user`.
+
+- [ ] **Step 1 : tests** : clés : créer, lister, supprimer, supprimer celle d'un autre → 404 ; changement de mot de passe : la session courante reste connectée, une seconde session devient anonyme, mauvais actuel → 400 `current_invalid` ; réglages : lecture, écriture valide relue, `msuRatio` à 0 → 400, univers d'un autre → 404, `serverId` `abc` → 404 ; admin : non-admin → 403, invitation et lien de réinitialisation créés, identifiant inconnu → 404 ; anonyme sur chaque route → 401.
+- [ ] **Step 2 :** lancer les fichiers → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck` → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add account, settings and admin endpoints to the site API"`
+
+## Scope 23 — App web : socle et pages publiques
+
+Branche : `feature/web-app`. Spec web, « Architecture », « Apparence », « Langue » ; `docs/web-design.md`.
+
+### Tâche 23.1 : Paquet `apps/web`, thème et build
+
+**Files :** Create `apps/web/{package.json,tsconfig.json,vite.config.ts,vitest.config.ts,index.html}`, `apps/web/src/{main.tsx,app.tsx,styles.css}` ; Modify `biome.json` (`**/*.tsx`), `.gitignore` si besoin ; Test `apps/web/test/app.test.tsx`.
+
+**Interfaces :**
+- `@app/web` : React, React DOM, React Router, Tailwind CSS v4 (`@tailwindcss/vite`), `@vitejs/plugin-react` ; tests Vitest en `jsdom` avec Testing Library (`@testing-library/react`, `@testing-library/user-event`, `@testing-library/jest-dom`). Scripts `dev`, `build`, `test`, `typecheck`. Dépend de `@app/shared` (`workspace:*`).
+- `vite.config.ts` : `build: { minify: false, outDir: 'dist' }` ; `server.proxy['/api'] = 'http://localhost:3000'`.
+- `styles.css` : `@import "tailwindcss";` puis `@theme` avec **toutes** les variables `:root` de `docs/web-design/starledger.css` (couleurs, rayons, polices, `--ease`) ; CSS hors utilitaires listé dans `docs/web-design.md` § Implémentation (fiches des clés au téléphone, résumé des `<details>` ouverts, marqueur du `<summary>`).
+- `app.tsx` : `<App />` avec le routeur ; routes vides pour l'instant, page introuvable par défaut.
+
+- [ ] **Step 1 : test** : `render(<App />)` sur `/nope` affiche le titre de la page introuvable.
+- [ ] **Step 2 :** `pnpm --filter @app/web test` → FAIL.
+- [ ] **Step 3 :** créer le paquet (dépendances à la dernière version via `npx npm-check-updates`), le thème et le routeur.
+- [ ] **Step 4 :** `pnpm --filter @app/web test`, `pnpm --filter @app/web build` → PASS ; `wc -l apps/web/dist/assets/*.js` donne des milliers de lignes (bundle non minifié) ; `pnpm test:coverage` inclut `apps/web`.
+- [ ] **Step 5 : commit.** `git commit -m "Scaffold the web app with Vite, React and the Tailwind theme"`
+
+### Tâche 23.2 : Client API, session, langue
+
+**Files :** Create `apps/web/src/api.ts`, `apps/web/src/session.tsx`, `apps/web/src/i18n.ts`, `apps/web/src/locales/{fr,en}.json` ; Test `apps/web/test/api.test.ts`, `apps/web/test/session.test.tsx`.
+
+**Interfaces :**
+- `api.ts` : `class ApiError extends Error { status: number; code: SiteErrorCode | 'network' }` ; `apiFetch<T>(path: string, init?: { method?: string; body?: unknown; schema?: ZodType<T> }): Promise<T>` : préfixe `/api/site`, JSON, `credentials: 'same-origin'`, en-tête `x-csrf-token` (jeton tenu par `setCsrfToken(token)`), 204 → `undefined`, réponse non OK → `ApiError` avec le code du corps.
+- `session.tsx` : `SessionProvider` charge `GET /session` au montage, expose `useSession(): { user: SiteUser | null; locale; openSignup; refresh(): Promise<void> }` ; `RequireUser` (redirige vers `/login`) et `RequireAdmin` (page Erreur « accès interdit »).
+- `i18n.ts` : `t(key, params?)` comme `apps/server/src/web/i18n.ts` (même syntaxe `{param}`), catalogues repris des locales serveur et complétés des libellés des maquettes ; `useT()` lit la langue de la session ; `formatDate(date, locale)` → « 16 nov. 2026, 14:32 » en fr.
+
+- [ ] **Step 1 : tests** : `apiFetch` envoie le jeton, transforme `{ error: 'csrf_invalid' }` 403 en `ApiError('csrf_invalid', 403)`, 204 → `undefined`, panne réseau → code `network` ; `SessionProvider` anonyme : `RequireUser` redirige vers `/login` ; `t('settings.universe', { serverId: '285', lang: 'fr' })` → « Univers 285 (fr) » ; clé absente → la clé ; `formatDate` fr et en.
+- [ ] **Step 2 :** lancer → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** lancer → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add the web API client, session and translations"`
+
+### Tâche 23.3 : Composants
+
+**Files :** Create `apps/web/src/ui/{button.tsx,field.tsx,card.tsx,notice.tsx,alert.tsx,icons.tsx,auth-card.tsx}` ; Test `apps/web/test/ui.test.tsx`.
+
+**Interfaces :** un composant par entrée de `docs/web-design.md` § Composants, avec les états qu'il décrit :
+- `Button({ variant: 'primary' | 'secondary' | 'ghost' | 'danger'; size?: 'md' | 'sm'; block?: boolean })` ;
+- `Field({ label, hint?, error?, ...inputProps })` : `aria-describedby` vers l'indication ou l'erreur, `aria-invalid` si erreur ;
+- `Card({ title, subtitle?, children })` ; `Alert({ children })` (`role="alert"`) ;
+- `SecretNotice({ message, secret })` (`role="status"`) : secret en mono, `user-select: all` ; bouton « Copier » rendu seulement si `navigator.clipboard` existe, passe à « Copié » après succès ; refus du presse-papiers → bouton revenu à « Copier », secret toujours sélectionnable ;
+- `AuthCard({ title, children })` : carte de 400 px centrée avec « Starledger ».
+
+- [ ] **Step 1 : tests** : `Field` avec erreur → `aria-invalid="true"` et message relié ; `SecretNotice` sans `navigator.clipboard` → pas de bouton ; avec → clic appelle `writeText(secret)` puis « Copié » ; `writeText` rejeté → « Copier » ; `Alert` a `role="alert"`.
+- [ ] **Step 2 :** lancer → FAIL.
+- [ ] **Step 3 :** implémenter avec les utilitaires du thème ; aucun style propre aux écrans.
+- [ ] **Step 4 :** lancer → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add the web UI components"`
+
+### Tâche 23.4 : Pages publiques
+
+**Files :** Create `apps/web/src/pages/{login.tsx,signup.tsx,reset-password.tsx,error.tsx}` ; Modify `apps/web/src/app.tsx` ; Test `apps/web/test/public-pages.test.tsx`.
+
+**Interfaces :**
+- Routes : `/login`, `/signup` (seulement si `openSignup`, sinon page introuvable), `/invite/:token` (vérifie le jeton au montage, 410 → page Erreur « invitation invalide »), `/reset/:token` (« Compte : <identifiant> », 410 → page Erreur), page Erreur / introuvable.
+- Après connexion, inscription ou réinitialisation : `refresh()` puis navigation vers `/account`. Utilisateur déjà connecté sur `/login` → `/account`.
+- Erreurs d'API rendues selon les maquettes : `invalid_credentials` en alerte ; `username_*` et `password_short` sous le champ concerné.
+
+- [ ] **Step 1 : tests** (fetch simulé) : login invalide → alerte « Identifiants invalides » ; login valide → navigation `/account` ; invitation expirée → page Erreur ; `username_taken` → erreur sous Identifiant ; reset affiche « Compte : vega » et soumet `{ password }` ; `/signup` avec `openSignup: false` → introuvable.
+- [ ] **Step 2 :** lancer → FAIL.
+- [ ] **Step 3 :** implémenter d'après les maquettes `login`, `signup`, `reset-password`.
+- [ ] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; contrôle visuel bureau (1280 px) et téléphone (390 px) contre `docs/web-design/screenshots/` avec `pnpm --filter @app/web dev` et le serveur local.
+- [ ] **Step 5 : commit.** `git commit -m "Add the public pages of the web app"`
+
+## Scope 24 — Pages connectées et bascule
+
+Branche : `feature/web-switchover`.
+
+### Tâche 24.1 : En-tête et page Compte
+
+**Files :** Create `apps/web/src/ui/app-shell.tsx`, `apps/web/src/pages/account.tsx` ; Modify `apps/web/src/app.tsx` ; Test `apps/web/test/account.test.tsx`.
+
+**Interfaces :**
+- `AppShell` : « Starledger », menu Compte, Réglages, Administration (admin seulement), `aria-current="page"` sur l'onglet actif, identifiant et « Déconnexion » (`POST /logout` puis `/login`). Pas d'onglet Dashboard (spec web, non-objectifs). `/` redirige vers `/account`.
+- Compte : carte « Clés API » (formulaire nom, `SecretNotice` de la clé créée, tableau, « Révoquer » par ligne, état vide) et carte « Mot de passe » (actuel, nouveau, champ identifiant caché `autocomplete="username"`).
+
+- [ ] **Step 1 : tests** : liste des clés rendue, « Sans nom » et « jamais » ; créer → `SecretNotice` avec la clé et ligne ajoutée ; nom vide → erreur sous le champ ; révoquer → ligne retirée ; aucune clé → « Aucune clé API active » ; mot de passe actuel faux → alerte « Mot de passe actuel incorrect » ; non-admin → pas d'onglet Administration.
+- [ ] **Step 2 :** lancer → FAIL.
+- [ ] **Step 3 :** implémenter d'après `account.html`.
+- [ ] **Step 4 :** lancer → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add the account page of the web app"`
+
+### Tâche 24.2 : Page Réglages
+
+**Files :** Create `apps/web/src/pages/settings.tsx` ; Test `apps/web/test/settings.test.tsx`.
+
+**Interfaces :** une carte `<details>` par univers ; `open` sur l'univers en erreur, celui qu'on vient d'enregistrer, ou l'unique univers ; résumé fermé « MSU 3 : 2 : 1 · Expéditions 100 % · Anomalies 100 % » (format fr des nombres) ; ratios MSU avec pastilles ; `PUT` à l'enregistrement ; `settings_invalid` → alerte en tête de la carte ; aucun univers → texte `settings.none`.
+
+- [ ] **Step 1 : tests** : un seul univers ouvert d'office ; deux univers fermés au départ, résumé avec virgule décimale (`2,5`) ; enregistrement invalide → alerte et carte ouverte ; enregistrement valide → carte ouverte avec les nouvelles valeurs ; aucun univers → texte vide.
+- [ ] **Step 2 :** lancer → FAIL.
+- [ ] **Step 3 :** implémenter d'après `settings.html`.
+- [ ] **Step 4 :** lancer → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add the settings page of the web app"`
+
+### Tâche 24.3 : Page Administration
+
+**Files :** Create `apps/web/src/pages/admin.tsx` ; Test `apps/web/test/admin.test.tsx`.
+
+**Interfaces :** route `/admin` sous `RequireAdmin` ; carte « Invitations » (bouton, puis `SecretNotice` du lien, 72 h) ; carte « Réinitialiser un mot de passe » (champ « Identifiant Starledger », bouton « Créer un lien », `SecretNotice` nommant le compte, 24 h ; `unknown_user` → « Aucun compte avec cet identifiant » sous le champ).
+
+- [ ] **Step 1 : tests** : invitation créée → lien affiché ; lien de réinitialisation → message avec l'identifiant ; identifiant inconnu → erreur de champ ; non-admin sur `/admin` → page Erreur.
+- [ ] **Step 2 :** lancer → FAIL.
+- [ ] **Step 3 :** implémenter d'après `admin.html`.
+- [ ] **Step 4 :** lancer → PASS.
+- [ ] **Step 5 : commit.** `git commit -m "Add the admin page of the web app"`
+
+### Tâche 24.4 : Le serveur sert l'app, les pages Eta disparaissent
+
+**Files :** Modify `apps/server/src/app.ts`, `apps/server/package.json` (retire `@fastify/view`, `eta`, `@fastify/formbody` ; ajoute `@fastify/static`), `apps/server/tsdown.config.ts` (plus de copie des vues), `Dockerfile` (construit `@app/web`, copie `apps/web/dist` vers `/app/public`), `.github/workflows/ci.yml` (le contrôle des vues devient : `test -f apps/web/dist/index.html`), `docs/deploy.md`, `README.md` ; Delete `apps/server/src/web/views/`, `apps/server/src/web/routes-{account,invite}.ts`, les routes HTML de `routes-auth.ts`, `apps/server/src/web/locales/` (garder `negotiateLocale`) ; Test `apps/server/test/web-static.test.ts`, tests web existants portés vers l'API du site ou supprimés s'ils doublonnent les tests 22.x.
+
+**Interfaces :**
+- `buildApp(config, db, options: { …; webRoot?: string })` : `webRoot` par défaut `fileURLToPath(new URL('../public', import.meta.url))` ; dossier absent → pas de service statique et un avertissement au démarrage.
+- Fichiers de `webRoot/assets/` : `Cache-Control: public, max-age=31536000, immutable` ; `index.html` : `no-cache`.
+- Fallback : `GET` hors `/api/` et hors `/healthz`, sans fichier correspondant → `index.html` (200). `GET /admin/invitations` → 301 vers `/admin`.
+- Les 404 sous `/api/v1` et `/api/site` restent du JSON.
+
+- [ ] **Step 1 : tests** (`webRoot` = dossier temporaire avec `index.html` et `assets/a.js`) : `/`, `/account`, `/invite/abc` → `index.html` ; `/assets/a.js` → le fichier avec le cache immuable ; `/api/v1/nope` et `/api/site/nope` → 404 JSON ; `/healthz` → JSON ; `/admin/invitations` → 301 `/admin` ; `POST /login` (ancienne route HTML) → 404.
+- [ ] **Step 2 :** lancer → FAIL.
+- [ ] **Step 3 :** implémenter, supprimer Eta et ses dépendances, porter les tests.
+- [ ] **Step 4 :** `pnpm test:coverage`, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; `docker compose up -d --build app` puis parcours complet sur `http://127.0.0.1:3000` : connexion, clé créée puis révoquée, réglages enregistrés, invitation, lien de réinitialisation, changement de mot de passe ; captures bureau et téléphone comparées à `docs/web-design/screenshots/` (Playwright isolé).
+- [ ] **Step 5 : commit.** `git commit -m "Serve the web app and drop the server-rendered pages"`
+
+### Tâche 24.5 : Vérification (utilisateur)
+
+- [ ] Sur le serveur local : créer une clé pour le téléphone sans toucher à celle du PC ; le userscript des deux appareils synchronise toujours ; la dernière utilisation de chaque clé se met à jour.
