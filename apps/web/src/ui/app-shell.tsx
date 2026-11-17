@@ -9,7 +9,7 @@ import { Button } from './button';
 const NAV_LINK =
   '-mb-px flex min-h-11 items-center border-b-2 border-transparent px-3 text-muted no-underline transition-colors hover:text-ink aria-[current=page]:border-gold aria-[current=page]:text-ink max-sm:px-2 max-sm:whitespace-nowrap';
 
-/** Header shared by the signed-in pages (docs/web-design.md, Mise en page); no Dashboard tab yet (spec web-front, non-objectifs). */
+/** Header shared by the signed-in pages (docs/web-design.md, Mise en page). */
 export function AppShell() {
   const t = useT();
   const { user, refresh } = useSession();
@@ -26,7 +26,7 @@ export function AppShell() {
       <header className="border-b border-line">
         <div className="mx-auto flex min-h-14 max-w-[1200px] flex-wrap items-center gap-x-6 px-6 max-sm:px-4">
           <Link
-            to="/account"
+            to="/dashboard"
             className="text-base leading-6 font-semibold text-ink no-underline hover:text-ink"
           >
             {t('appName')}
@@ -35,6 +35,9 @@ export function AppShell() {
             aria-label={t('nav.label')}
             className="flex gap-1 self-stretch max-sm:order-3 max-sm:-mx-2.5 max-sm:w-[calc(100%+20px)] max-sm:gap-0.5 max-sm:overflow-x-auto"
           >
+            <NavLink to="/dashboard" className={NAV_LINK}>
+              {t('nav.dashboard')}
+            </NavLink>
             <NavLink to="/account" className={NAV_LINK}>
               {t('nav.account')}
             </NavLink>
@@ -60,24 +63,33 @@ export function AppShell() {
   );
 }
 
-/** The 1200 px container with a 720 px column of cards, aligned left. */
+/** The 1200 px container: a 720 px column of cards aligned left, or the full width with `wide`. */
 export function Page({
   title,
   lead,
+  actions,
+  wide = false,
   children,
 }: {
   title: string;
   lead?: ReactNode;
+  actions?: ReactNode;
+  wide?: boolean;
   children: ReactNode;
 }) {
   useDocumentTitle(title);
   return (
-    <main className="mx-auto flex max-w-[1200px] flex-col gap-6 px-6 pt-8 pb-16 max-sm:gap-4 max-sm:px-4 max-sm:pt-5 max-sm:pb-12 [&>*]:w-full [&>*]:max-w-[720px]">
-      <div className="flex flex-col gap-1">
-        <h1 className="m-0 text-[28px] leading-9 font-medium text-ink max-sm:text-2xl max-sm:leading-8">
-          {title}
-        </h1>
-        {lead && <p className="m-0 text-muted">{lead}</p>}
+    <main
+      className={`mx-auto flex max-w-[1200px] flex-col gap-6 px-6 pt-8 pb-16 max-sm:gap-4 max-sm:px-4 max-sm:pt-5 max-sm:pb-12 [&>*]:w-full ${wide ? '' : '[&>*]:max-w-[720px]'}`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col gap-1">
+          <h1 className="m-0 text-[28px] leading-9 font-medium text-ink max-sm:text-2xl max-sm:leading-8">
+            {title}
+          </h1>
+          {lead && <p className="m-0 text-muted">{lead}</p>}
+        </div>
+        {actions}
       </div>
       {children}
     </main>

@@ -18,7 +18,7 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  if (user) return <Navigate to="/account" replace />;
+  if (user) return <Navigate to="/dashboard" replace />;
 
   const submit = async () => {
     setBusy(true);
@@ -30,7 +30,7 @@ export function LoginPage() {
         schema: userResponseSchema,
       });
       await refresh();
-      navigate('/account', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(
         err instanceof ApiError && err.code === 'invalid_credentials'

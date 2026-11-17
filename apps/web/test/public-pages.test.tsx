@@ -14,7 +14,7 @@ describe('login', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Identifiants invalides');
   });
 
-  it('signs in, reloads the session and goes to /account', async () => {
+  it('signs in, reloads the session and goes to /dashboard', async () => {
     let signedIn = false;
     const { router, fetch } = renderAt('/login', {
       'GET /session': () => sessionReply({ user: signedIn ? VEGA : null }),
@@ -27,13 +27,13 @@ describe('login', () => {
     await userEvent.type(await screen.findByLabelText('Identifiant'), 'vega');
     await userEvent.type(screen.getByLabelText('Mot de passe'), 'correct horse battery');
     await userEvent.click(screen.getByRole('button', { name: 'Se connecter' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/account'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/dashboard'));
     expect(callsTo(fetch, 'GET /session')).toHaveLength(2);
   });
 
-  it('sends a signed-in user straight to /account', async () => {
+  it('sends a signed-in user straight to /dashboard', async () => {
     const { router } = renderAt('/login', { 'GET /session': sessionReply({ user: VEGA }) });
-    await waitFor(() => expect(router.state.location.pathname).toBe('/account'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/dashboard'));
   });
 });
 
@@ -95,7 +95,7 @@ describe('password reset', () => {
     expect(await screen.findByText('Compte : vega')).toBeInTheDocument();
     await userEvent.type(screen.getByLabelText('Nouveau mot de passe'), 'another long password');
     await userEvent.click(screen.getByRole('button', { name: 'Enregistrer le mot de passe' }));
-    await waitFor(() => expect(router.state.location.pathname).toBe('/account'));
+    await waitFor(() => expect(router.state.location.pathname).toBe('/dashboard'));
     expect(sent).toEqual({ password: 'another long password' });
   });
 
