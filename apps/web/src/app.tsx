@@ -9,6 +9,7 @@ import {
 import { RequireAdmin, RequireUser } from './guards';
 import { AccountPage } from './pages/account';
 import { AdminPage } from './pages/admin';
+import { DashboardPage } from './pages/dashboard';
 import { ErrorPage, NotFoundPage } from './pages/error';
 import { LoginPage } from './pages/login';
 import { ResetPasswordPage } from './pages/reset-password';
@@ -30,7 +31,7 @@ export const routes: RouteObject[] = [
       { path: '/signup', element: <OpenSignupPage /> },
       { path: '/invite/:token', element: <InvitePage /> },
       { path: '/reset/:token', element: <ResetPasswordPage /> },
-      { path: '/', element: <Navigate to="/account" replace /> },
+      { path: '/', element: <Navigate to="/dashboard" replace /> },
       {
         element: (
           <RequireUser>
@@ -38,6 +39,7 @@ export const routes: RouteObject[] = [
           </RequireUser>
         ),
         children: [
+          { path: '/dashboard', element: <DashboardPage /> },
           { path: '/account', element: <AccountPage /> },
           { path: '/settings', element: <SettingsPage /> },
         ],

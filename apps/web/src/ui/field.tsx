@@ -1,8 +1,9 @@
 import { type InputHTMLAttributes, type ReactNode, useId } from 'react';
 import { AlertIcon } from './icons';
 
-export const INPUT_CLASSES =
-  'w-full h-10 max-sm:h-11 px-3 bg-page border border-control rounded-control text-ink text-sm leading-5 tabular-nums placeholder:text-muted aria-invalid:border-danger';
+export const CONTROL_CLASSES =
+  'h-10 max-sm:h-11 px-3 bg-page border border-control rounded-control text-ink text-sm leading-5 tabular-nums placeholder:text-muted aria-invalid:border-danger';
+export const INPUT_CLASSES = `w-full ${CONTROL_CLASSES}`;
 
 export function FieldError({ id, children }: { id?: string; children: ReactNode }) {
   return (

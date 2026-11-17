@@ -35,7 +35,7 @@ function SignupForm({ endpoint, onInvalid }: { endpoint: string; onInvalid?: () 
         schema: userResponseSchema,
       });
       await refresh();
-      navigate('/account', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (err) {
       setBusy(false);
       const code = err instanceof ApiError ? err.code : null;

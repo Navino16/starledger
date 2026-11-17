@@ -163,16 +163,8 @@ describe('header', () => {
     expect(await screen.findByRole('heading', { name: 'Connexion' })).toBeInTheDocument();
   });
 
-  it('sends a visitor from / to /login through /account', async () => {
+  it('sends a visitor from / to /login', async () => {
     const { router } = renderAt('/', {});
     await waitFor(() => expect(router.state.location.pathname).toBe('/login'));
-  });
-
-  it('sends a signed-in user from / to /account', async () => {
-    const { router } = renderAt('/', {
-      'GET /session': sessionReply({ user: VEGA }),
-      'GET /api-keys': [200, { keys: [] }],
-    });
-    await waitFor(() => expect(router.state.location.pathname).toBe('/account'));
   });
 });

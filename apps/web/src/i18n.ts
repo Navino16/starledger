@@ -65,3 +65,26 @@ export function describeError(t: Translate, error: unknown): string {
   if (code === 'csrf_invalid') return t('errors.csrf');
   return t('errors.generic');
 }
+
+const COMPACT_UNITS: [string, number][] = [
+  ['k', 1e3],
+  ['M', 1e6],
+  ['G', 1e9],
+];
+
+/** « 30,6 M », « −2 M » in French, « 1.3k » in English: the userscript units (docs/web-design.md, Rédaction). */
+export function formatCompact(value: number, locale: SiteLocale): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 && Math.round(abs) > 0 ? '−' : '';
+  const number = new Intl.NumberFormat(LOCALE_TAGS[locale], { maximumFractionDigits: 1 });
+  if (Math.round(abs) < 1000) return `${sign}${number.format(Math.round(abs))}`;
+  const space = locale === 'fr' ? ' ' : '';
+  for (const [i, [unit, divisor]] of COMPACT_UNITS.entries()) {
+    const rounded = Math.round((abs / divisor) * 10) / 10;
+    // 999.96k reads 1 M, not 1000 k.
+    if (rounded < 1000 || i === COMPACT_UNITS.length - 1) {
+      return `${sign}${number.format(rounded)}${space}${unit}`;
+    }
+  }
+  return '';
+}
