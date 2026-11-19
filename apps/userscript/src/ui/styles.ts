@@ -75,7 +75,7 @@ div.starledger-status{margin:8px 4px 4px}
 .starledger-daynum{display:block}
 .starledger-dateline{margin:16px 0 12px}
 #starledger-details .starledger-dateline strong{font-size:13px;font-weight:normal;color:#e7e8eb}
-.starledger-split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.starledger-split{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .starledger-card{padding:12px;background:#161b23;border-radius:8px}
 .starledger-donut{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px 24px;height:100%}
 .starledger-donut-wrap{position:relative;width:152px;height:152px;flex:none}
@@ -89,7 +89,7 @@ div.starledger-status{margin:8px 4px 4px}
 .starledger-legend-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .starledger-legend b{font-weight:normal;color:#e7e8eb;text-align:right}
 .starledger-legend small{font-size:11px;color:#858b98;text-align:right}
-.starledger-shipgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;align-content:start}
+.starledger-shipgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:4px;align-content:start}
 .starledger-shiptile{display:flex;align-items:center;gap:8px;min-width:0;padding:4px 8px 4px 4px;background:#161b23;border-radius:6px}
 .starledger-icon{display:inline-block;flex:none;vertical-align:middle;background-repeat:no-repeat;border-radius:2px}
 /* The game's own icon-blue filter on its grey lithium image */
@@ -100,11 +100,13 @@ div.starledger-status{margin:8px 4px 4px}
 .starledger-lost{font-size:11px;line-height:12px;color:#e2574c}
 .starledger-balancewrap{margin-top:16px}
 .starledger-tablewrap{overflow-x:auto;padding:4px 0;background:#161b23;border-radius:8px}
-#starledger-details .starledger-balance{min-width:620px;border-collapse:collapse}
-#starledger-details .starledger-balance th{height:32px;padding:0 12px;font-size:11px;font-weight:normal;color:#858b98;text-align:right;vertical-align:middle;border:0}
-#starledger-details .starledger-balance td{height:32px;padding:0 12px;text-align:right;white-space:nowrap;background:none;border:0;border-top:1px solid rgba(231,232,235,.06)}
+#starledger-details .starledger-balance{border-collapse:collapse}
+#starledger-details .starledger-balance th{height:32px;padding:0 6px;font-size:11px;font-weight:normal;color:#858b98;text-align:right;vertical-align:middle;border:0}
+#starledger-details .starledger-balance td{height:32px;padding:0 6px;text-align:right;white-space:nowrap;background:none;border:0;border-top:1px solid rgba(231,232,235,.06)}
 #starledger-details .starledger-balance th:first-child,#starledger-details .starledger-balance td:first-child{position:sticky;left:0;text-align:left;background:#161b23}
-#starledger-details .starledger-balance td:first-child{color:#c9cdd6}
+#starledger-details .starledger-balance th:first-child,#starledger-details .starledger-balance td:first-child{padding-left:12px}
+#starledger-details .starledger-balance td:first-child{min-width:96px;color:#c9cdd6;line-height:14px;white-space:normal}
+#starledger-details .starledger-balance th:last-child,#starledger-details .starledger-balance td:last-child{padding-right:12px}
 #starledger-details .starledger-balance tr[data-category=total] td{font-weight:600;color:#e7e8eb;background:#1b212b;border-top:1px solid rgba(231,232,235,.16)}
 #starledger-details .starledger-balance td[data-col=count]{color:#c9cdd6}
 .starledger-amount[data-res=darkMatter]{color:#b88ce8}
