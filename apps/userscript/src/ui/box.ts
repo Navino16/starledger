@@ -53,6 +53,30 @@ function tile(doc: Document, key: string, label: string, figure: HTMLElement): H
   return node;
 }
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+// Filled polygon with an evenodd hole: no stroke dashes, which some renderers drop (see details/donut.ts)
+const GEAR_PATH =
+  'M13.35 6.35 L15.49 6.71 L15.49 9.29 L13.35 9.65 L12.95 10.61 L14.21 12.39 L12.39 14.21 L10.61 12.95 L9.65 13.35 L9.29 15.49 L6.71 15.49 L6.35 13.35 L5.39 12.95 L3.61 14.21 L1.79 12.39 L3.05 10.61 L2.65 9.65 L0.51 9.29 L0.51 6.71 L2.65 6.35 L3.05 5.39 L1.79 3.61 L3.61 1.79 L5.39 3.05 L6.35 2.65 L6.71 0.51 L9.29 0.51 L9.65 2.65 L10.61 3.05 L12.39 1.79 L14.21 3.61 L12.95 5.39 Z M10.60 8.00 L10.40 8.99 L9.84 9.84 L8.99 10.40 L8.00 10.60 L7.01 10.40 L6.16 9.84 L5.60 8.99 L5.40 8.00 L5.60 7.01 L6.16 6.16 L7.01 5.60 L8.00 5.40 L8.99 5.60 L9.84 6.16 L10.40 7.01 Z';
+
+function gearButton(doc: Document, label: string, onClick: () => void): HTMLButtonElement {
+  const svg = doc.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('aria-hidden', 'true');
+  const path = doc.createElementNS(SVG_NS, 'path');
+  path.setAttribute('d', GEAR_PATH);
+  path.setAttribute('fill-rule', 'evenodd');
+  svg.append(path);
+  const button = el(
+    doc,
+    'button',
+    { type: 'button', className: 'starledger-gear', title: label },
+    svg,
+  );
+  button.setAttribute('aria-label', label);
+  button.addEventListener('click', onClick);
+  return button;
+}
+
 const DOT_CLASS = { up_to_date: 'is-ok', pending: 'is-pending', error: 'is-error' } as const;
 
 function statusText(model: BoxModel, t: T): { text: string; title?: string } {
@@ -123,7 +147,13 @@ export function renderBox(container: HTMLElement, model: BoxModel, handlers: Box
     'div',
     { className: 'starledger-head' },
     el(doc, 'strong', { textContent: t('boxTitle') }),
-    stateNode,
+    el(
+      doc,
+      'span',
+      { className: 'starledger-head-end' },
+      stateNode,
+      gearButton(doc, t('menuLabel'), onConfigure),
+    ),
   );
   if (model.stale) {
     const text =
