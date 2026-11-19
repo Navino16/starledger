@@ -47,6 +47,10 @@ describe('built userscript', () => {
     expect(script).toMatch(/^\/\/ @description:fr\s+\S/m);
   });
 
+  it('declares the ES2020 globals of bundled zod for the Tampermonkey editor lint', () => {
+    expect(script).toContain('/* global BigInt, globalThis */');
+  });
+
   it('runs in the top frame only', () => {
     expect(script).toMatch(/@noframes/);
   });
