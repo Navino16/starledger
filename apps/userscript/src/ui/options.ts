@@ -28,16 +28,25 @@ export function renderOptions(ctx: UiContext): void {
     id: 'starledger-hide',
     checked: settings.hideOglightBox,
   });
-  const position = el(doc, 'select', { id: 'starledger-position' });
-  for (const value of ['above', 'below'] as const) {
-    position.append(
-      el(doc, 'option', {
-        value,
-        textContent: t(value === 'above' ? 'panelAbove' : 'panelBelow'),
-        selected: settings.panelPosition === value,
-      }),
-    );
-  }
+  const position = el(doc, 'div', { id: 'starledger-position', className: 'starledger-segmented' });
+  position.setAttribute('role', 'group');
+  position.setAttribute('aria-label', t('panelPosition'));
+  const positionButtons = (['above', 'below'] as const).map((value) => {
+    const button = el(doc, 'button', {
+      type: 'button',
+      textContent: t(value === 'above' ? 'panelAbove' : 'panelBelow'),
+    });
+    button.dataset.position = value;
+    button.setAttribute('aria-pressed', String(settings.panelPosition === value));
+    button.addEventListener('click', () => {
+      saveSettings(gm, { panelPosition: value });
+      for (const b of positionButtons) {
+        b.setAttribute('aria-pressed', String(b.dataset.position === value));
+      }
+    });
+    return button;
+  });
+  position.append(...positionButtons);
   const status = el(doc, 'div', { className: 'starledger-status' });
   const warning = el(doc, 'div', { className: 'starledger-warning' });
   const save = el(doc, 'button', { type: 'button', textContent: t('save') });
@@ -115,10 +124,6 @@ export function renderOptions(ctx: UiContext): void {
     setOglightHidden(gm, doc, hide.checked);
   });
 
-  position.addEventListener('change', () => {
-    saveSettings(gm, { panelPosition: position.value === 'below' ? 'below' : 'above' });
-  });
-
   withdraw.addEventListener('click', () => {
     saveSettings(gm, { consent: false });
     queue.clear();
@@ -140,7 +145,13 @@ export function renderOptions(ctx: UiContext): void {
       el(doc, 'label', { textContent: t('serverUrl') }, url),
       el(doc, 'label', { textContent: t('apiKey') }, key),
       el(doc, 'label', {}, hide, ` ${t('hideOglight')}`),
-      el(doc, 'label', { textContent: t('panelPosition') }, position),
+      el(
+        doc,
+        'div',
+        { className: 'starledger-field' },
+        el(doc, 'span', { className: 'starledger-field-label', textContent: t('panelPosition') }),
+        position,
+      ),
       warning,
       status,
       el(doc, 'div', { className: 'starledger-actions' }, save, test, removeKey, withdraw),
