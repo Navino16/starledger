@@ -15,6 +15,10 @@ export default defineConfig({
       userscript: {
         name: 'Starledger',
         version: pkg.version,
+        description: {
+          '': 'Collects your OGame expedition, combat, recycling, transport and anomaly reports, syncs them to your own Starledger server and shows the stats in game.',
+          fr: 'Collecte vos rapports OGame d’expédition, de combat, de recyclage, de transport et d’anomalie, les synchronise avec votre propre serveur Starledger et affiche les stats dans le jeu.',
+        },
         // AGENTS.md §5: PTS only until toleration, removed in scope 14
         match: ['https://s808-en.ogame.gameforge.com/game/index.php*'],
         grant: [
