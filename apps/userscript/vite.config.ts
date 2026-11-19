@@ -7,7 +7,13 @@ export default defineConfig({
   build: {
     minify: false,
     // Keeps the `//!` compliance comments in the built file reviewers read (AGENTS.md §0)
-    rolldownOptions: { output: { comments: { legal: true } } },
+    rolldownOptions: {
+      output: {
+        comments: { legal: true },
+        // Bundled zod uses these ES2020 globals, unknown to the ESLint config of the Tampermonkey editor
+        intro: '/* global BigInt, globalThis */',
+      },
+    },
   },
   plugins: [
     monkey({
