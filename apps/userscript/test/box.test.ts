@@ -95,6 +95,16 @@ describe('formatAmount', () => {
 });
 
 describe('renderBox', () => {
+  it('opens the settings from a gear button in the header, without opening the detail', () => {
+    const { box, onConfigure, onOpenDetails } = render(model());
+    const gear = box.querySelector<HTMLButtonElement>('.starledger-head .starledger-gear');
+    expect(gear?.type).toBe('button');
+    expect(gear?.getAttribute('aria-label')).toBe(MESSAGES.en.menuLabel);
+    gear?.click();
+    expect(onConfigure).toHaveBeenCalledOnce();
+    expect(onOpenDetails).not.toHaveBeenCalled();
+  });
+
   it('renders the six tiles', () => {
     const { box } = render(model());
     expect(tile(box, 'metal')).toBe('1.50M');

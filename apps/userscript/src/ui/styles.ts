@@ -6,6 +6,11 @@ export const UI_CSS = `
 .starledger-box button{max-width:100%;box-sizing:border-box;font:inherit}
 .starledger-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 8px;margin-bottom:4px;padding:4px 8px;background:#161b23;border-radius:4px}
 .starledger-state{display:inline-flex;align-items:center;gap:4px;font-size:10px;white-space:nowrap;color:#858b98}
+.starledger-head-end{display:inline-flex;align-items:center;gap:6px}
+.starledger-box .starledger-gear{display:inline-flex;width:16px;height:16px;padding:1px;color:#858b98;background:none;border:0;border-radius:3px;cursor:pointer;transition:color .15s}
+.starledger-box .starledger-gear:hover,.starledger-box .starledger-gear:focus-visible{color:#e7e8eb}
+.starledger-box .starledger-gear:focus-visible{outline:1px solid #b4c8f7}
+.starledger-gear svg{display:block;width:100%;height:100%;fill:currentColor}
 .starledger-dot{display:inline-block;width:8px;height:8px;border-radius:50%}
 .starledger-dot.is-ok{background:#64a69b}
 .starledger-dot.is-pending{background:#e0a030}
