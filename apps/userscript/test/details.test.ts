@@ -273,6 +273,21 @@ describe('stats details dialog', () => {
     remove.mockRestore();
   });
 
+  it('keeps the previous content while another period loads, so the page does not jump', async () => {
+    open();
+    await tick();
+    const body = () => dialog()?.querySelector('.starledger-dialog-body');
+    const balance = body()?.querySelector('[aria-label="Balance by category"]');
+    expect(balance).not.toBeNull();
+    dialog()?.querySelector<HTMLElement>('[data-period="week"]')?.click();
+    expect(body()?.textContent).not.toContain('Loading...');
+    expect(body()?.querySelector('[aria-label="Balance by category"]')).toBe(balance);
+    expect(body()?.getAttribute('aria-busy')).toBe('true');
+    await tick();
+    expect(body()?.hasAttribute('aria-busy')).toBe(false);
+    expect(body()?.querySelector('[aria-label="Balance by category"]')).not.toBe(balance);
+  });
+
   it('flushes the queue before the first stats request when the detail opens', async () => {
     const queue = createQueue(gm);
     queue.enqueue([

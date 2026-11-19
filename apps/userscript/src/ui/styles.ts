@@ -75,6 +75,7 @@ div.starledger-status{margin:8px 4px 4px}
 .starledger-daynum{display:block}
 .starledger-dateline{margin:16px 0 12px}
 #starledger-details .starledger-dateline strong{font-size:13px;font-weight:normal;color:#e7e8eb}
+.starledger-dialog-body[aria-busy=true]{opacity:.5;transition:opacity .15s}
 .starledger-split{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .starledger-card{padding:12px;background:#161b23;border-radius:8px}
 .starledger-donut{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px 24px;height:100%}
