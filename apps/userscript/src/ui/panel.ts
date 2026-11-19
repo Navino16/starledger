@@ -45,7 +45,7 @@ export function openPanel(doc: Document, opts: PanelOptions, content: Node[]): P
     if (!open) return;
     open = false;
     doc.removeEventListener('keydown', onKey);
-    doc.removeEventListener('click', onOutside);
+    doc.removeEventListener('pointerdown', onOutside);
     panel.remove();
     if (closeCurrent === close) closeCurrent = null;
     previousFocus?.focus();
@@ -54,7 +54,7 @@ export function openPanel(doc: Document, opts: PanelOptions, content: Node[]): P
   function onKey(e: KeyboardEvent) {
     if (e.key === 'Escape') close();
   }
-  function onOutside(e: MouseEvent) {
+  function onOutside(e: Event) {
     const target = e.target;
     if (target instanceof Node && target.isConnected && !panel.contains(target)) close();
   }
@@ -63,10 +63,8 @@ export function openPanel(doc: Document, opts: PanelOptions, content: Node[]): P
   closeButton.addEventListener('click', close);
   doc.addEventListener('keydown', onKey);
   if (opts.closeOnOutside) {
-    // Deferred so the click that opened the panel does not close it
-    queueMicrotask(() => {
-      if (open) doc.addEventListener('click', onOutside);
-    });
+    // pointerdown: the opening click's own pointerdown is already past, so it cannot close the panel
+    doc.addEventListener('pointerdown', onOutside);
   }
 
   panel.append(

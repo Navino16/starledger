@@ -238,12 +238,12 @@ describe('stats details dialog', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(dialog()).toBeNull();
     open();
-    await tick();
-    document.body.click();
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     expect(dialog()).toBeNull();
     open();
-    await tick();
-    dialog()?.querySelector('strong')?.click();
+    dialog()
+      ?.querySelector('strong')
+      ?.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     expect(dialog()).not.toBeNull();
     [...(dialog()?.querySelectorAll('button') ?? [])]
       .find((b) => b.textContent === 'Close')
@@ -268,7 +268,7 @@ describe('stats details dialog', () => {
     await tick();
     const added = add.mock.calls.filter(([n]) => n === 'keydown' || n === 'click').length;
     const removed = remove.mock.calls.filter(([n]) => n === 'keydown' || n === 'click').length;
-    expect(removed).toBeGreaterThanOrEqual(added);
+    expect(removed).toBe(added);
     add.mockRestore();
     remove.mockRestore();
   });

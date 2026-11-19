@@ -234,7 +234,7 @@ describe('with consent', () => {
     const panel = document.getElementById('starledger-settings');
     expect(panel?.parentElement?.id).toBe('contentWrapper');
     await flush();
-    document.body.click();
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     expect(document.getElementById('starledger-settings')).not.toBeNull();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(document.getElementById('starledger-settings')).toBeNull();
