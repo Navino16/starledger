@@ -1,4 +1,4 @@
-//! AGENTS.md §1.7: the box stays in normal flow; only the player-opened dialog uses a fixed backdrop (see ui/panel.ts)
+//! AGENTS.md §1.7: the box and the player-opened panel stay in normal flow, no fixed positioning or overlay
 // Dialog values copied from the game's own jQuery UI dialog, overlay and .btn_blue rules
 export const UI_CSS = `
 .starledger-box{box-sizing:border-box;width:168px;max-width:100%;margin:12px 0 0;padding:4px;font:11px Verdana,Arial,sans-serif;color:#858b98;background:#0d131b;border-radius:8px}
@@ -36,8 +36,7 @@ div.starledger-status{margin:8px 4px 4px}
 .starledger-cta{display:block;width:100%;padding:8px;color:#e7e8eb;background:#161b23;border:0;border-radius:4px;cursor:pointer;transition:background-color .15s}
 .starledger-cta:hover{background:#1d2430}
 .starledger-warning{color:#e0a030}
-.starledger-backdrop{position:fixed;inset:0;z-index:100000;display:flex;align-items:flex-start;justify-content:center;padding:8vh 8px 8px;box-sizing:border-box;overflow-y:auto;background:rgba(20,26,30,.8)}
-.starledger-dialog{box-sizing:border-box;width:720px;max-width:100%;font:11px/14px Verdana,Arial,Helvetica,sans-serif;color:#848484;box-shadow:5px 8px 15px #000}
+.starledger-dialog{box-sizing:border-box;width:100%;margin:10px 0;font:11px/14px Verdana,Arial,Helvetica,sans-serif;color:#848484}
 .starledger-dialog-head{position:relative;padding:.4em 2.5em .4em 1em;background:linear-gradient(to bottom,#3d4b5b 0%,#2b343f 49%,#1f262d 50%,#1f2934 100%);border:1px solid #111a22;color:#6f9fc8;font-weight:700}
 .starledger-close{position:absolute;right:.3em;top:50%;width:19px;height:18px;margin:-10px 0 0;padding:1px;min-width:0;background:transparent;border:0;cursor:pointer}
 .starledger-close:hover .ui-icon-closethick{background-position:-208px -18px}
@@ -55,7 +54,6 @@ div.starledger-status{margin:8px 4px 4px}
 .starledger-dialog-content button:hover{background:linear-gradient(to bottom,#6e87a0 0%,#5d7ea2 17%,#7897b1 50%,#57799c 54%,#56789e 59%,#6a89ac 82%,#89a4bd 100%)}
 .starledger-dialog table{border-collapse:collapse;width:100%}
 .starledger-dialog td,.starledger-dialog th{padding:3px 6px;text-align:left;border-bottom:1px solid #1f2833}
-#starledger-details{width:880px}
 #starledger-details .starledger-dialog-content{padding:12px;color:#c9cdd6;font-size:12px;font-variant-numeric:tabular-nums}
 .starledger-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .starledger-periods,.starledger-monthnav{display:flex;align-items:center;gap:4px}
@@ -74,7 +72,7 @@ div.starledger-status{margin:8px 4px 4px}
 .starledger-daynum{display:block}
 .starledger-dateline{margin:16px 0 12px}
 #starledger-details .starledger-dateline strong{font-size:13px;font-weight:normal;color:#e7e8eb}
-.starledger-split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.starledger-split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
 .starledger-card{padding:12px;background:#161b23;border-radius:8px}
 .starledger-donut{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px 24px;height:100%}
 .starledger-donut-wrap{position:relative;width:152px;height:152px;flex:none}
@@ -113,5 +111,5 @@ div.starledger-status{margin:8px 4px 4px}
 #starledger-details .starledger-balance td.is-empty,#starledger-details .starledger-balance td.is-zero,#starledger-details .starledger-balance td.is-zero .starledger-amount{color:#5b6270}
 .starledger-unit{margin-left:1px;font-size:10px;opacity:.8}
 .starledger-legend:empty{display:none}
-@media (max-width:560px){.starledger-split{grid-template-columns:minmax(0,1fr)}#starledger-details .starledger-calendar button:not([aria-pressed=true]):not(:nth-child(5n)) .starledger-daynum{visibility:hidden}#starledger-details .starledger-balance td:first-child{min-width:80px;max-width:110px;white-space:normal}}
+@media (max-width:560px){#starledger-details .starledger-calendar button:not([aria-pressed=true]):not(:nth-child(5n)) .starledger-daynum{visibility:hidden}#starledger-details .starledger-balance td:first-child{min-width:80px;max-width:110px;white-space:normal}}
 `;

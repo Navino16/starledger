@@ -47,14 +47,14 @@ describe('built userscript', () => {
   });
 
   it('keeps the compliance markers in the built file', () => {
-    expect(script).toContain(
-      'GRAY AREA: requires ToolDev approval before publishing — see AGENTS.md §3',
-    );
+    expect(script).not.toContain('GRAY AREA');
+    expect(script).not.toContain('starledger-backdrop');
+    expect(script).toContain('ToolDev answer 2026-11-18 (forum thread 598)');
     expect(script).toContain(
       "AGENTS.md §1.7: appended after other tools' panels at the end of #links, monetization entries untouched",
     );
     expect(script).toContain('AGENTS.md §1.3: reacts to DOM changes only, no timer');
-    expect(script).toContain('AGENTS.md §1.7: the backdrop dims ads and monetization entries');
+    expect(script).toContain('AGENTS.md §1.7: in normal flow inside the game content area');
     expect(script).toContain('AGENTS.md §5');
     expect(script).toContain('AGENTS.md §1.9');
     expect(script).toContain('AGENTS.md §1.9: consent re-read before every enqueue');

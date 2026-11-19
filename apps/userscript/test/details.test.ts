@@ -6,7 +6,6 @@ import { createT } from '../src/i18n';
 import { saveSettings } from '../src/storage';
 import { createQueue } from '../src/sync/queue';
 import { DETAILS_ID, openDetails } from '../src/ui/details';
-import { BACKDROP_CLASS } from '../src/ui/panel';
 
 const ACCOUNT: AccountRef = { serverId: 808, lang: 'en', playerId: 42, playerName: 'Neo' };
 const t = createT('en');
@@ -191,14 +190,13 @@ describe('stats details dialog', () => {
     expect(dialog()?.textContent).not.toContain('unrecognized');
   });
 
-  it('opens in a backdrop at the end of the body and leaves the page as before on close', async () => {
+  it('opens first in the content area and leaves the page as before on close', async () => {
     document.body.innerHTML =
       '<div id="links"></div><div id="contentWrapper"><p>game</p></div><div id="footer"></div>';
     const initial = document.body.innerHTML;
     open();
-    const backdrop = dialog()?.parentElement;
-    expect(backdrop?.className).toBe(BACKDROP_CLASS);
-    expect(document.body.lastElementChild).toBe(backdrop);
+    expect(document.getElementById('contentWrapper')?.firstElementChild).toBe(dialog());
+    expect(dialog()?.hasAttribute('aria-modal')).toBe(false);
     [...(dialog()?.querySelectorAll('button') ?? [])]
       .find((b) => b.textContent === 'Close')
       ?.click();
@@ -206,15 +204,46 @@ describe('stats details dialog', () => {
     expect(document.body.innerHTML).toBe(initial);
   });
 
+  it('opens last in the content area with the below option', () => {
+    document.body.innerHTML = '<div id="contentWrapper"><p>game</p></div>';
+    saveSettings(gm, { panelPosition: 'below' });
+    open();
+    expect(document.getElementById('contentWrapper')?.lastElementChild).toBe(dialog());
+  });
+
+  it('falls back to #middle, then to just after the box, never at the end of the body', () => {
+    document.body.innerHTML = '<div id="middle"><p>game</p></div><div id="footer"></div>';
+    open();
+    expect(document.getElementById('middle')?.firstElementChild).toBe(dialog());
+    document.body.innerHTML =
+      '<div id="links"><div id="starledger-box"></div></div><div id="footer"></div>';
+    open();
+    expect(document.getElementById('starledger-box')?.nextElementSibling).toBe(dialog());
+    expect(document.body.lastElementChild?.id).toBe('footer');
+  });
+
+  it('scrolls the panel into view when the browser can', () => {
+    const scroll = vi.fn();
+    Element.prototype.scrollIntoView = scroll;
+    try {
+      open();
+      expect(scroll).toHaveBeenCalledWith({ block: 'nearest' });
+    } finally {
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
+  });
+
   it('closes on Escape, click outside and the close button, but not on a click inside', async () => {
     open();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     expect(dialog()).toBeNull();
     open();
-    document.querySelector<HTMLElement>(`.${BACKDROP_CLASS}`)?.click();
+    document.body.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     expect(dialog()).toBeNull();
     open();
-    dialog()?.querySelector('strong')?.click();
+    dialog()
+      ?.querySelector('strong')
+      ?.dispatchEvent(new Event('pointerdown', { bubbles: true }));
     expect(dialog()).not.toBeNull();
     [...(dialog()?.querySelectorAll('button') ?? [])]
       .find((b) => b.textContent === 'Close')
