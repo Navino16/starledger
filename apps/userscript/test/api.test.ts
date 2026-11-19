@@ -9,6 +9,7 @@ const settings = (patch: Partial<ClientSettings> = {}): ClientSettings => ({
   apiKey: 'secret-key',
   consent: true,
   hideOglightBox: false,
+  panelPosition: 'above',
   deviceId: 'dev',
   ...patch,
 });

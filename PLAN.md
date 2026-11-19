@@ -1946,11 +1946,11 @@ Branche : `feature/in-content-panel`. Spec : `docs/superpowers/specs/2026-11-19-
 - Détail : les deux cartes passent en une colonne quand la largeur manque.
 - `panel.ts` : commentaire `AGENTS.md §1.7` (dans le flux, ne recouvre ni pub, ni menu, ni footer) à la place du marqueur `GRAY AREA`. `oglight.ts` : commentaire de conformité qui cite la réponse ToolDev du 2026-11-18 (fil 598) à la place du marqueur `GRAY AREA`.
 
-- [ ] **Step 1 : tests** : avec `#contentWrapper`, le panneau en est le premier enfant (`above`) ou le dernier (`below`) ; sans hôte, il suit l'encart ; aucun élément ajouté à la fin de `body` ; Échap, le bouton et (détail seulement) un clic hors du panneau ferment et laissent le DOM comme avant ; l'option est enregistrée et relue ; le build ne contient plus `GRAY AREA` ni `starledger-backdrop`.
-- [ ] **Step 2 :** `pnpm --filter @app/userscript exec vitest run` → FAIL.
-- [ ] **Step 3 :** implémenter.
-- [ ] **Step 4 :** suite userscript, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; capture du détail et des réglages dans une page de test qui reprend la mise en page du jeu (menu, contenu, footer), au-dessus et en dessous ; auto-audit `AGENTS.md` §7 noté dans la PR.
-- [ ] **Step 5 : commit.** `git commit -m "Open settings and details inside the game content area"`
+- [x] **Step 1 : tests** : avec `#contentWrapper`, le panneau en est le premier enfant (`above`) ou le dernier (`below`) ; sans hôte, il suit l'encart ; aucun élément ajouté à la fin de `body` ; Échap, le bouton et (détail seulement) un clic hors du panneau ferment et laissent le DOM comme avant ; l'option est enregistrée et relue ; le build ne contient plus `GRAY AREA` ni `starledger-backdrop`.
+- [x] **Step 2 :** `pnpm --filter @app/userscript exec vitest run` → FAIL.
+- [x] **Step 3 :** implémenter.
+- [x] **Step 4 :** suite userscript, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; capture du détail et des réglages dans une page de test qui reprend la mise en page du jeu (menu, contenu, footer), au-dessus et en dessous ; auto-audit `AGENTS.md` §7 noté dans la PR.
+- [x] **Step 5 : commit.** `git commit -m "Open settings and details inside the game content area"`
 
 ## Scope 30 — Données des autres joueurs retirées avant l'envoi
 

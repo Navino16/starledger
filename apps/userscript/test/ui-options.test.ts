@@ -227,15 +227,36 @@ describe('with consent', () => {
     expect(loadSettings(gm).serverUrl).toBe('https://sl.example.org');
   });
 
-  it('opens the settings in a backdrop that a click beside does not close', () => {
+  it('opens the settings in the content area that a click beside does not close', async () => {
+    document.body.innerHTML = '<div id="links"></div><div id="contentWrapper"><p>game</p></div>';
     main(gm, document);
     gm.menus[0]?.fn();
-    const backdrop = document.querySelector<HTMLElement>('.starledger-backdrop');
-    expect(backdrop?.firstElementChild?.id).toBe('starledger-settings');
-    backdrop?.click();
+    const panel = document.getElementById('starledger-settings');
+    expect(panel?.parentElement?.id).toBe('contentWrapper');
+    await flush();
+    document.body.click();
     expect(document.getElementById('starledger-settings')).not.toBeNull();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-    expect(document.querySelector('.starledger-backdrop')).toBeNull();
+    expect(document.getElementById('starledger-settings')).toBeNull();
+  });
+
+  it('stores the panel position and reads it back', () => {
+    document.body.innerHTML = '<div id="links"></div><div id="contentWrapper"><p>game</p></div>';
+    main(gm, document);
+    gm.menus[0]?.fn();
+    const select = document.querySelector('#starledger-position') as HTMLSelectElement;
+    expect(select.value).toBe('above');
+    select.value = 'below';
+    select.dispatchEvent(new Event('change'));
+    expect(loadSettings(gm).panelPosition).toBe('below');
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    gm.menus[0]?.fn();
+    expect(document.getElementById('contentWrapper')?.lastElementChild?.id).toBe(
+      'starledger-settings',
+    );
+    expect((document.querySelector('#starledger-position') as HTMLSelectElement).value).toBe(
+      'below',
+    );
   });
 
   it('refreshes the box behind the settings when the key is removed', () => {

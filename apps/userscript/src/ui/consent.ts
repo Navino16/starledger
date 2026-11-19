@@ -40,6 +40,7 @@ export function renderConsent(ctx: UiContext, onAccepted: () => void): void {
     doc,
     {
       id: SETTINGS_ID,
+      position: loadSettings(gm).panelPosition,
       title: t('consentTitle'),
       closeLabel: t('close'),
       closeOnOutside: false,

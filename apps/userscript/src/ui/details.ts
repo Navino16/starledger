@@ -84,7 +84,13 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
   const calendarBox = el(doc, 'div', {});
   const handle = openPanel(
     doc,
-    { id: DETAILS_ID, title: t('detailsTitle'), closeLabel: t('close'), closeOnOutside: true },
+    {
+      id: DETAILS_ID,
+      position: loadSettings(gm).panelPosition,
+      title: t('detailsTitle'),
+      closeLabel: t('close'),
+      closeOnOutside: true,
+    },
     [el(doc, 'div', { className: 'starledger-toolbar' }, bar, nav), calendarBox, body],
   );
   const monthFormat = new Intl.DateTimeFormat(detectLang(doc), {

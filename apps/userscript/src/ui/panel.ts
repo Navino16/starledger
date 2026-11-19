@@ -1,7 +1,10 @@
-import { el } from './dom';
+import { el, PANEL_ID } from './dom';
+
+export type PanelPosition = 'above' | 'below';
 
 export type PanelOptions = {
   id: string;
+  position: PanelPosition;
   title: string;
   closeLabel: string;
   closeOnOutside: boolean;
@@ -10,19 +13,24 @@ export type PanelOptions = {
 
 export type PanelHandle = { panel: HTMLElement; isOpen: () => boolean; close: () => void };
 
-export const BACKDROP_CLASS = 'starledger-backdrop';
-
 let closeCurrent: (() => void) | null = null;
 
-//! GRAY AREA: requires ToolDev approval before publishing — see AGENTS.md §3
-//! AGENTS.md §1.7: the backdrop dims ads and monetization entries while open; opened by a click, closed by the player, fully removed on close
+function mount(doc: Document, panel: HTMLElement, position: PanelPosition): void {
+  const host = doc.getElementById('contentWrapper') ?? doc.getElementById('middle');
+  if (!host) {
+    const box = doc.getElementById(PANEL_ID);
+    if (box) box.after(panel);
+    else doc.body.prepend(panel);
+  } else if (position === 'below') host.append(panel);
+  else host.prepend(panel);
+}
+
+//! AGENTS.md §1.7: in normal flow inside the game content area, covers no ad, menu entry or footer; opened by a click, fully removed on close
 export function openPanel(doc: Document, opts: PanelOptions, content: Node[]): PanelHandle {
   closeCurrent?.();
 
   const panel = el(doc, 'div', { id: opts.id, className: 'starledger-dialog' });
   panel.setAttribute('role', 'dialog');
-  panel.setAttribute('aria-modal', 'true');
-  const backdrop = el(doc, 'div', { className: BACKDROP_CLASS }, panel);
   const closeButton = el(
     doc,
     'button',
@@ -37,7 +45,8 @@ export function openPanel(doc: Document, opts: PanelOptions, content: Node[]): P
     if (!open) return;
     open = false;
     doc.removeEventListener('keydown', onKey);
-    backdrop.remove();
+    doc.removeEventListener('click', onOutside);
+    panel.remove();
     if (closeCurrent === close) closeCurrent = null;
     previousFocus?.focus();
     opts.onClose?.();
@@ -45,13 +54,18 @@ export function openPanel(doc: Document, opts: PanelOptions, content: Node[]): P
   function onKey(e: KeyboardEvent) {
     if (e.key === 'Escape') close();
   }
+  function onOutside(e: MouseEvent) {
+    const target = e.target;
+    if (target instanceof Node && target.isConnected && !panel.contains(target)) close();
+  }
   closeCurrent = close;
 
   closeButton.addEventListener('click', close);
   doc.addEventListener('keydown', onKey);
   if (opts.closeOnOutside) {
-    backdrop.addEventListener('click', (e) => {
-      if (e.target === backdrop) close();
+    // Deferred so the click that opened the panel does not close it
+    queueMicrotask(() => {
+      if (open) doc.addEventListener('click', onOutside);
     });
   }
 
@@ -65,7 +79,8 @@ export function openPanel(doc: Document, opts: PanelOptions, content: Node[]): P
     ),
     el(doc, 'div', { className: 'starledger-dialog-content' }, ...content),
   );
-  doc.body.append(backdrop);
+  mount(doc, panel, opts.position);
+  if (typeof panel.scrollIntoView === 'function') panel.scrollIntoView({ block: 'nearest' });
   closeButton.focus();
   return { panel, isOpen: () => open, close };
 }

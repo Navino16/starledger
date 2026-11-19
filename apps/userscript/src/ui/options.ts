@@ -28,6 +28,16 @@ export function renderOptions(ctx: UiContext): void {
     id: 'starledger-hide',
     checked: settings.hideOglightBox,
   });
+  const position = el(doc, 'select', { id: 'starledger-position' });
+  for (const value of ['above', 'below'] as const) {
+    position.append(
+      el(doc, 'option', {
+        value,
+        textContent: t(value === 'above' ? 'panelAbove' : 'panelBelow'),
+        selected: settings.panelPosition === value,
+      }),
+    );
+  }
   const status = el(doc, 'div', { className: 'starledger-status' });
   const warning = el(doc, 'div', { className: 'starledger-warning' });
   const save = el(doc, 'button', { type: 'button', textContent: t('save') });
@@ -105,6 +115,10 @@ export function renderOptions(ctx: UiContext): void {
     setOglightHidden(gm, doc, hide.checked);
   });
 
+  position.addEventListener('change', () => {
+    saveSettings(gm, { panelPosition: position.value === 'below' ? 'below' : 'above' });
+  });
+
   withdraw.addEventListener('click', () => {
     saveSettings(gm, { consent: false });
     queue.clear();
@@ -116,6 +130,7 @@ export function renderOptions(ctx: UiContext): void {
     doc,
     {
       id: SETTINGS_ID,
+      position: loadSettings(gm).panelPosition,
       title: t('menuLabel'),
       closeLabel: t('close'),
       closeOnOutside: false,
@@ -125,6 +140,7 @@ export function renderOptions(ctx: UiContext): void {
       el(doc, 'label', { textContent: t('serverUrl') }, url),
       el(doc, 'label', { textContent: t('apiKey') }, key),
       el(doc, 'label', {}, hide, ` ${t('hideOglight')}`),
+      el(doc, 'label', { textContent: t('panelPosition') }, position),
       warning,
       status,
       el(doc, 'div', { className: 'starledger-actions' }, save, test, removeKey, withdraw),

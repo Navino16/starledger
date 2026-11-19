@@ -1,11 +1,13 @@
 import type { AccountRef, StatsResponse } from '@app/shared';
 import type { Gm } from './gm';
+import type { PanelPosition } from './ui/panel';
 
 export type ClientSettings = {
   serverUrl: string | null;
   apiKey: string | null;
   consent: boolean;
   hideOglightBox: boolean;
+  panelPosition: PanelPosition;
   deviceId: string;
 };
 
@@ -28,6 +30,7 @@ export function loadSettings(gm: Gm): ClientSettings {
     apiKey: stored.apiKey ?? null,
     consent: stored.consent === true && (stored.consentVersion ?? 0) >= CONSENT_VERSION,
     hideOglightBox: stored.hideOglightBox ?? false,
+    panelPosition: stored.panelPosition === 'below' ? 'below' : 'above',
     deviceId: stored.deviceId ?? crypto.randomUUID(),
   };
   if (!stored.deviceId) persist(gm, settings);
