@@ -285,7 +285,11 @@ Verified on PTS 2026-11-12: the message also has `recycleramount`, `totalcapacit
   `sourceplaneticon`. No `hashcode`: the message id is the only key.
 - `resourcesbefore` (JSON, same keys) is the receiving planet's stock before delivery, present
   only when the receiver is the account.
-- The `transport` event keeps the other player's id, name and coordinates (`partner`, from the target side when delivered, the source side when received).
+- Before sending, the client removes the other player's side (`playerid`, `playername`, `planetid`,
+  `planetname`, `planetcoordinates`, `planettype`, `planeticon`) with `redactObservation`
+  (spec `2026-11-19-tooldev-answers-design.md` §3). The `transport` event carries no partner: its
+  direction comes from the side that holds the account's player id, a side without `playerid`
+  counting as another player.
 - Type 34 (fleet arrival, ~280 live messages) was only seen between own planets or from an
   unknown source to own planets; it is not needed for transports.
 
