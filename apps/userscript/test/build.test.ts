@@ -42,6 +42,11 @@ describe('built userscript', () => {
     );
   });
 
+  it('describes the script in English and French', () => {
+    expect(script).toMatch(/^\/\/ @description\s+\S/m);
+    expect(script).toMatch(/^\/\/ @description:fr\s+\S/m);
+  });
+
   it('runs in the top frame only', () => {
     expect(script).toMatch(/@noframes/);
   });
