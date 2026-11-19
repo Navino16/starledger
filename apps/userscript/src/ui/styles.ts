@@ -75,7 +75,7 @@ div.starledger-status{margin:8px 4px 4px}
 .starledger-daynum{display:block}
 .starledger-dateline{margin:16px 0 12px}
 #starledger-details .starledger-dateline strong{font-size:13px;font-weight:normal;color:#e7e8eb}
-.starledger-split{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
+.starledger-split{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
 .starledger-card{padding:12px;background:#161b23;border-radius:8px}
 .starledger-donut{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:16px 24px;height:100%}
 .starledger-donut-wrap{position:relative;width:152px;height:152px;flex:none}
@@ -89,7 +89,7 @@ div.starledger-status{margin:8px 4px 4px}
 .starledger-legend-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .starledger-legend b{font-weight:normal;color:#e7e8eb;text-align:right}
 .starledger-legend small{font-size:11px;color:#858b98;text-align:right}
-.starledger-shipgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;align-content:start}
+.starledger-shipgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(116px,1fr));gap:4px;align-content:start}
 .starledger-shiptile{display:flex;align-items:center;gap:8px;min-width:0;padding:4px 8px 4px 4px;background:#161b23;border-radius:6px}
 .starledger-icon{display:inline-block;flex:none;vertical-align:middle;background-repeat:no-repeat;border-radius:2px}
 /* The game's own icon-blue filter on its grey lithium image */
