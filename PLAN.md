@@ -56,6 +56,8 @@
 | 26 | Page Dashboard | ✅ |
 | 27 | En-têtes de sécurité | ✅ |
 | 28 | Icônes du jeu dans le dashboard | ✅ |
+| 29 | Panneau dans la zone de contenu | ☐ |
+| 30 | Données des autres joueurs retirées avant l'envoi | ☐ |
 
 ## Global Constraints
 
@@ -65,7 +67,9 @@
 - **Consentement explicite** requis avant toute collecte et tout envoi (design §4.1, `AGENTS.md` §1.9).
 - **Le `.user.js` n'est jamais minifié**, dépendances embarquées comprises (`build.minify: false`).
 - **Monétisation intacte** : l'encart ne recouvre ni ne déplace Marchand, Officiers, Boutique, la barre de pub ou le footer, sur desktop comme sur mobile (`AGENTS.md` §1.7).
-- Le masquage de l'encart OGLight porte exactement `// GRAY AREA: requires ToolDev approval before publishing — see AGENTS.md §3`.
+- Le masquage de l'encart OGLight est hors du champ d'Origin (réponse ToolDev du 2026-11-18, spec `2026-11-19-tooldev-answers-design.md` §1) ; il porte un commentaire de conformité qui cite cette réponse.
+- **Aucun calque ni fond plein écran** : réglages et détail s'ouvrent dans la zone de contenu du jeu (même spec, §2).
+- **Données des autres joueurs** retirées par `redactObservation` avant tout envoi (même spec, §3).
 - **Commentaires** : uniquement le code complexe, les décisions discutables et les choix de conformité, sur une ligne avec renvoi (`// AGENTS.md §4: passive read, no game request`). Voir `CLAUDE.md`.
 - **Build et consommation de `@app/shared`** : `@app/shared` expose `"exports": { ".": "./src/index.ts" }` (consommé en source par Vitest, Vite et le bundler serveur ; jamais compilé seul). Le serveur est **bundlé avec tsdown** vers `apps/server/dist/{index,cli}.js` (ESM, cible node26), `@node-rs/argon2` et `pg` restant externes. Les imports relatifs restent sans extension.
 - **Langues** : code, commits et documentation technique en anglais ; interface en français et en anglais. Messages de commit sur une seule ligne, sans co-author.
@@ -1123,7 +1127,7 @@ Décision utilisateur du 2026-11-12 : les vaisseaux des récompenses d'anomalie 
 
 ## Scope 14 — Dossier de tolérance et publication
 
-Branche : `feature/toleration-release`. **Prérequis** : réponses écrites des ToolDevs aux questions du design §9.4.
+Branche : `feature/toleration-release`. **Prérequis** : scopes 29 et 30 ; réponse écrite des ToolDevs à la question des icônes du jeu (design §9.4, point 4). Les autres questions ont reçu une réponse le 2026-11-18 (spec `2026-11-19-tooldev-answers-design.md`).
 
 ### Tâche 14.1 : Métadonnées de diffusion et documents
 
@@ -1137,7 +1141,7 @@ Branche : `feature/toleration-release`. **Prérequis** : réponses écrites des 
 - Modify : `AGENTS.md`, resynchronisé depuis la source en mettant à jour l'en-tête.
 
 - [ ] **Step 0 :** retirer le garde-fou PTS : `@match` élargi à `https://*.ogame.gameforge.com/game/index.php*`, suppression de `pts-guard.ts`, de son appel et de ses tests. Cette version est celle soumise aux reviewers ; l'utilisateur ne l'installe pas sur ses comptes réels avant la tolérance.
-- [ ] **Step 1 :** si la réponse des ToolDevs sur le masquage d'OGLight est négative, retirer la fonctionnalité et ses tests. Si elle est positive, garder le marqueur `GRAY AREA` et citer l'accord dans le dossier.
+- [ ] **Step 1 :** citer dans le dossier la réponse du 2026-11-18 sur le masquage d'OGLight (déjà traitée au scope 29). Si la réponse sur les icônes est négative, retirer `apps/web/src/ui/game-icon.tsx` et ses usages, et les domaines `gfX.geo.gfsrv.net` de la CSP.
 - [ ] **Step 2 :** construire (`pnpm build`), vérifier que le `.user.js` n'est pas minifié et que son en-tête est complet, puis faire une dernière passe sur le PTS.
 - [ ] **Step 3 :** `pnpm test && pnpm lint && pnpm typecheck`. Attendu : PASS.
 - [ ] **Step 4 : commit.** `git commit -m "Prepare toleration submission and release metadata"`
@@ -1926,3 +1930,43 @@ Branche : `feature/dashboard-game-icons`. Spec : `docs/superpowers/specs/2026-11
 - [x] **Step 3 :** implémenter ; commentaire de conformité AGENTS.md §4 (images statiques, aucune requête de jeu).
 - [x] **Step 4 :** suites web, serveur et userscript, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; captures bureau et téléphone sans erreur de console.
 - [x] **Step 5 : commit.** `git commit -m "Show the game icons on the dashboard"`
+
+## Scope 29 — Panneau dans la zone de contenu
+
+Branche : `feature/in-content-panel`. Spec : `docs/superpowers/specs/2026-11-19-tooldev-answers-design.md` §1 et §2. Le code de la Ruling M2 (PR #10, `50b1359`) peut servir de point de départ.
+
+### Tâche 29.1 : Panneau dans le flux et option de position
+
+**Files :** Modify `apps/userscript/src/ui/panel.ts`, `apps/userscript/src/ui/styles.ts`, `apps/userscript/src/ui/options.ts`, `apps/userscript/src/ui/details.ts`, `apps/userscript/src/ui/consent.ts`, `apps/userscript/src/i18n.ts`, le stockage des options du client, `apps/userscript/src/ui/oglight.ts` ; Test `apps/userscript/test/details.test.ts`, `apps/userscript/test/ui-options.test.ts`, `apps/userscript/test/build.test.ts` et les tests qui ouvrent un panneau.
+
+**Interfaces :**
+- `openPanel` insère le panneau dans `#contentWrapper`, sinon `#middle`, sinon après l'encart ; en tête ou à la fin de l'hôte selon l'option `panelPosition: 'above' | 'below'` (défaut `'above'`) ; puis `scrollIntoView({ block: 'nearest' })` quand la fonction existe (jsdom ne l'a pas).
+- Plus de `BACKDROP_CLASS` ni de `position: fixed` ; `aria-modal` retiré. Fermeture : bouton, Échap, et clic hors du panneau si `closeOnOutside`. Tout est retiré à la fermeture.
+- Réglages : sélecteur « Position du panneau » (Au-dessus du contenu du jeu / En dessous), en français et en anglais.
+- Détail : les deux cartes passent en une colonne quand la largeur manque.
+- `panel.ts` : commentaire `AGENTS.md §1.7` (dans le flux, ne recouvre ni pub, ni menu, ni footer) à la place du marqueur `GRAY AREA`. `oglight.ts` : commentaire de conformité qui cite la réponse ToolDev du 2026-11-18 (fil 598) à la place du marqueur `GRAY AREA`.
+
+- [ ] **Step 1 : tests** : avec `#contentWrapper`, le panneau en est le premier enfant (`above`) ou le dernier (`below`) ; sans hôte, il suit l'encart ; aucun élément ajouté à la fin de `body` ; Échap, le bouton et (détail seulement) un clic hors du panneau ferment et laissent le DOM comme avant ; l'option est enregistrée et relue ; le build ne contient plus `GRAY AREA` ni `starledger-backdrop`.
+- [ ] **Step 2 :** `pnpm --filter @app/userscript exec vitest run` → FAIL.
+- [ ] **Step 3 :** implémenter.
+- [ ] **Step 4 :** suite userscript, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; capture du détail et des réglages dans une page de test qui reprend la mise en page du jeu (menu, contenu, footer), au-dessus et en dessous ; auto-audit `AGENTS.md` §7 noté dans la PR.
+- [ ] **Step 5 : commit.** `git commit -m "Open settings and details inside the game content area"`
+
+## Scope 30 — Données des autres joueurs retirées avant l'envoi
+
+Branche : `feature/redact-other-players`. Spec : `docs/superpowers/specs/2026-11-19-tooldev-answers-design.md` §3.
+
+### Tâche 30.1 : `redactObservation` et transport sans partenaire
+
+**Files :** Create `packages/shared/src/redact.ts` ; Modify `packages/shared/src/index.ts`, `packages/shared/src/parsers/transport.ts`, `packages/shared/src/events.ts`, la construction et l'envoi des observations du userscript (`apps/userscript/src/collect/messages.ts` et la file d'envoi), le texte du consentement (`apps/userscript/src/i18n.ts`) ; Test `packages/shared/test/redact.test.ts`, tests des parseurs transport et combat, tests de collecte et d'envoi du userscript.
+
+**Interfaces :**
+- `redactObservation(obs: Observation): Observation` : pure, idempotente ; règles du tableau §3.2 ; ne touche qu'aux observations de messages.
+- `TransportEvent` perd `partner` (et le type `TransportPartner` s'il n'a plus d'usage) ; le sens se déduit du côté qui porte `own`.
+- Commentaire de conformité `AGENTS.md §1.9` sur l'appel de `redactObservation` avant l'envoi.
+
+- [ ] **Step 1 : tests** : sur chaque fixture réelle de combat, transport, combat en un round et récompense d'anomalie, la sortie ne contient plus aucun nom ni identifiant d'un autre joueur (recherche des valeurs d'origine dans le JSON sérialisé) ; le joueur lui-même est intact ; `redactObservation(redactObservation(o))` égale `redactObservation(o)` ; chaque parseur donne le même événement sur l'observation nettoyée que sur l'originale (transport : sans `partner`) ; JSON invalide → attribut retiré ; le userscript envoie des observations nettoyées, y compris celles déjà en file.
+- [ ] **Step 2 :** `pnpm --filter @app/shared exec vitest run` et `pnpm --filter @app/userscript exec vitest run` → FAIL.
+- [ ] **Step 3 :** implémenter ; mettre à jour le texte du consentement (spec §3.4).
+- [ ] **Step 4 :** suites shared, userscript et serveur (`--no-file-parallelism`), web, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; auto-audit `AGENTS.md` §7 noté dans la PR.
+- [ ] **Step 5 : commit.** `git commit -m "Strip other players' identifiers before sending observations"`

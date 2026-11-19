@@ -99,10 +99,8 @@ Les conséquences de ces règles sont décrites au §4.1.
 - **Consentement explicite et éclairé** avant tout envoi au serveur : un écran au premier lancement explique ce qui est envoyé et où. Sans consentement, rien n'est collecté ni envoyé.
 - **Code lisible** : le `.user.js` publié n'est ni minifié ni obfusqué, **dépendances embarquées comprises**, et le code source est publié.
 - **Ne pas toucher** aux bannières, à la monétisation et au footer du jeu. L'encart inséré sous `#links` ne doit **ni masquer, ni recouvrir, ni repousser hors de l'écran** les entrées Marchand, Recruter des officiers ou Boutique, ni la barre de publicité (`AGENTS.md` §1.7). C'est à vérifier aussi sur mobile.
-- **Masquage de l'encart OGLight** : zone grise (`AGENTS.md` §3).
-  - Le code est marqué `// GRAY AREA: requires ToolDev approval before publishing — see AGENTS.md §3`.
-  - La fonctionnalité n'est pas déposée ni publiée sans accord **écrit** d'un ToolDev ; en cas de refus, elle est retirée.
-  - La question se pose sur le forum Development (§9).
+- **Masquage de l'encart OGLight** : hors du champ d'Origin d'après la réponse ToolDev du 2026-11-18 (§9). Le code porte un commentaire de conformité qui cite cette réponse.
+- **Réglages et détail** s'ouvrent dans un panneau de la zone de contenu du jeu, sans calque ni fond plein écran (`2026-11-19-tooldev-answers-design.md` §2).
 - Le fichier `AGENTS.md` officiel est **copié à la racine du dépôt** et référencé dans le `CLAUDE.md` du projet.
   - Son dépôt n'a pas de licence, mais l'auteur invite explicitement à faire cette copie dans le fil du forum.
   - On indique en tête du fichier la source et la date de la copie, et on le resynchronise avant chaque dépôt de tolérance.
@@ -286,7 +284,7 @@ On reproduit le calcul d'OGLight, puisque c'est la référence à laquelle l'uti
   - Le client extrait les attributs bruts, l'identité du message et son type. Il n'envoie que les messages de ses propres types suivis.
   - **Le serveur interprète** avec les parseurs de `packages/shared` et fait autorité.
   - « Non reconnu » est un verdict du serveur, renvoyé dans l'accusé de réception.
-  - Les données brutes de combat contiennent des noms, identifiants et coordonnées d'autres joueurs. L'écran de consentement et le dossier de tolérance doivent le déclarer.
+  - Avant l'envoi, le client retire les noms et identifiants des autres joueurs (`redactObservation`, `2026-11-19-tooldev-answers-design.md` §3). Le brut conservé est ce brut nettoyé. L'écran de consentement et le dossier de tolérance le déclarent.
 - Les champs inconnus sont nuls, au sens « inconnu », et distincts de 0.
 - Chaque événement garde sa **provenance** : collecte, et plus tard import.
 - Les stats de l'encart sont calculées à la demande à partir des événements, avec un cache éventuel. On ne maintient pas de compteurs incrémentaux qu'on ne pourrait plus réconcilier.
@@ -342,9 +340,10 @@ Ils reprennent la spec §12, restreints au périmètre du MVP :
    - un rappel rembourse-t-il du deutérium ?
    - la réponse d'envoi de flotte contient-elle un identifiant de flotte ?
    - la réponse `miniFleet` expose-t-elle la consommation ?
-4. **Questions aux ToolDevs** (forum Development, posées le 2026-11-11 : https://forum.origin.ogame.gameforge.com/forum/thread/598-gray-area-questions-before-submitting-a-stats-sync-userscript-expeditions-combat/) :
-   - peut-on masquer l'encart d'un autre outil toléré ?
-   - les rapports de combat bruts contiennent des noms, identifiants et coordonnées d'**autres joueurs**. Peut-on les envoyer et les conserver sur notre serveur, ou faut-il les retirer côté client avant l'envoi ? La réponse peut modifier le principe « on conserve le brut » du §6.3.
+4. **Questions aux ToolDevs** (forum Development, posées le 2026-11-11 : https://forum.origin.ogame.gameforge.com/forum/thread/598-gray-area-questions-before-submitting-a-stats-sync-userscript-expeditions-combat/). Réponse de RiV- le 2026-11-18, détaillée dans `2026-11-19-tooldev-answers-design.md` §1. Le message était retenu à cause du lien vers le code source, à retirer.
+   - ~~peut-on masquer l'encart d'un autre outil toléré ?~~ Hors du champ d'Origin : la fonctionnalité reste.
+   - ~~données d'autres joueurs dans les combats bruts~~ : pas d'arbitrage, RGPD à notre charge ; le client les retire avant l'envoi.
+   - ~~fenêtre avec fond plein écran~~ : pas d'accord ; panneau dans la zone de contenu.
    - **à poser** (ajoutée le 2026-11-17) : le site du serveur affiche les icônes du jeu (ressources, vaisseaux) en les chargeant depuis le CDN d'images de Gameforge, sans les copier. Est-ce admis hors des pages du jeu ? Voir `2026-11-17-dashboard-game-icons-design.md`.
 5. ~~**Nom du projet**~~ : réglé, **Starledger** (2026-11-11).
 
@@ -353,15 +352,15 @@ Ils reprennent la spec §12, restreints au périmètre du MVP :
 Source : les fils du forum Origin cités au §3.3. Les règles évoluent : il faut relire les fils « Forbidden features » et « Do I need to submit my tool? » avant chaque dépôt.
 
 1. **Avant le dépôt**
-   - Poser les questions de zone grise sur le forum **Development** (https://forum.origin.ogame.gameforge.com/forum/board/11-development/), dont le masquage de l'encart OGLight. Obtenir une réponse **écrite** d'un ToolDev.
+   - Poser les questions de zone grise sur le forum **Development** (https://forum.origin.ogame.gameforge.com/forum/board/11-development/). Obtenir une réponse **écrite** d'un ToolDev. Ne pas y mettre de lien vers un code source pas encore toléré : le message serait retenu.
    - Développer et tester **uniquement sur le PTS** (Singularity, en_808, accessible par le lobby « pioneers »). On peut copier son compte réel vers le PTS depuis Options → Extended.
    - Faire l'auto-audit de la §7 d'`AGENTS.md`.
 2. **Figer une version** : numéro de version, `.user.js` non minifié, code source public sur GitHub, serveur déployé et joignable par les reviewers.
 3. **Ouvrir un fil** dans **Submissions & API Requests** (https://forum.origin.ogame.gameforge.com/forum/board/12-submissions-api-requests/), avec le modèle « Tool Submission Template » (fil 332). Le dossier est en anglais et contient :
    - la liste **exhaustive** des fonctionnalités ;
    - les endpoints du jeu utilisés et leur fréquence. Pour nous : aucun appel émis, seulement la lecture du DOM et l'observation des réponses aux actions du joueur ;
-   - toutes les modifications de l'interface, avec des captures d'écran (encart, détail, options, masquage OGLight) ;
-   - la gestion des données : stockage local, envoi au serveur externe (quoi, où, consentement, données d'autres joueurs contenues dans les rapports de combat), aucune télémétrie ;
+   - toutes les modifications de l'interface, avec des captures d'écran (encart, panneau de détail et de réglages au-dessus et en dessous, masquage OGLight) ;
+   - la gestion des données : stockage local, envoi au serveur externe (quoi, où, consentement, noms et identifiants des autres joueurs retirés avant l'envoi), aucune télémétrie ;
    - le lien vers le code source non minifié ;
    - la déclaration de conformité ;
    - **le serveur est revu aussi** : décrire ce qu'il stocke, l'isolation entre utilisateurs, la suppression des données sur demande.
