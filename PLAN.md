@@ -1965,8 +1965,8 @@ Branche : `feature/redact-other-players`. Spec : `docs/superpowers/specs/2026-11
 - `TransportEvent` perd `partner` (et le type `TransportPartner` s'il n'a plus d'usage) ; le sens se déduit du côté qui porte `own`.
 - Commentaire de conformité `AGENTS.md §1.9` sur l'appel de `redactObservation` avant l'envoi.
 
-- [ ] **Step 1 : tests** : sur chaque fixture réelle de combat, transport, combat en un round et récompense d'anomalie, la sortie ne contient plus aucun nom ni identifiant d'un autre joueur (recherche des valeurs d'origine dans le JSON sérialisé) ; le joueur lui-même est intact ; `redactObservation(redactObservation(o))` égale `redactObservation(o)` ; chaque parseur donne le même événement sur l'observation nettoyée que sur l'originale (transport : sans `partner`) ; JSON invalide → attribut retiré ; le userscript envoie des observations nettoyées, y compris celles déjà en file.
-- [ ] **Step 2 :** `pnpm --filter @app/shared exec vitest run` et `pnpm --filter @app/userscript exec vitest run` → FAIL.
-- [ ] **Step 3 :** implémenter ; mettre à jour le texte du consentement (spec §3.4).
-- [ ] **Step 4 :** suites shared, userscript et serveur (`--no-file-parallelism`), web, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; auto-audit `AGENTS.md` §7 noté dans la PR.
-- [ ] **Step 5 : commit.** `git commit -m "Strip other players' identifiers before sending observations"`
+- [x] **Step 1 : tests** : sur chaque fixture réelle de combat, transport, combat en un round et récompense d'anomalie, la sortie ne contient plus aucun nom ni identifiant d'un autre joueur (recherche des valeurs d'origine dans le JSON sérialisé) ; le joueur lui-même est intact ; `redactObservation(redactObservation(o))` égale `redactObservation(o)` ; chaque parseur donne le même événement sur l'observation nettoyée que sur l'originale (transport : sans `partner`) ; JSON invalide → attribut retiré ; le userscript envoie des observations nettoyées, y compris celles déjà en file.
+- [x] **Step 2 :** `pnpm --filter @app/shared exec vitest run` et `pnpm --filter @app/userscript exec vitest run` → FAIL.
+- [x] **Step 3 :** implémenter ; mettre à jour le texte du consentement (spec §3.4).
+- [x] **Step 4 :** suites shared, userscript et serveur (`--no-file-parallelism`), web, `rtk proxy pnpm lint`, `pnpm typecheck`, `pnpm build` → PASS ; auto-audit `AGENTS.md` §7 noté dans la PR.
+- [x] **Step 5 : commit.** `git commit -m "Strip other players' identifiers before sending observations"`

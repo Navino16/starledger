@@ -21,6 +21,7 @@ export * from './parsers/lifeform';
 export { rawInt, rawJson } from './parsers/raw';
 export * from './parsers/recycling';
 export * from './parsers/wreckfield';
+export * from './redact';
 export * from './ships';
 export * from './site';
 export * from './stats';

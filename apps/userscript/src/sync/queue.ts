@@ -1,4 +1,10 @@
-import type { ApiError, BatchAck, Observation, ObservationBatch } from '@app/shared';
+import {
+  type ApiError,
+  type BatchAck,
+  type Observation,
+  type ObservationBatch,
+  redactObservation,
+} from '@app/shared';
 import type { Gm } from '../gm';
 import { CLIENT_VERSION } from '../version';
 import type { ApiResult } from './api';
@@ -92,7 +98,8 @@ export function createQueue(gm: Gm) {
         result = await api.sendBatch({
           clientVersion: CLIENT_VERSION,
           deviceId,
-          observations: batch,
+          // AGENTS.md §1.9: redact again at send time, queued items may predate redaction
+          observations: batch.map(redactObservation),
         });
       } catch {
         result = { ok: false, error: 'unreachable' };
