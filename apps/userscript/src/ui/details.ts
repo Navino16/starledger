@@ -107,6 +107,7 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
   let seq = 0;
 
   const showMessage = (text: string) => {
+    body.removeAttribute('aria-busy');
     calendarBox.replaceChildren();
     body.replaceChildren(el(doc, 'p', { className: 'starledger-error', textContent: text }));
   };
@@ -140,7 +141,9 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
     const { period, refDay, range } = state;
     for (const [p, b] of buttons) b.setAttribute('aria-pressed', String(p === period));
     renderMonthLabel();
-    body.replaceChildren(el(doc, 'p', { textContent: t('loading') }));
+    // The previous content stays while loading: emptying the in-flow panel would shorten the page and scroll it
+    if (body.hasChildNodes()) body.setAttribute('aria-busy', 'true');
+    else body.replaceChildren(el(doc, 'p', { textContent: t('loading') }));
     await before;
     if (!isOpen() || mine !== seq) return;
     const settings = loadSettings(gm);
@@ -182,6 +185,7 @@ export function openDetails(ctx: UiContext, env: DetailsEnv): void {
         ),
       );
       body.replaceChildren(...renderContent(doc, t, result.data, refDay));
+      body.removeAttribute('aria-busy');
       if (refocus) calendarBox.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus();
     } catch {
       showError('server_error');
