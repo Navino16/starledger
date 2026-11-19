@@ -100,11 +100,13 @@ div.starledger-status{margin:8px 4px 4px}
 .starledger-lost{font-size:11px;line-height:12px;color:#e2574c}
 .starledger-balancewrap{margin-top:16px}
 .starledger-tablewrap{overflow-x:auto;padding:4px 0;background:#161b23;border-radius:8px}
-#starledger-details .starledger-balance{min-width:620px;border-collapse:collapse}
-#starledger-details .starledger-balance th{height:32px;padding:0 12px;font-size:11px;font-weight:normal;color:#858b98;text-align:right;vertical-align:middle;border:0}
-#starledger-details .starledger-balance td{height:32px;padding:0 12px;text-align:right;white-space:nowrap;background:none;border:0;border-top:1px solid rgba(231,232,235,.06)}
+#starledger-details .starledger-balance{border-collapse:collapse}
+#starledger-details .starledger-balance th{height:32px;padding:0 6px;font-size:11px;font-weight:normal;color:#858b98;text-align:right;vertical-align:middle;border:0}
+#starledger-details .starledger-balance td{height:32px;padding:0 6px;text-align:right;white-space:nowrap;background:none;border:0;border-top:1px solid rgba(231,232,235,.06)}
 #starledger-details .starledger-balance th:first-child,#starledger-details .starledger-balance td:first-child{position:sticky;left:0;text-align:left;background:#161b23}
-#starledger-details .starledger-balance td:first-child{color:#c9cdd6}
+#starledger-details .starledger-balance th:first-child,#starledger-details .starledger-balance td:first-child{padding-left:12px}
+#starledger-details .starledger-balance td:first-child{min-width:96px;color:#c9cdd6;line-height:14px;white-space:normal}
+#starledger-details .starledger-balance th:last-child,#starledger-details .starledger-balance td:last-child{padding-right:12px}
 #starledger-details .starledger-balance tr[data-category=total] td{font-weight:600;color:#e7e8eb;background:#1b212b;border-top:1px solid rgba(231,232,235,.16)}
 #starledger-details .starledger-balance td[data-col=count]{color:#c9cdd6}
 .starledger-amount[data-res=darkMatter]{color:#b88ce8}
