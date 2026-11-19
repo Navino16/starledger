@@ -5,7 +5,14 @@ import { MESSAGES } from '../src/i18n';
 import { loadSettings, saveSettings } from '../src/storage';
 import { createQueue } from '../src/sync/queue';
 
-const obs = (id: string) => ({ kind: 'message', clientObservationId: id }) as never;
+const obs = (id: string) =>
+  ({
+    kind: 'message',
+    clientObservationId: id,
+    account: { serverId: 1, lang: 'en', playerId: 1, playerName: null },
+    messageType: null,
+    raw: {},
+  }) as never;
 const ackAll = (opts: { data?: string }) => ({
   status: 200,
   body: JSON.stringify({
@@ -81,7 +88,9 @@ describe('without consent', () => {
   it('accepting consent requires a valid URL and an explicit click, then saves consent', () => {
     main(gm, document);
     click('#starledger-box button');
-    expect(document.body.textContent).toContain('names and coordinates of other players');
+    expect(document.body.textContent).toContain(
+      'names and ids of other players are removed before sending',
+    );
     expect(loadSettings(gm).consent).toBe(false);
     const url = document.querySelector('#starledger-url') as HTMLInputElement;
     url.value = 'https://sl.example.org';

@@ -2,6 +2,7 @@ import {
   type AccountRef,
   type MessageObservation,
   messageObservationSchema,
+  redactObservation,
   TRACKED_MESSAGE_TYPES,
 } from '@app/shared';
 
@@ -111,7 +112,7 @@ export function extractMessageObservations(
       subtabId,
       raw,
     });
-    if (parsed.success) result.push(parsed.data);
+    if (parsed.success) result.push(redactObservation(parsed.data));
   }
   return result;
 }

@@ -66,6 +66,23 @@ describe('extractMessageObservations', () => {
     expect(out[0]?.clientObservationId).not.toBe(out[1]?.clientObservationId);
   });
 
+  it('removes other players identifiers when building the observation', () => {
+    const root = document.createElement('div');
+    const attr = (k: string, v: string) => `data-raw-${k}="${v}"`;
+    root.innerHTML = `<div class="msg" data-msg-id="7"><div class="rawMessageData" ${[
+      attr('messagetype', '33'),
+      attr('timestamp', '1789120800'),
+      attr('sourceplayerid', '42'),
+      attr('sourceplayername', 'Zed'),
+      attr('targetplayerid', '99'),
+      attr('targetplayername', 'Stranger'),
+      attr('targetplanetname', 'Hideout'),
+    ].join(' ')}></div></div>`;
+    const [out] = extractMessageObservations(root, ctx);
+    expect(out?.raw.sourceplayername).toBe('Zed');
+    expect(JSON.stringify(out)).not.toMatch(/Stranger|Hideout|"99"/);
+  });
+
   it('skips a message whose msgId is not numeric', () => {
     const root = document.createElement('div');
     root.innerHTML =

@@ -20,7 +20,7 @@ const en = {
   consentIntro:
     'With your consent, this script reads the pages you open and sends the following to the server below:',
   consentReports:
-    'The reports you display: expeditions, combats (including the names and coordinates of other players), recycling, wreck fields, discoveries, transports and anomaly rewards',
+    'The reports you display: expeditions, combats, recycling, wreck fields, discoveries, transports and anomaly rewards. The names and ids of other players are removed before sending; fight coordinates and the composition of opposing fleets are kept',
   consentFleets:
     'Your fleet departures: ships, mission, origin and target, departure time and fuel consumption',
   consentAnomalies:
@@ -142,7 +142,7 @@ const fr: Record<MessageKey, string> = {
   consentIntro:
     'Avec votre consentement, ce script lit les pages que vous ouvrez et envoie ce qui suit au serveur ci-dessous :',
   consentReports:
-    'Les rapports affichés : expéditions, combats (y compris les noms et coordonnées des autres joueurs), recyclages, champs d’épaves, découvertes, transports et récompenses d’anomalies',
+    'Les rapports affichés : expéditions, combats, recyclages, champs d’épaves, découvertes, transports et récompenses d’anomalies. Les noms et identifiants des autres joueurs sont retirés avant l’envoi ; les coordonnées des combats et la composition des flottes adverses sont conservées',
   consentFleets:
     'Vos départs de flotte : vaisseaux, mission, origine et cible, heure de départ et consommation de carburant',
   consentAnomalies:

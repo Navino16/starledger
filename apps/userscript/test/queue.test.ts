@@ -165,6 +165,35 @@ describe('queue', () => {
     expect(q.size()).toBe(0);
   });
 
+  it('sends redacted observations, including items queued before redaction existed', async () => {
+    const q = createQueue(memoryGm());
+    const legacy: MessageObservation = {
+      ...obs(1, {
+        sourceplayerid: '1',
+        sourceplayername: 'Me',
+        targetplayerid: '99',
+        targetplayername: 'Stranger',
+        targetplanetid: '5',
+        cargo: '{}',
+      }),
+      messageType: 33,
+    };
+    q.enqueue([legacy]);
+    let sent: ObservationBatch | null = null;
+    await q.flush(
+      {
+        sendBatch: async (b) => {
+          sent = b;
+          return ack(b);
+        },
+      },
+      'dev',
+    );
+    const payload = JSON.stringify(sent);
+    expect(payload).not.toMatch(/Stranger|"99"/);
+    expect(payload).toContain('"sourceplayername":"Me"');
+  });
+
   it('does not lose an item enqueued while a flush awaits the API', async () => {
     const q = createQueue(memoryGm());
     q.enqueue(many(2));
