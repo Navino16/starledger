@@ -253,19 +253,19 @@ describe('with consent', () => {
     document.body.innerHTML = '<div id="links"></div><div id="contentWrapper"><p>game</p></div>';
     main(gm, document);
     gm.menus[0]?.fn();
-    const select = document.querySelector('#starledger-position') as HTMLSelectElement;
-    expect(select.value).toBe('above');
-    select.value = 'below';
-    select.dispatchEvent(new Event('change'));
+    const pressed = () =>
+      document.querySelector<HTMLElement>('#starledger-position [aria-pressed="true"]')?.dataset
+        .position;
+    expect(pressed()).toBe('above');
+    document.querySelector<HTMLElement>('#starledger-position [data-position="below"]')?.click();
     expect(loadSettings(gm).panelPosition).toBe('below');
+    expect(pressed()).toBe('below');
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     gm.menus[0]?.fn();
     expect(document.getElementById('contentWrapper')?.lastElementChild?.id).toBe(
       'starledger-settings',
     );
-    expect((document.querySelector('#starledger-position') as HTMLSelectElement).value).toBe(
-      'below',
-    );
+    expect(pressed()).toBe('below');
   });
 
   it('refreshes the box behind the settings when the key is removed', () => {
